@@ -1,0 +1,17 @@
+import express, {
+    Express,
+    Request,
+    Response
+} from 'express';
+import path from 'path';
+import {APP_STATIC_DIR} from '../utils/env';
+
+const app: Express = express();
+
+app.get('/', (req,res) => {
+    console.log('path: ',req.path, req);
+    const file = path.resolve(APP_STATIC_DIR, 'example.html');
+    res.sendFile(file);
+});
+
+export default app;

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<!--[if lt IE 8 ]>
+<html lang="en-US" class="lte-ie9 lt-ie9 lt-ie8"><![endif]-->
+<!--[if IE 8 ]>
+<html lang="en-US" class="lte-ie9 lt-ie9"><![endif]-->
+<!--[if IE 9 ]>
+<html lang="en-US" class="lte-ie9"><![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!-->
+<html class="site-pmc" lang="en-US"><!--<![endif]-->
+<head>
+	<!-- Disable IE compatibility view - needs to appear before any IE conditional comments -->
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Code Review</title>
+	<link rel="shortcut icon" href="https://pmc.com/wp-content/themes/pmc-corporate-2018/assets/build/images/favicon/favicon.ico" />
+
+	<style>
+        body {
+            font-family: monospace;
+        }
+        body a {
+            color: blue;
+        }
+        body a:hover {
+            color: red;
+        }
+        #main {
+            padding: 10px;
+        }
+        table {
+            margin-top: 20px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        table, th, td {
+            border: lightgray solid 1px;
+            border-collapse: collapse;
+            padding: 4px;
+        }
+        th {
+            background: aliceblue;
+        }
+        .pmc-brands__a:hover {
+            cursor: default;
+        }	</style>
+
+</head>
+
+<body>
+
+<header class="site-header">
+	<div class="row">
+		<div id="header-menu-warp" class="xlarge-9 medium-12 header-menu-warp columns text-right">
+			<div class="show-for-xlarge">
+				<span class="pmc-brands__a">Code Review Daskboard</span>
+			</div>
+		</div>
+	</div>
+</header>
+<div id="main">
+
+	<table>
+		<thead>
+		<th>Request Date</th>
+		<th>Last Update</th>
+		<th>Reviewer(s)</th>
+		<th>Approval(s)</th>
+		<th>Status</th>
+		<th>Owner</th>
+		<th>Jira Ticket</th>
+		<th>Pull Request</th>
+		</thead>
+		<tbody id="queues">
+		<td>2023-01-28 10:00a</td>
+		<td>2023-01-28 10:00p</td>
+		<td>Person1, Person2</td>
+		<td>Person1</td>
+		<td>Change requested</td>
+		<td>Owner</td>
+		<td><a href="https://penskemedia.atlassian.net/browse/REV-559">REV-123</a></td>
+		<td><a href="https://github.com/penske-media-corp/publisher-reporting-dashboard/pull/855">publisher-reporting-dashboard#855</td>
+		</tbody>
+	</table>
+
+</div>
+<!-- #wrapper-inner -->
+<footer id="footer" class="pmc-footer text-center">
+
+</footer><!-- #footer -->
+
+</body>
+</html>
