@@ -1,8 +1,8 @@
 import express, {
     Express,
 } from 'express';
-import path from 'path';
 import {APP_STATIC_DIR} from '../utils/env';
+import path from 'path';
 
 const app: Express = express();
 

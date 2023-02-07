@@ -1,15 +1,15 @@
 import {
+    DB_HOST,
+    DB_NAME,
+    DB_PASSWORD,
+    DB_USER,
+} from '../utils/env';
+import {
     DataSource,
     DataSourceOptions
 } from 'typeorm';
-import {
-    DB_HOST,
-    DB_NAME,
-    DB_USER,
-    DB_PASSWORD
-} from '../utils/env';
-import CodeReviewRequestReviewerRelation from './entity/CodeReviewRequestReviewerRelation';
 import CodeReviewRequest from './entity/CodeReviewRequest';
+import CodeReviewRequestReviewerRelation from './entity/CodeReviewRequestReviewerRelation';
 import Reviewer from './entity/Reviewer';
 import User from './entity/User';
 

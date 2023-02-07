@@ -1,6 +1,6 @@
 import CodeReviewRequest from '../database/entity/CodeReviewRequest';
-import User from '../database/entity/User';
 import Connection from '../database/connection';
+import User from '../database/entity/User';
 import {getUserInfo} from '../bolt/utils';
 
 async function findOrCreateUser({slackUserId} : User) {

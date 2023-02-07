@@ -1,8 +1,8 @@
 import {
     Entity,
+    JoinColumn,
     OneToMany,
     OneToOne,
-    JoinColumn,
 } from 'typeorm'
 import Base from './Base';
 import CodeReviewRequestReviewerRelation from './CodeReviewRequestReviewerRelation';

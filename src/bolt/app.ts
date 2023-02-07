@@ -7,12 +7,12 @@ import {
     SLACK_BOT_TOKEN,
     SLACK_SIGNING_SECRET
 } from '../utils/env';
-import CodeReview from '../service/CodeReview';
-import {slackActions} from '../utils/config';
 import {
     getReactionData,
     getUserInfo,
 } from './utils';
+import CodeReview from '../service/CodeReview';
+import {slackActions} from '../utils/config';
 
 const app = new App({
     appToken: SLACK_APP_TOKEN,

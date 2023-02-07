@@ -6,10 +6,10 @@ import {
     ReactionData,
     UserInfo
 } from './types';
-import app from './app';
 import {
     GenericMessageEvent
 } from '@slack/bolt/dist/types/events/message-events';
+import app from './app';
 
 let botUserId : string | unknown = null;
 

@@ -1,8 +1,8 @@
 import './utils/env';
+import Connection from './database/connection';
+import {PORT} from './utils/env';
 import boltApp from './bolt/app';
 import expressApp from './express/app';
-import {PORT} from './utils/env';
-import Connection from './database/connection';
 
 (async () => {
     if (!Connection.isInitialized) {
