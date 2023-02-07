@@ -5,12 +5,9 @@ import {
 } from 'typeorm'
 
 export default abstract class Base {
-    @PrimaryGeneratedColumn()
-        id = 0;
+    @PrimaryGeneratedColumn() id = 0;
 
-    @CreateDateColumn()
-        createAt: Date = new Date();
+    @CreateDateColumn() createAt: Date = new Date();
 
-    @UpdateDateColumn()
-        updatedAt?: Date;
+    @UpdateDateColumn() updatedAt?: Date;
 }
