@@ -22,12 +22,12 @@ export async function getBotUserId() {
 }
 
 // https://api.slack.com/methods/users.profile.get
-export async function getUserInfo(user?: string): Promise<UserInfo> {
+export async function getUserInfo(user: string): Promise<UserInfo> {
     const info = await app.client.users.profile.get({user: user});
     const {real_name, display_name} = info.profile ?? {};
 
     return {
-        slackUserId: user!,
+        slackUserId: user,
         displayName: display_name?.length ? display_name : real_name!,
     }
 }
@@ -49,7 +49,7 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
     const botUserId = await getBotUserId();
 
     if (!result.client_msg_id && botUserId === event.item_user) {
-        ts =  (result.messages ?? [])[0].thread_ts!;
+        ts =  (result.messages ?? [])[0].thread_ts as string;
         result = await app.client.conversations.replies({
             channel: event.item.channel,
             inclusive: true,
@@ -73,7 +73,7 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
     console.log('DEBUG Reactions', reactions)
     return {
         slackMsgId: slackMsgId as string,
-        slackMsgUserId: slackMsgUserId as string,
+        slackMsgUserId,
         slackMsgText: slackMsgText as string,
         slackMsgThreadTs: slackMsgThreadTs as string,
         reaction: event.reaction,

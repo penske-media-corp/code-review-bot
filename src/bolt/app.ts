@@ -8,6 +8,7 @@ import {
     SLACK_SIGNING_SECRET
 } from '../utils/env';
 import CodeReview from '../service/CodeReview';
+import {slackActions} from '../utils/config';
 import {
     getReactionData,
     getUserInfo,
@@ -29,7 +30,7 @@ app.event('reaction_added', async ({ event, client, say }) => {
     console.log('EVENT', event);
     const data = await getReactionData(event);
 
-    if (!data || !data.pullRequestLink) {
+    if (!data?.pullRequestLink) {
         return;
     }
 
@@ -38,7 +39,7 @@ app.event('reaction_added', async ({ event, client, say }) => {
     // @TODO
     const reactionUserName = (await getUserInfo(data.reactionUserId)).displayName;
 
-    if (['review'].includes(data.reaction)) {
+    if (slackActions.request.includes(data.reaction)) {
         const result = await CodeReview.add(data);
         const {user} = result;
 
@@ -50,7 +51,7 @@ app.event('reaction_added', async ({ event, client, say }) => {
             });
         }
         else {
-            const userDisplayName = user.displayName!;
+            const userDisplayName = user.displayName as string;
 
             await say({
                 // @TODO: Replace with configuration mention @groups/team to alert on.
@@ -59,28 +60,28 @@ app.event('reaction_added', async ({ event, client, say }) => {
             });
         }
     }
-    else if (['eyes'].includes(data.reaction)) {
+    else if (slackActions.claim.includes(data.reaction)) {
         const result = await CodeReview.claim(data);
         await say({
             text: `<@${slackMsgUserId}>, *${reactionUserName}* claimed the code review.  ${result.message}`,
             thread_ts: slackMsgThreadTs,
         });
     }
-    else if (['white_check_mark', 'heavy_check_mark','approved'].includes(data.reaction)) {
+    else if (slackActions.approved.includes(data.reaction)) {
         const result = await CodeReview.approve(data);
         await say({
             text: `<@${slackMsgUserId}>, ${reactionUserName} approved your code. ${result.message}`,
             thread_ts: slackMsgThreadTs,
         });
     }
-    else if (['trash'].includes(data.reaction)) {
+    else if (slackActions.remove.includes(data.reaction)) {
         await CodeReview.remove(data);
         await say({
             text: `Pull request has been removed from review queue.`,
             thread_ts: slackMsgThreadTs,
         });
     }
-    else if (['memo','request-changes'].includes(data.reaction)) {
+    else if (slackActions.change.includes(data.reaction)) {
         await CodeReview.requestChanges(data);
         await say({
             text: `<@${slackMsgUserId}>, *${reactionUserName}* requested changes on your pull request.`,
@@ -101,14 +102,14 @@ app.event('reaction_removed', async ({ event, client, say }) => {
 
     const {slackMsgThreadTs} = data;
 
-    if (['review'].includes(data.reaction)) {
+    if (slackActions.change.includes(data.reaction)) {
         await CodeReview.withdraw(data);
         await say({
             text: `*${reactionUserName}* withdraw the code review request.`,
             thread_ts: slackMsgThreadTs,
         });
     }
-    else if(['eyes'].includes(data.reaction)) {
+    else if(slackActions.claim.includes(data.reaction)) {
         await CodeReview.finish(data);
         await say({
             text: `*${reactionUserName}* finished reviewing the code.`,
