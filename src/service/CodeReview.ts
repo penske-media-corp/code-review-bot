@@ -43,7 +43,7 @@ async function findOrCreateCodeReviewRequest({jiraTicket, pullRequestLink, slack
         codeReviewRequest.pullRequestLink = pullRequestLink ?? '';
         codeReviewRequest.jiraTicket = jiraTicket ?? '';
 
-        codeReviewRequest.user = await findOrCreateUser(user as User);
+        codeReviewRequest.user = await findOrCreateUser(user!);
         await repository.save(codeReviewRequest);
     }
     else {

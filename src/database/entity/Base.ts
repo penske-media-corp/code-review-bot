@@ -6,11 +6,11 @@ import {
 
 export default abstract class Base {
     @PrimaryGeneratedColumn()
-    id: number = 0;
+        id = 0;
 
     @CreateDateColumn()
-    createAt: Date = new Date();
+        createAt: Date = new Date();
 
     @UpdateDateColumn()
-    updatedAt?: Date;
+        updatedAt?: Date;
 }

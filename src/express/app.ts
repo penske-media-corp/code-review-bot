@@ -1,7 +1,5 @@
 import express, {
     Express,
-    Request,
-    Response
 } from 'express';
 import path from 'path';
 import {APP_STATIC_DIR} from '../utils/env';

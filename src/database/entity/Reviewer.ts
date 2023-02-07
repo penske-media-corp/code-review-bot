@@ -12,8 +12,8 @@ import User from './User';
 export default class Reviewer extends Base {
     @OneToOne(() => User, (user) => user.reviewer)
     @JoinColumn()
-    user?: User;
+        user?: User;
 
     @OneToMany(() => CodeReviewRequestReviewerRelation, (relation) => relation.reviewer)
-    requests?: CodeReviewRequestReviewerRelation[];
+        requests?: CodeReviewRequestReviewerRelation[];
 }

@@ -9,7 +9,9 @@ import Connection from './database/connection';
         await Connection.initialize();
     }
     await boltApp.start();
-    await expressApp.listen(PORT);
-
+    return expressApp.listen(PORT);
+})().then(() => {
     console.log('⚡️ Bolt boltApp is running!');
-})();
+}).catch((error) => {
+    console.error(error);
+});

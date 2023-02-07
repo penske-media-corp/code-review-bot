@@ -15,7 +15,7 @@ export async function getBotUserId() {
 // https://api.slack.com/methods/users.profile.get
 export async function getUserInfo(user?: string) {
     const info = await app.client.users.profile.get({user: user});
-    const {real_name, display_name} = info?.profile ?? {};
+    const {real_name, display_name} = info.profile ?? {};
 
     return {
         displayName: display_name?.length ? display_name : real_name,
@@ -27,7 +27,7 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
         return null;
     }
 
-    let ts = (event.item as ReactionMessageItem).ts;
+    let ts = (event.item ).ts;
     let result = await app.client.conversations.replies({
         channel: event.item.channel,
         inclusive: true,
@@ -38,8 +38,8 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
 
     const botUserId = await getBotUserId();
 
-    if (!result?.client_msg_id && botUserId === event.item_user) {
-        ts =  (result.messages || [])[0].thread_ts as string;
+    if (!result.client_msg_id && botUserId === event.item_user) {
+        ts =  (result.messages || [])[0].thread_ts!;
         result = await app.client.conversations.replies({
             channel: event.item.channel,
             inclusive: true,
@@ -48,9 +48,9 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
             ts: ts,
         });
     }
-    const {text: slackMsgText, client_msg_id: slackMsgId, user: slackMsgUserId, reactions, thread_ts: slackMsgThreadTs} = (result?.messages || [])[0] as {text?: string, client_msg_id?: string, user?: string, reactions: unknown, thread_ts: string};
+    const {text: slackMsgText, client_msg_id: slackMsgId, user: slackMsgUserId, reactions, thread_ts: slackMsgThreadTs} = (result.messages || [])[0] as {text: string, client_msg_id: string, user: string, reactions: unknown, thread_ts: string};
 
-    const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(slackMsgText as string);
+    const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(slackMsgText);
 
     console.log('DEBUG getReactionData', result);
     console.log('DEBUG Reactions', reactions)

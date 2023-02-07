@@ -9,12 +9,15 @@ import Reviewer from './Reviewer';
 
 @Entity()
 export default class CodeReviewRequestReviewerRelation extends Base {
-    @Column()
-    status: string = 'pending';
+    @Column() status = 'pending';
 
-    @ManyToOne(() => Reviewer, (reviewer) => reviewer.requests)
-    reviewer?: Reviewer;
+    @ManyToOne(
+        () => Reviewer,
+        (reviewer) => reviewer.requests
+    ) reviewer?: Reviewer;
 
-    @ManyToOne(() => CodeReviewRequest, (requestInfo) => requestInfo.reviewers)
-    requestInfo?: CodeReviewRequest;
+    @ManyToOne(
+        () => CodeReviewRequest,
+        (requestInfo) => requestInfo.reviewers
+    ) requestInfo?: CodeReviewRequest;
 }
