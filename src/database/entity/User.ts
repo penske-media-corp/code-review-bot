@@ -8,11 +8,11 @@ import Reviewer from './Reviewer';
 
 @Entity()
 export default class User extends Base {
-    @Column() displayName?: string = '';
+    @Column({length: 40}) displayName?: string = '';
 
-    @Column() slackUserId?: string = '';
+    @Column({length: 20}) slackUserId?: string = '';
 
-    @Column() email?: string = '';
+    @Column({length: 128}) email?: string = '';
 
     @OneToOne(
         () => Reviewer,

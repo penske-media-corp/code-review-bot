@@ -63,7 +63,6 @@ async function findCodeReviewRequest({pullRequestLink, slackMsgId}: CodeReviewRe
     });
 }
 
-
 async function setCodeReviewerStatus(codeReviewRequest: CodeReviewRequest, slackUserId: string, status: string) {
     const user = await findOrCreateUser({slackUserId} as User);
 
@@ -110,30 +109,32 @@ async function setCodeReviewerStatus(codeReviewRequest: CodeReviewRequest, slack
 const add = async ({pullRequestLink, slackMsgId, slackMsgUserId, slackMsgThreadTs}: ReactionData) => {
     if (!pullRequestLink) {
         return {
-            message: 'Cannot determine the github code review pull request link',
+            message: 'Cannot determine the github code review pull request link.',
         };
     }
 
     let codeReviewRequest = await findCodeReviewRequest({pullRequestLink, slackMsgId} as CodeReviewRequest);
-    let codeReviewRequestUser = codeReviewRequest?.user;
+    let user = codeReviewRequest?.user;
 
     if (!codeReviewRequest) {
         const repository = Connection.getRepository(CodeReviewRequest);
 
-        codeReviewRequestUser = await findOrCreateUser({slackUserId: slackMsgUserId} as User)
+        user = await findOrCreateUser({slackUserId: slackMsgUserId} as User)
         codeReviewRequest = new CodeReviewRequest();
         codeReviewRequest.slackMsgId = slackMsgId;
         codeReviewRequest.pullRequestLink = pullRequestLink;
-        codeReviewRequest.user = codeReviewRequestUser;
+        codeReviewRequest.user = user;
         codeReviewRequest.slackMsgThreadTs = slackMsgThreadTs;
         await repository.save(codeReviewRequest);
     }
 
+    const userDisplayName = user?.displayName as string;
+
     console.log('DEBUG', codeReviewRequest);
 
     return {
-        codeReviewRequestUser,
-        message: '2 reviewers :review: are needed',
+        user,
+        message: `*${userDisplayName}* has request a code review! 2 reviewers :review: are needed.`,
     };
 }
 const approve = async ({pullRequestLink, slackMsgId, reactionUserId}: ReactionData) => {
@@ -148,7 +149,8 @@ const approve = async ({pullRequestLink, slackMsgId, reactionUserId}: ReactionDa
         };
     }
 
-    const codeReviewApprovedUser = await setCodeReviewerStatus(codeReviewRequest, reactionUserId, 'approved');
+    const user = await setCodeReviewerStatus(codeReviewRequest, reactionUserId, 'approved');
+    const userDisplayName = user?.displayName as string;
 
     let approvalCount = 0;
     codeReviewRequest.reviewers?.forEach((reviewer) => {
@@ -159,11 +161,11 @@ const approve = async ({pullRequestLink, slackMsgId, reactionUserId}: ReactionDa
     });
     const message = approvalCount === 1
         ? 'One more approval :approved: is needed.'
-        : `Code has ${approvalCount} approvals :approved:, ready to merge.`;
+        : `Code has ${approvalCount} approvals, ready to merge.`;
 
     return {
-        codeReviewApprovedUser,
-        message,
+        user,
+        message: `*${userDisplayName}* approved the code. ${message}`,
     }
 }
 const claim = async ({pullRequestLink, slackMsgId, reactionUserId}: ReactionData) => {
@@ -179,7 +181,8 @@ const claim = async ({pullRequestLink, slackMsgId, reactionUserId}: ReactionData
         };
     }
 
-    const codeReviewClaimUser = await setCodeReviewerStatus(codeReviewRequest, reactionUserId, 'pending');
+    const user = await setCodeReviewerStatus(codeReviewRequest, reactionUserId, 'pending');
+    const userDisplayName = user?.displayName as string;
 
     const count = codeReviewRequest.reviewers?.length ?? 0;
     const message = count === 1
@@ -187,13 +190,59 @@ const claim = async ({pullRequestLink, slackMsgId, reactionUserId}: ReactionData
         : `Code has ${count} reviewers.`;
 
     return {
-        codeReviewClaimUser,
-        message,
+        user,
+        message: `*${userDisplayName}* claimed the code review. ${message}`,
     }
 }
 const finish = async (data: unknown) => {}
-const remove = async (data: unknown) => {}
-const requestChanges = async (data: unknown) => {}
+const remove = async ({pullRequestLink, slackMsgId, reactionUserId}: ReactionData) => {
+    const codeReviewRequest = await findCodeReviewRequest({
+        pullRequestLink,
+        slackMsgId,
+    } as CodeReviewRequest);
+
+    if (!codeReviewRequest) {
+        return {
+            message: 'Cannot locate existing code review request data.',
+        };
+    }
+
+    const user = await findOrCreateUser({slackUserId: reactionUserId} as User);
+    const userDisplayName = user?.displayName as string;
+
+    const repository = Connection.getRepository(CodeReviewRequest);
+
+    codeReviewRequest.status = 'removed';
+    await repository.save(codeReviewRequest);
+
+    return {
+        user,
+        message: '*${userDisplayName}* removed the code review.',
+    }
+}
+
+const requestChanges = async ({pullRequestLink, slackMsgId, reactionUserId}: ReactionData) => {
+    const codeReviewRequest = await findCodeReviewRequest({
+        pullRequestLink,
+        slackMsgId,
+    } as CodeReviewRequest);
+
+    if (!codeReviewRequest) {
+        return {
+            message: 'Cannot locate existing code review request data.',
+        };
+    }
+
+    const user = await setCodeReviewerStatus(codeReviewRequest, reactionUserId, 'change');
+    const userDisplayName = user?.displayName as string;
+
+
+    return {
+        user,
+        message: `*${userDisplayName}* requested changes on the pull request.`,
+    }
+}
+
 const withdraw = async (data: unknown) => {}
 
 export default {

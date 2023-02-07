@@ -39,80 +39,88 @@ app.event('reaction_added', async ({ event, client, say }) => {
 
     const {slackMsgUserId, slackMsgThreadTs} = data;
 
-    // @TODO
-    const reactionUserName = (await getUserInfo(data.reactionUserId)).displayName;
-
     if (slackActions.request.includes(data.reaction)) {
         const result = await CodeReview.add(data);
-        const {codeReviewRequestUser} = result;
+        const {user} = result;
 
         // If user object isn't available, there must be something wrong.
-        if (!codeReviewRequestUser) {
+        if (!user) {
             await say({
-                text: `<@${data.reactionUserId}>, ${result.message}.`,
+                text: `<@${data.reactionUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
             });
         }
         else {
-            const userDisplayName = codeReviewRequestUser.displayName as string;
-            // @TODO: Replace with configuration mention @groups/team/channel to alert on.
             const notify = channelNotify[data.slackChannelId] || channelNotify.default;
 
             await say({
-                text: `<${notify}>, *${userDisplayName}* has request a code review! ${result.message}.`,
+                text: `<${notify}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
             });
         }
     }
     else if (slackActions.claim.includes(data.reaction)) {
         const result = await CodeReview.claim(data);
-        const {codeReviewClaimUser} = result;
 
-        if (!codeReviewClaimUser) {
+        if (!result.user) {
             await say({
-                text: `<@${data.reactionUserId}>, ${result.message}.`,
+                text: `<@${data.reactionUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
             });
         }
         else {
-            const claimUserDisplayName = codeReviewClaimUser.displayName as string
-
             await say({
-                text: `<@${slackMsgUserId}>, *${claimUserDisplayName}* claimed the code review.  ${result.message}`,
+                text: `<@${slackMsgUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
             });
         }
     }
     else if (slackActions.approved.includes(data.reaction)) {
         const result = await CodeReview.approve(data);
-        const {codeReviewApprovedUser} = result;
-        if (!codeReviewApprovedUser) {
+        if (!result.user) {
             await say({
-                text: `<@${data.reactionUserId}>, ${result.message}.`,
+                text: `<@${data.reactionUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
             });
         }
         else {
-            const approvedUserDisplayName = codeReviewApprovedUser.displayName as string
             await say({
-                text: `<@${slackMsgUserId}>, *${approvedUserDisplayName}* approved your code. ${result.message}`,
+                text: `<@${slackMsgUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
             });
         }
     }
     else if (slackActions.remove.includes(data.reaction)) {
-        await CodeReview.remove(data);
-        await say({
-            text: `TODO: Pull request has been removed from review queue.`,
-            thread_ts: slackMsgThreadTs,
-        });
+        const result = await CodeReview.remove(data);
+
+        if (!result.user) {
+            await say({
+                text: `<@${data.reactionUserId}>, ${result.message}`,
+                thread_ts: slackMsgThreadTs,
+            });
+        }
+        else {
+            await say({
+                text: `<@${slackMsgUserId}>, ${result.message}`,
+                thread_ts: slackMsgThreadTs,
+            });
+        }
     }
     else if (slackActions.change.includes(data.reaction)) {
-        await CodeReview.requestChanges(data);
-        await say({
-            text: `TODO: <@${slackMsgUserId}>, *${reactionUserName}* requested changes on your pull request.`,
-            thread_ts: slackMsgThreadTs,
-        });
+        const result = await CodeReview.requestChanges(data);
+
+        if (!result.user) {
+            await say({
+                text: `<@${data.reactionUserId}>, ${result.message}`,
+                thread_ts: slackMsgThreadTs,
+            });
+        }
+        else {
+            await say({
+                text: `<@${slackMsgUserId}>, ${result.message}`,
+                thread_ts: slackMsgThreadTs,
+            });
+        }
     }
 });
 
