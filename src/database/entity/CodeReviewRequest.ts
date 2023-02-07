@@ -17,6 +17,8 @@ export default class CodeReviewRequest extends Base {
 
     @Column() slackMsgId?: string = '';
 
+    @Column() slackMsgThreadTs?: string = '';
+
     @OneToOne(() => User)
     @JoinColumn()
         user?: User;

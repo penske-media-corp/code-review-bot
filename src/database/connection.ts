@@ -27,7 +27,7 @@ const options: DataSourceOptions = {
         CodeReviewRequestReviewerRelation,
     ],
     logging: false,
-//    logger: 'file',
+    logger: 'file',
 }
 
 const Connection = new DataSource(options);

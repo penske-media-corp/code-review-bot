@@ -15,8 +15,11 @@ module.exports = {
     root: true,
     rules: {
         '@typescript-eslint/indent': ['error'],
-        'no-empty-function':'off',
         '@typescript-eslint/no-empty-function': 'off',
+        '@typescript-eslint/no-inferrable-types': 'off',
+        '@typescript-eslint/non-nullable-type-assertion-style': 'off',
         '@typescript-eslint/require-await': 'off',
+        'no-empty-function':'off',
+        'sort-imports': ['error'],
     }
 };

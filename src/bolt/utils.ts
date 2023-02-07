@@ -28,7 +28,7 @@ export async function getUserInfo(user: string): Promise<UserInfo> {
 
     return {
         slackUserId: user,
-        displayName: display_name?.length ? display_name : real_name!,
+        displayName: display_name?.length ? display_name : real_name as string,
     }
 }
 
@@ -69,6 +69,7 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
 
     const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(slackMsgText as string);
 
+    console.log('DEBUG slackMsgText', slackMsgText);
     console.log('DEBUG getReactionData', result);
     console.log('DEBUG Reactions', reactions)
     return {
@@ -79,5 +80,6 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
         reaction: event.reaction,
         reactionUserId: event.user,
         pullRequestLink: match ? match[0] : '',
+        slackChannelId: event.item.channel,
     }
 }
