@@ -1,6 +1,15 @@
+import {
+    ReactionAddedEvent,
+    ReactionRemovedEvent
+} from '@slack/bolt';
+import {
+    ReactionData,
+    UserInfo
+} from './types';
 import app from './app';
-import {ReactionAddedEvent, ReactionRemovedEvent} from '@slack/bolt';
-import {ReactionMessageItem} from '@slack/bolt/dist/types/events/base-events';
+import {
+    GenericMessageEvent
+} from '@slack/bolt/dist/types/events/message-events';
 
 let botUserId : string | unknown = null;
 
@@ -13,21 +22,22 @@ export async function getBotUserId() {
 }
 
 // https://api.slack.com/methods/users.profile.get
-export async function getUserInfo(user?: string) {
+export async function getUserInfo(user?: string): Promise<UserInfo> {
     const info = await app.client.users.profile.get({user: user});
     const {real_name, display_name} = info.profile ?? {};
 
     return {
-        displayName: display_name?.length ? display_name : real_name,
+        slackUserId: user!,
+        displayName: display_name?.length ? display_name : real_name!,
     }
 }
 
-export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedEvent) {
+export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedEvent): Promise<ReactionData | null> {
     if (event.item.type !== 'message') {
         return null;
     }
 
-    let ts = (event.item ).ts;
+    let ts = event.item.ts;
     let result = await app.client.conversations.replies({
         channel: event.item.channel,
         inclusive: true,
@@ -39,7 +49,7 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
     const botUserId = await getBotUserId();
 
     if (!result.client_msg_id && botUserId === event.item_user) {
-        ts =  (result.messages || [])[0].thread_ts!;
+        ts =  (result.messages ?? [])[0].thread_ts!;
         result = await app.client.conversations.replies({
             channel: event.item.channel,
             inclusive: true,
@@ -48,17 +58,24 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
             ts: ts,
         });
     }
-    const {text: slackMsgText, client_msg_id: slackMsgId, user: slackMsgUserId, reactions, thread_ts: slackMsgThreadTs} = (result.messages || [])[0] as {text: string, client_msg_id: string, user: string, reactions: unknown, thread_ts: string};
 
-    const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(slackMsgText);
+    const {
+        text: slackMsgText,
+        client_msg_id: slackMsgId,
+        user: slackMsgUserId,
+        reactions,
+        thread_ts: slackMsgThreadTs
+    } = (result.messages ?? [])[0] as GenericMessageEvent;
+
+    const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(slackMsgText as string);
 
     console.log('DEBUG getReactionData', result);
     console.log('DEBUG Reactions', reactions)
     return {
-        slackMsgId,
-        slackMsgUserId,
-        slackMsgText,
-        slackMsgThreadTs,
+        slackMsgId: slackMsgId as string,
+        slackMsgUserId: slackMsgUserId as string,
+        slackMsgText: slackMsgText as string,
+        slackMsgThreadTs: slackMsgThreadTs as string,
         reaction: event.reaction,
         reactionUserId: event.user,
         pullRequestLink: match ? match[0] : '',

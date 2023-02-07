@@ -36,7 +36,7 @@ app.event('reaction_added', async ({ event, client, say }) => {
     const {slackMsgUserId, slackMsgThreadTs} = data;
 
     // @TODO
-    const reactionUserName = (await getUserInfo(data.reactionUserId)).displayName!;
+    const reactionUserName = (await getUserInfo(data.reactionUserId)).displayName;
 
     if (['review'].includes(data.reaction)) {
         const result = await CodeReview.add(data);
@@ -92,11 +92,12 @@ app.event('reaction_added', async ({ event, client, say }) => {
 app.event('reaction_removed', async ({ event, client, say }) => {
     console.log('DEBUG', event);
     const data = await getReactionData(event);
-    const reactionUserName = (await getUserInfo(data?.reactionUserId)).displayName!;
 
     if (!data) {
         return;
     }
+
+    const reactionUserName = (await getUserInfo(data.reactionUserId)).displayName;
 
     const {slackMsgThreadTs} = data;
 
