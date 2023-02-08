@@ -7,7 +7,6 @@ import path from 'path';
 const app: Express = express();
 
 app.get('/', (req,res) => {
-    console.log('path: ',req.path, req);
     const file = path.resolve(APP_STATIC_DIR, 'example.html');
     res.sendFile(file);
 });

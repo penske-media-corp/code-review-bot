@@ -7,7 +7,7 @@ export const slackActions = {
 };
 
 export const channelNotify: {[key: string] : string} = {
-    default: '!here|here',
+    default: '!here',
     // @see https://api.slack.com/reference/surfaces/formatting#mentioning-groups
-    'C04HT9SUN2H': '!here|here',
+    'C04HT9SUN2H': '!here',
 }

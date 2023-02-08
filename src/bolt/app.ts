@@ -11,11 +11,10 @@ import {
     channelNotify,
     slackActions
 } from '../utils/config';
+import CodeReview from '../service/CodeReview';
 import {
     getReactionData,
-    getUserInfo,
 } from './utils';
-import CodeReview from '../service/CodeReview';
 
 const app = new App({
     appToken: SLACK_APP_TOKEN,
@@ -29,15 +28,14 @@ app.use(async ({ next }) => {
     await next();
 });
 
-app.event('reaction_added', async ({ event, client, say }) => {
-    console.log('EVENT', event);
+app.event('reaction_added', async ({ event, say }) => {
     const data = await getReactionData(event);
 
     if (!data?.pullRequestLink) {
         return;
     }
 
-    const {slackMsgUserId, slackMsgThreadTs} = data;
+    const {reactionUserId, slackMsgUserId, slackMsgThreadTs} = data;
 
     if (slackActions.request.includes(data.reaction)) {
         const result = await CodeReview.add(data);
@@ -46,7 +44,7 @@ app.event('reaction_added', async ({ event, client, say }) => {
         // If user object isn't available, there must be something wrong.
         if (!user) {
             await say({
-                text: `<@${data.reactionUserId}>, ${result.message}`,
+                text: `<@${reactionUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
             });
         }
@@ -64,11 +62,11 @@ app.event('reaction_added', async ({ event, client, say }) => {
 
         if (!result.user) {
             await say({
-                text: `<@${data.reactionUserId}>, ${result.message}`,
+                text: `<@${reactionUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
             });
         }
-        else {
+        else if (result.codeReviewRequest.status === 'pending') {
             await say({
                 text: `<@${slackMsgUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
@@ -79,11 +77,11 @@ app.event('reaction_added', async ({ event, client, say }) => {
         const result = await CodeReview.approve(data);
         if (!result.user) {
             await say({
-                text: `<@${data.reactionUserId}>, ${result.message}`,
+                text: `<@${reactionUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
             });
         }
-        else {
+        else if (result.codeReviewRequest.status === 'pending') {
             await say({
                 text: `<@${slackMsgUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
@@ -95,11 +93,11 @@ app.event('reaction_added', async ({ event, client, say }) => {
 
         if (!result.user) {
             await say({
-                text: `<@${data.reactionUserId}>, ${result.message}`,
+                text: `<@${reactionUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
             });
         }
-        else {
+        else if (result.codeReviewRequest.status === 'pending') {
             await say({
                 text: `<@${slackMsgUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
@@ -111,11 +109,11 @@ app.event('reaction_added', async ({ event, client, say }) => {
 
         if (!result.user) {
             await say({
-                text: `<@${data.reactionUserId}>, ${result.message}`,
+                text: `<@${reactionUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
             });
         }
-        else {
+        else if (result.codeReviewRequest.status === 'pending') {
             await say({
                 text: `<@${slackMsgUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
@@ -124,31 +122,48 @@ app.event('reaction_added', async ({ event, client, say }) => {
     }
 });
 
-app.event('reaction_removed', async ({ event, client, say }) => {
-    console.log('DEBUG', event);
+app.event('reaction_removed', async ({ event, say }) => {
     const data = await getReactionData(event);
 
     if (!data) {
         return;
     }
 
-    const reactionUserName = (await getUserInfo(data.reactionUserId)).displayName;
+    const {reactionUserId, slackMsgUserId, slackMsgThreadTs} = data;
 
-    const {slackMsgThreadTs} = data;
+    if (slackActions.request.includes(data.reaction)) {
+        const result = await CodeReview.withdraw(data);
 
-    if (slackActions.change.includes(data.reaction)) {
-        await CodeReview.withdraw(data);
-        await say({
-            text: `TODO: *${reactionUserName}* withdraw the code review request.`,
-            thread_ts: slackMsgThreadTs,
-        });
+        if (!result.user) {
+            await say({
+                text: `<@${reactionUserId}>, ${result.message}`,
+                thread_ts: slackMsgThreadTs,
+            });
+        }
+        else {
+            const notify = channelNotify[data.slackChannelId] || channelNotify.default;
+
+            await say({
+                text: `<${notify}>, ${result.message}`,
+                thread_ts: slackMsgThreadTs,
+            });
+        }
     }
     else if(slackActions.claim.includes(data.reaction)) {
-        await CodeReview.finish(data);
-        await say({
-            text: `TODO: *${reactionUserName}* finished reviewing the code.`,
-            thread_ts: slackMsgThreadTs,
-        });
+        const result = await CodeReview.finish(data);
+
+        if (!result.user) {
+            await say({
+                text: `<@${reactionUserId}>, ${result.message}`,
+                thread_ts: slackMsgThreadTs,
+            });
+        }
+        else if (result.codeReviewRequest.status === 'pending') {
+            await say({
+                text: `<@${slackMsgUserId}>, ${result.message}`,
+                thread_ts: slackMsgThreadTs,
+            });
+        }
     }
 });
 

@@ -63,15 +63,11 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
         text: slackMsgText,
         client_msg_id: slackMsgId,
         user: slackMsgUserId,
-        reactions,
         thread_ts: slackMsgThreadTs
     } = (result.messages ?? [])[0] as GenericMessageEvent;
 
     const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(slackMsgText as string);
 
-    console.log('DEBUG slackMsgText', slackMsgText);
-    console.log('DEBUG getReactionData', result);
-    console.log('DEBUG Reactions', reactions)
     return {
         slackMsgId: slackMsgId as string,
         slackMsgUserId,

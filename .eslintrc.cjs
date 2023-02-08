@@ -14,6 +14,7 @@ module.exports = {
     plugins: ['@typescript-eslint'],
     root: true,
     rules: {
+        '@typescript-eslint/consistent-indexed-object-style': 'off',
         '@typescript-eslint/indent': ['error'],
         '@typescript-eslint/no-empty-function': 'off',
         '@typescript-eslint/no-inferrable-types': 'off',
