@@ -1,6 +1,7 @@
 export interface ReactionData {
     slackChannelId: string;
     slackMsgId: string;
+    slackMsgLinkUrl: string;
     slackMsgUserId: string;
     slackMsgText: string;
     slackMsgThreadTs: string;

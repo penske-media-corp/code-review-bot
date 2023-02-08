@@ -17,6 +17,8 @@ export default class CodeReviewRequest extends Base {
 
     @Column({length: 40}) slackMsgId?: string = ''; // eg. b7a6d799-c32c-4d2d-989c-4f1b77e944fe
 
+    @Column({length: 128}) slackMsgLinkUrl?: string = '';
+
     @Column({length: 30}) slackMsgThreadTs?: string = ''; // eg. 1674872216.274939
 
     @Column({length: 10}) status?: string = ''; // approved | merged | deployed | pending

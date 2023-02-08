@@ -66,11 +66,19 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
         thread_ts: slackMsgThreadTs
     } = (result.messages ?? [])[0] as GenericMessageEvent;
 
+    result = await app.client.chat.getPermalink({
+        channel: event.item.channel,
+        message_ts: slackMsgThreadTs as string,
+    });
+
+    const {permalink} = result;
+
     const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(slackMsgText as string);
 
     return {
         slackMsgId: slackMsgId as string,
         slackMsgUserId,
+        slackMsgLinkUrl: permalink as string,
         slackMsgText: slackMsgText as string,
         slackMsgThreadTs: slackMsgThreadTs as string,
         reaction: event.reaction,
