@@ -13,6 +13,7 @@ import {
 } from '../utils/config';
 import CodeReview from '../service/CodeReview';
 import {
+    getBotUserId,
     getReactionData,
 } from './utils';
 
@@ -165,6 +166,27 @@ app.event('reaction_removed', async ({ event, say }) => {
             });
         }
     }
+});
+
+app.event('app_mention', async ({ event, say }) => {
+    const {text, ts, thread_ts, channel} = event;
+
+    console.log('DEBUG: app_mention', event);
+
+    if (/.*?\btime\b/.test(text)) {
+        const dateString = new Date().toString();
+
+        await say({
+            text: `The current date and time is ${dateString}`,
+            thread_ts: thread_ts ?? ts,
+        });
+    }
+
+    console.log('DEBUG getBotUserId()', await getBotUserId())
+});
+
+app.event('member_joined_channel',async ({ event, say }) => {
+    console.log('DEBUG: member_joined_channel', event);
 });
 
 export default app;

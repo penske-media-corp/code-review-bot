@@ -7,7 +7,10 @@ export const slackActions = {
 };
 
 export const channelNotify: {[key: string] : string} = {
-    default: '!here',
     // @see https://api.slack.com/reference/surfaces/formatting#mentioning-groups
-    'C04HT9SUN2H': '!here',
+    default: '!here',
 }
+
+export const scheduledReminders = [
+    '0 0 14 * * 1-5' // Mon-Fri @14:00
+]

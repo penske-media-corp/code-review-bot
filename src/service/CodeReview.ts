@@ -141,7 +141,7 @@ async function calculateReviewStats(codeReviewRequest: CodeReviewRequest) {
     }
 }
 
-const add = async ({pullRequestLink, slackMsgId, slackMsgLinkUrl, slackMsgUserId, slackMsgThreadTs}: ReactionData) => {
+const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackMsgLinkUrl, slackMsgUserId, slackMsgThreadTs}: ReactionData) => {
     if (!pullRequestLink) {
         return {
             message: 'Cannot determine the github code review pull request link.',
@@ -160,6 +160,7 @@ const add = async ({pullRequestLink, slackMsgId, slackMsgLinkUrl, slackMsgUserId
         await deleteReviewersFromRequest(codeReviewRequest.id);
     }
     codeReviewRequest.pullRequestLink = pullRequestLink;
+    codeReviewRequest.slackChannelId = slackChannelId;
     codeReviewRequest.slackMsgId = slackMsgId;
     codeReviewRequest.slackMsgLinkUrl = slackMsgLinkUrl;
     codeReviewRequest.slackMsgThreadTs = slackMsgThreadTs;

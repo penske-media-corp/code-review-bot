@@ -15,6 +15,8 @@ export default class CodeReviewRequest extends Base {
 
     @Column({length: 128}) pullRequestLink?: string = '';
 
+    @Column({length: 20}) slackChannelId?: string = ''; // eg. C04HT9SUN2H
+
     @Column({length: 40}) slackMsgId?: string = ''; // eg. b7a6d799-c32c-4d2d-989c-4f1b77e944fe
 
     @Column({length: 128}) slackMsgLinkUrl?: string = '';
