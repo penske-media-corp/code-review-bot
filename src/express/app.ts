@@ -1,14 +1,20 @@
 import express, {
     Express,
 } from 'express';
-import {APP_STATIC_DIR} from '../utils/env';
+import {APP_CLIENT_BUILD} from '../utils/env';
+import api from './routes/api';
+import cookieParser from 'cookie-parser';
 import path from 'path';
 
 const app: Express = express();
 
-app.get('/', (req,res) => {
-    const file = path.resolve(APP_STATIC_DIR, 'example.html');
-    res.sendFile(file);
+app.use(express.json());
+app.use(cookieParser());
+app.use(express.static(APP_CLIENT_BUILD));
+
+app.use('/api', api);
+app.get('*', (req,res) => {
+    res.sendFile(path.resolve(APP_CLIENT_BUILD, 'index.html'));
 });
 
 export default app;

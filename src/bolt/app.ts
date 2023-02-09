@@ -66,7 +66,7 @@ app.event('reaction_added', async ({ event, say }) => {
                 thread_ts: slackMsgThreadTs,
             });
         }
-        else if (result.codeReviewRequest.status === 'pending') {
+        else if (['inprogress', 'pending'].includes(result.codeReviewRequest.status as string)) {
             await say({
                 text: `<@${slackMsgUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
@@ -81,7 +81,7 @@ app.event('reaction_added', async ({ event, say }) => {
                 thread_ts: slackMsgThreadTs,
             });
         }
-        else if (result.codeReviewRequest.status === 'pending') {
+        else if (['inprogress', 'pending', 'ready'].includes(result.codeReviewRequest.status as string)) {
             await say({
                 text: `<@${slackMsgUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
@@ -97,7 +97,7 @@ app.event('reaction_added', async ({ event, say }) => {
                 thread_ts: slackMsgThreadTs,
             });
         }
-        else if (result.codeReviewRequest.status === 'pending') {
+        else {
             await say({
                 text: `<@${slackMsgUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
@@ -113,7 +113,7 @@ app.event('reaction_added', async ({ event, say }) => {
                 thread_ts: slackMsgThreadTs,
             });
         }
-        else if (result.codeReviewRequest.status === 'pending') {
+        else if (['inprogress', 'pending'].includes(result.codeReviewRequest.status as string)) {
             await say({
                 text: `<@${slackMsgUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,
@@ -158,7 +158,7 @@ app.event('reaction_removed', async ({ event, say }) => {
                 thread_ts: slackMsgThreadTs,
             });
         }
-        else if (result.codeReviewRequest.status === 'pending') {
+        else if (['inprogress', 'pending'].includes(result.codeReviewRequest.status as string)) {
             await say({
                 text: `<@${slackMsgUserId}>, ${result.message}`,
                 thread_ts: slackMsgThreadTs,

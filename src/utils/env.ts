@@ -20,5 +20,4 @@ export const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET ?? '';
 export const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN ?? '';
 
 export const APP_ROOT_DIR = resolve(__dirname, '../..');
-
-export const APP_STATIC_DIR = resolve(APP_ROOT_DIR, 'static');
+export const APP_CLIENT_BUILD = resolve(APP_ROOT_DIR, 'client', 'build');
