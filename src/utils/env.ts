@@ -21,3 +21,6 @@ export const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN ?? '';
 
 export const APP_ROOT_DIR = resolve(__dirname, '../..');
 export const APP_CLIENT_BUILD = resolve(APP_ROOT_DIR, 'client', 'build');
+
+export const LOG_DEBUG = ['true', 'yes'].includes(process.env.LOG_DEBUG ?? '');
+export const LOG_ERROR = ['true', 'yes'].includes(process.env.LOG_ERROR ?? 'true');

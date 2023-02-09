@@ -7,6 +7,9 @@ import {
     UserInfo
 } from './types';
 import {
+    ConversationsRepliesResponse
+} from '@slack/web-api/dist/response/ConversationsRepliesResponse';
+import {
     GenericMessageEvent
 } from '@slack/bolt/dist/types/events/message-events';
 import app from './app';
@@ -37,53 +40,60 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
         return null;
     }
 
-    let ts = event.item.ts;
     let result = await app.client.conversations.replies({
         channel: event.item.channel,
         inclusive: true,
-        latest: ts,
+        latest: event.item.ts,
         limit: 1,
-        ts: ts,
+        ts: event.item.ts,
     });
 
+    if (!result) {
+        return null;
+    }
+
+    const getMessageInfo = (data: ConversationsRepliesResponse) => {
+        const message = (data.messages ?? [])[0] as GenericMessageEvent;
+        return {
+            slackMsgText: message.text,
+            slackMsgId: message.client_msg_id,
+            slackMsgUserId: message.user,
+            slackMsgThreadTs: message.thread_ts ?? message.ts
+        }
+    };
     const botUserId = await getBotUserId();
+    let messageInfo;
 
     if (!result.client_msg_id && botUserId === event.item_user) {
-        ts =  (result.messages ?? [])[0].thread_ts as string;
+        messageInfo = getMessageInfo(result);
         result = await app.client.conversations.replies({
             channel: event.item.channel,
             inclusive: true,
-            latest: ts,
+            latest: messageInfo.slackMsgThreadTs,
             limit: 1,
-            ts: ts,
+            ts: messageInfo.slackMsgThreadTs,
         });
+
     }
 
-    const {
-        text: slackMsgText,
-        client_msg_id: slackMsgId,
-        user: slackMsgUserId,
-        thread_ts: slackMsgThreadTs
-    } = (result.messages ?? [])[0] as GenericMessageEvent;
+    messageInfo = getMessageInfo(result);
 
     result = await app.client.chat.getPermalink({
         channel: event.item.channel,
-        message_ts: slackMsgThreadTs as string,
+        message_ts: messageInfo.slackMsgThreadTs,
     });
 
     const {permalink} = result;
 
-    const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(slackMsgText as string);
-
-    return {
-        slackMsgId: slackMsgId as string,
-        slackMsgUserId,
+    const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(messageInfo.slackMsgText as string);
+    const reactionData: ReactionData = {
+        ...messageInfo,
         slackMsgLinkUrl: permalink as string,
-        slackMsgText: slackMsgText as string,
-        slackMsgThreadTs: slackMsgThreadTs as string,
         reaction: event.reaction,
         reactionUserId: event.user,
         pullRequestLink: match ? match[0] : '',
         slackChannelId: event.item.channel,
-    }
+    } as ReactionData;
+
+    return reactionData;
 }

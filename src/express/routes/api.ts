@@ -1,9 +1,9 @@
 import CodeReviewRequest from '../../database/entity/CodeReviewRequest';
-import Connection from '../../database/connection';
-import express from 'express';
-import {FindManyOptions} from 'typeorm';
-import codeReview from '../../service/CodeReview';
 import CodeReviewRequestReviewerRelation from '../../database/entity/CodeReviewRequestReviewerRelation';
+import Connection from '../../database/connection';
+import {FindManyOptions} from 'typeorm';
+import express from 'express';
+import {logError} from '../../utils/log';
 
 const api = express.Router();
 
@@ -30,10 +30,10 @@ api.get('/reviews/:status?', (req, res, next) => {
         };
     }
     repository.find(findOptions).then((reviews) => {
-        const extractReviewers = (relation: CodeReviewRequestReviewerRelation) => relation.reviewer?.user?.displayName;
+        const extractUsers = (relation: CodeReviewRequestReviewerRelation) => relation.reviewer?.user?.displayName;
         const result = reviews.map((item) => {
-            const reviewers = item.reviewers?.map(extractReviewers);
-            const approvers = item.reviewers?.filter((r) => r.status === 'approved').map(extractReviewers);
+            const reviewers = item.reviewers?.map(extractUsers);
+            const approvers = item.reviewers?.filter((r) => r.status === 'approved').map(extractUsers);
 
             return {
                 id: item.id,
@@ -52,8 +52,8 @@ api.get('/reviews/:status?', (req, res, next) => {
         })
 
         res.json(result);
-    }).catch(()=>{
-
+    }).catch((error)=>{
+        logError(error);
     });
 });
 
