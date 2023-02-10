@@ -12,7 +12,7 @@
     "lint": "eslint ./src",
     "start": "npm run build && node build/server.js",
     "dev": "concurrently \"cd client && npm start\" \"nodemon --watch build build/server.js\" ",
-    "dev-once": "npm ci && prisma migrate dev && cd client && npm ci && npm run build"
+    "dev-once": "npm ci && prisma migrate dev && npm run build:all"
   },
   "nodemonConfig": {
     "ignore": ["**/test/**"],
