@@ -27,5 +27,5 @@ export const LOG_ERROR = ['true', 'yes'].includes(process.env.LOG_ERROR ?? 'true
 
 // prisma use this info
 if (!process.env.DATABASE_URL) {
-    process.env.DATABASE_URL = `mysql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:3306/${DB_NAME}?createDatabaseIfNotExist=true&useSSL=false`;
+    process.env.DATABASE_URL = `mysql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:3306/${DB_NAME}`;
 }
