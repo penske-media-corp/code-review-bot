@@ -48,17 +48,13 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
         ts: event.item.ts,
     });
 
-    if (!result) {
-        return null;
-    }
-
     const getMessageInfo = (data: ConversationsRepliesResponse) => {
         const message = (data.messages ?? [])[0] as GenericMessageEvent;
         return {
             slackMsgText: message.text,
             slackMsgId: message.client_msg_id,
             slackMsgUserId: message.user,
-            slackMsgThreadTs: message.thread_ts ?? message.ts
+            slackThreadTs: message.thread_ts ?? message.ts
         }
     };
     const botUserId = await getBotUserId();
@@ -69,9 +65,9 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
         result = await app.client.conversations.replies({
             channel: event.item.channel,
             inclusive: true,
-            latest: messageInfo.slackMsgThreadTs,
+            latest: messageInfo.slackThreadTs,
             limit: 1,
-            ts: messageInfo.slackMsgThreadTs,
+            ts: messageInfo.slackThreadTs,
         });
 
     }
@@ -80,20 +76,18 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
 
     result = await app.client.chat.getPermalink({
         channel: event.item.channel,
-        message_ts: messageInfo.slackMsgThreadTs,
+        message_ts: messageInfo.slackThreadTs,
     });
 
     const {permalink} = result;
 
     const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(messageInfo.slackMsgText as string);
-    const reactionData: ReactionData = {
+    return {
         ...messageInfo,
-        slackMsgLinkUrl: permalink as string,
+        slackPermalink: permalink as string,
         reaction: event.reaction,
         reactionUserId: event.user,
         pullRequestLink: match ? match[0] : '',
         slackChannelId: event.item.channel,
-    } as ReactionData;
-
-    return reactionData;
+    };
 }

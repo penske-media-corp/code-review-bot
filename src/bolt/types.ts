@@ -1,10 +1,10 @@
 export interface ReactionData {
     slackChannelId: string;
-    slackMsgId: string;
-    slackMsgLinkUrl: string;
+    slackMsgId?: string;
+    slackPermalink?: string;
     slackMsgUserId: string;
-    slackMsgText: string;
-    slackMsgThreadTs: string;
+    slackMsgText?: string;
+    slackThreadTs: string;
     reaction: string;
     reactionUserId: string;
     pullRequestLink: string;
