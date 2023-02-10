@@ -5,7 +5,9 @@
   "license": "MIT",
   "main": "build/server.js",
   "scripts": {
-    "build": "rm -rf build client/build && tsc -p . && cd client && npm run build",
+    "build": "rm -rf build client/build && tsc -p .",
+    "build:client": "cd client && npm run build",
+    "build:all": "npm run build && npm run build:client",
     "build:watch": "tsc -w -p .",
     "lint": "eslint ./src",
     "start": "npm run build && node build/server.js",
