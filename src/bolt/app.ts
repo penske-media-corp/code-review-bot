@@ -1,5 +1,7 @@
 import {
     App,
+    Block,
+    KnownBlock,
     LogLevel,
 } from '@slack/bolt';
 import {
@@ -15,8 +17,13 @@ import {
     getBotUserId,
     getReactionData,
 } from './utils';
+import {
+    PrismaClient
+} from '@prisma/client';
 import Review from '../service/Review';
+import SlackActions from '../utils/SlackActions';
 import {logDebug} from '../utils/log';
+
 
 const app = new App({
     appToken: SLACK_APP_TOKEN,
@@ -225,6 +232,78 @@ app.event('member_joined_channel',async ({ event, say }) => {
      * @TODO: if bot is detected to join a channel
      * Trigger default setup for the channel, notification, etc...
      */
+});
+
+app.action({callback_id: 'home_page'}, async ({action, body, client}) => {
+    logDebug('action', action);
+    const actionUserId = body.user.id
+
+    const {action_id: actionId, value: actionValue} = action as {action_id: string, value: string};
+
+    const prisma = new PrismaClient();
+    const codeReview = await prisma.codeReview.findFirst({
+        where: {
+            id: parseInt(actionId.split('-')[1]),
+        }
+    })
+
+    if (codeReview) {
+        const statusMap: {[index:string]: string} = {
+            claim: 'pending',
+            approve: 'approved',
+            remove: 'removed',
+        }
+        const status = statusMap[actionValue];
+        if (status) {
+            await Review.setCodeReviewerStatus(codeReview, actionUserId, status);
+        }
+    }
+
+    const blocks: (KnownBlock | Block)[] = [
+        {
+            type: 'section',
+            text: {
+                type: 'mrkdwn',
+                text: '*Outstanding code review queue:*'
+            }
+        },
+        ...await SlackActions.getCodeReviewList('pending')
+    ];
+
+    await client.views.publish({
+        user_id: actionUserId,
+        view: {
+            type: "home",
+            callback_id: "home_page",
+
+            blocks,
+        }
+    });
+});
+
+app.event('app_home_opened', async ({event, client}) => {
+    logDebug('app_home_opened', event);
+
+    const blocks: (KnownBlock | Block)[] = [
+        {
+            type: 'section',
+            text: {
+                type: 'mrkdwn',
+                text: '*Outstanding code review queue:*'
+            }
+        },
+        ...await SlackActions.getCodeReviewList('pending')
+    ];
+
+    await client.views.publish({
+        user_id: event.user,
+        view: {
+            type: "home",
+            callback_id: "home_page",
+
+            blocks,
+        }
+    });
 });
 
 export default app;

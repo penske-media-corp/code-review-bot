@@ -32,6 +32,19 @@ async function setCodeReviewerStatus(codeReview: CodeReview & {reviewers?: CodeR
     const user = await findOrCreateUser(slackUserId);
     const prisma = new PrismaClient();
 
+    if (status === 'removed') {
+        codeReview.status = 'removed';
+        await prisma.codeReview.update({
+            where: {
+                id: codeReview.id,
+            },
+            data: {
+                status: codeReview.status,
+            }
+        })
+        return user;
+    }
+
     let relation = await prisma.codeReviewRelation.findFirst({
         where: {
             codeReviewId: codeReview.id,
@@ -142,6 +155,15 @@ const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink,
                 codeReviewId: codeReview.id,
             }
         });
+        codeReview.status = 'pending';
+        await prisma.codeReview.update({
+            where: {
+                id: codeReview.id,
+            },
+            data: {
+                status: codeReview.status,
+            }
+        })
     }
 
     const userDisplayName = user.displayName;
@@ -339,4 +361,5 @@ export default {
     remove,
     requestChanges,
     withdraw,
+    setCodeReviewerStatus,
 }
