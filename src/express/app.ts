@@ -13,6 +13,13 @@ app.use(cookieParser());
 app.use(express.static(APP_CLIENT_BUILD));
 
 app.use('/api', api);
+
+app.get( '/health-check', (req, res) => {
+    res.json({
+        status: 'ok',
+    })
+});
+
 app.get('*', (req,res) => {
     res.sendFile(path.resolve(APP_CLIENT_BUILD, 'index.html'));
 });
