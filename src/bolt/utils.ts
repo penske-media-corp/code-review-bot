@@ -1,6 +1,9 @@
 import {
+    App,
+    Block,
+    KnownBlock,
     ReactionAddedEvent,
-    ReactionRemovedEvent
+    ReactionRemovedEvent,
 } from '@slack/bolt';
 import {
     ReactionData,
@@ -12,13 +15,18 @@ import {
 import {
     GenericMessageEvent
 } from '@slack/bolt/dist/types/events/message-events';
-import app from './app';
+import SlackActions from '../utils/SlackActions';
 
 let botUserId : string | unknown = null;
+let slackBotApp: App;
+
+export function registerSlackBotApp(app: App) {
+    slackBotApp = app;
+}
 
 export async function getBotUserId() {
     if (!botUserId) {
-        const result = await app.client.auth.test();
+        const result = await slackBotApp.client.auth.test();
         botUserId = result.user_id;
     }
     return botUserId;
@@ -26,7 +34,7 @@ export async function getBotUserId() {
 
 // https://api.slack.com/methods/users.profile.get
 export async function getUserInfo(user: string): Promise<UserInfo> {
-    const info = await app.client.users.profile.get({user: user});
+    const info = await slackBotApp.client.users.profile.get({user: user});
     const {real_name, display_name} = info.profile ?? {};
 
     return {
@@ -40,7 +48,7 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
         return null;
     }
 
-    let result = await app.client.conversations.replies({
+    let result = await slackBotApp.client.conversations.replies({
         channel: event.item.channel,
         inclusive: true,
         latest: event.item.ts,
@@ -62,7 +70,7 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
 
     if (!result.client_msg_id && botUserId === event.item_user) {
         messageInfo = getMessageInfo(result);
-        result = await app.client.conversations.replies({
+        result = await slackBotApp.client.conversations.replies({
             channel: event.item.channel,
             inclusive: true,
             latest: messageInfo.slackThreadTs,
@@ -74,7 +82,7 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
 
     messageInfo = getMessageInfo(result);
 
-    result = await app.client.chat.getPermalink({
+    result = await slackBotApp.client.chat.getPermalink({
         channel: event.item.channel,
         message_ts: messageInfo.slackThreadTs,
     });
@@ -90,4 +98,27 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
         pullRequestLink: match ? match[0] : '',
         slackChannelId: event.item.channel,
     };
+}
+
+export async function sentHomePageCodeReviewList(slackUserId: string) {
+    const blocks: (KnownBlock | Block)[] = [
+        {
+            type: 'section',
+            text: {
+                type: 'mrkdwn',
+                text: '*Outstanding code review queue:*'
+            }
+        },
+        ...await SlackActions.getCodeReviewList('pending')
+    ];
+
+    await slackBotApp.client.views.publish({
+        user_id: slackUserId,
+        view: {
+            type: "home",
+            callback_id: "home_page",
+
+            blocks,
+        }
+    });
 }

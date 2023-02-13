@@ -1,7 +1,5 @@
 import {
     App,
-    Block,
-    KnownBlock,
     LogLevel,
 } from '@slack/bolt';
 import {
@@ -9,23 +7,15 @@ import {
     SLACK_BOT_TOKEN,
     SLACK_SIGNING_SECRET
 } from '../utils/env';
-import {
-    channelNotify,
-    slackActions
-} from '../utils/config';
-import {
-    getBotUserId,
-    getReactionData,
-} from './utils';
-import {
-    PrismaClient
-} from '@prisma/client';
-import Review from '../service/Review';
-import SlackActions from '../utils/SlackActions';
-import {logDebug} from '../utils/log';
+import registerActionHomePage from './actions/RegisterActionHomePage';
+import registerEventAppHomeOpened from './events/RegisterEventAppHomeOpened';
+import registerEventAppMention from './events/RegisterEventAppMention';
+import registerEventMemberJoinedChannel from './events/RegisterEventMemberJoinedChannel';
+import registerEventReactionAdd from './events/RegisterEventReactionAdd';
+import registerEventReactionRemove from './events/RegisterEventReactionRemove';
+import {registerSlackBotApp} from './utils';
 
-
-const app = new App({
+const slackBotApp = new App({
     appToken: SLACK_APP_TOKEN,
     logLevel: LogLevel.ERROR,
     signingSecret: SLACK_SIGNING_SECRET,
@@ -33,277 +23,16 @@ const app = new App({
     token: SLACK_BOT_TOKEN,
 });
 
-app.use(async ({ next }) => {
+slackBotApp.use(async ({ next }) => {
     await next();
 });
 
-app.event('reaction_added', async ({ event, say }) => {
-    logDebug('reaction_added', event);
+registerSlackBotApp(slackBotApp);
+registerActionHomePage(slackBotApp);
+registerEventAppHomeOpened(slackBotApp);
+registerEventAppMention(slackBotApp);
+registerEventMemberJoinedChannel(slackBotApp);
+registerEventReactionAdd(slackBotApp);
+registerEventReactionRemove(slackBotApp);
 
-    // Check to make sure we only look into reaction we subscribed to
-    if (!Object.values(slackActions).some((items) => items.includes(event.reaction))) {
-        return;
-    }
-
-    const data = await getReactionData(event);
-
-    if (!data?.pullRequestLink) {
-        return;
-    }
-
-    const {reactionUserId, slackMsgUserId, slackThreadTs} = data;
-
-    if (slackActions.request.includes(data.reaction)) {
-        const result = await Review.add(data);
-        const {user} = result;
-
-        // If user object isn't available, there must be something wrong.
-        if (!user) {
-            await say({
-                text: `<@${reactionUserId}>, ${result.message}`,
-                thread_ts: slackThreadTs,
-            });
-        }
-        else {
-            const notify = channelNotify[data.slackChannelId] || channelNotify.default;
-
-            await say({
-                text: `<${notify}>, ${result.message}`,
-                thread_ts: slackThreadTs,
-            });
-        }
-    }
-    else if (slackActions.claim.includes(data.reaction)) {
-        const result = await Review.claim(data);
-
-        if (!result.user) {
-            await say({
-                text: `<@${reactionUserId}>, ${result.message}`,
-                thread_ts: slackThreadTs,
-            });
-        }
-        else if (['inprogress', 'pending'].includes(result.codeReview.status)) {
-            await say({
-                text: `<@${slackMsgUserId}>, ${result.message}`,
-                thread_ts: slackThreadTs,
-            });
-        }
-    }
-    else if (slackActions.approved.includes(data.reaction)) {
-        const result = await Review.approve(data);
-        if (!result.user) {
-            await say({
-                text: `<@${reactionUserId}>, ${result.message}`,
-                thread_ts: slackThreadTs,
-            });
-        }
-        else if (['inprogress', 'pending', 'ready'].includes(result.codeReview.status)) {
-            await say({
-                text: `<@${slackMsgUserId}>, ${result.message}`,
-                thread_ts: slackThreadTs,
-            });
-        }
-    }
-    else if (slackActions.remove.includes(data.reaction)) {
-        const result = await Review.remove(data);
-
-        if (!result.user) {
-            await say({
-                text: `<@${reactionUserId}>, ${result.message}`,
-                thread_ts: slackThreadTs,
-            });
-        }
-        else {
-            await say({
-                text: `<@${slackMsgUserId}>, ${result.message}`,
-                thread_ts: slackThreadTs,
-            });
-        }
-    }
-    else if (slackActions.change.includes(data.reaction)) {
-        const result = await Review.requestChanges(data);
-
-        if (!result.user) {
-            await say({
-                text: `<@${reactionUserId}>, ${result.message}`,
-                thread_ts: slackThreadTs,
-            });
-        }
-        else if (['inprogress', 'pending'].includes(result.codeReview.status)) {
-            await say({
-                text: `<@${slackMsgUserId}>, ${result.message}`,
-                thread_ts: slackThreadTs,
-            });
-        }
-    }
-});
-
-app.event('reaction_removed', async ({ event, say }) => {
-    logDebug('reaction_removed', event);
-
-    // Check to make sure we only look into reaction we subscribed to
-    if (!slackActions.request.includes(event.reaction) && !slackActions.claim.includes(event.reaction)) {
-        return;
-    }
-
-    const data = await getReactionData(event);
-
-    if (!data) {
-        return;
-    }
-
-    const {reactionUserId, slackMsgUserId, slackThreadTs} = data;
-
-    if (slackActions.request.includes(data.reaction)) {
-        const result = await Review.withdraw(data);
-
-        if (!result.user) {
-            await say({
-                text: `<@${reactionUserId}>, ${result.message}`,
-                thread_ts: slackThreadTs,
-            });
-        }
-        else {
-            const notify = channelNotify[data.slackChannelId] || channelNotify.default;
-
-            await say({
-                text: `<${notify}>, ${result.message}`,
-                thread_ts: slackThreadTs,
-            });
-        }
-    }
-    else if(slackActions.claim.includes(data.reaction)) {
-        const result = await Review.finish(data);
-
-        if (!result.user) {
-            await say({
-                text: `<@${reactionUserId}>, ${result.message}`,
-                thread_ts: slackThreadTs,
-            });
-        }
-        else if (['inprogress', 'pending'].includes(result.codeReview.status)) {
-            await say({
-                text: `<@${slackMsgUserId}>, ${result.message}`,
-                thread_ts: slackThreadTs,
-            });
-        }
-    }
-});
-
-app.event('app_mention', async ({ event, say }) => {
-    logDebug('app_mention', event);
-
-    const {text, ts, thread_ts, channel} = event;
-
-    if (/.*?\btime\b/.test(text)) {
-        const dateString = new Date().toString();
-
-        await say({
-            text: `The current date and time is ${dateString}`,
-            thread_ts: thread_ts ?? ts,
-        });
-    }
-    /**
-     * @TODO custom bot commands:
-     *
-     * @pmc_code_review_bot schedule add "0 0 14 * * 1-5"
-     * @pmc_code_review_bot schedule list
-     * @pmc_code_review_bot schedule remove <schedule-id>
-     * @pmc_code_review_bot schedule clear all
-     * @pmc_code_review_bot schedule reload
-     * @pmc_code_review_bot login
-     *    https://api.slack.com/methods/chat.postEphemeral
-     *
-     * @pmc_code_review_bot status
-     * @pmc_code_review_bot set notify <@team>
-     * @pmc_code_review_bot set number review <repo-name> 2
-     * @pmc_code_review_bot time
-     */
-});
-
-app.event('member_joined_channel',async ({ event, say }) => {
-    logDebug('member_joined_channel', event);
-
-    if (await getBotUserId() !== event.user) {
-        return;
-    }
-
-    /**
-     * @TODO: if bot is detected to join a channel
-     * Trigger default setup for the channel, notification, etc...
-     */
-});
-
-app.action({callback_id: 'home_page'}, async ({action, body, client}) => {
-    logDebug('action', action);
-    const actionUserId = body.user.id
-
-    const {action_id: actionId, value: actionValue} = action as {action_id: string, value: string};
-
-    const prisma = new PrismaClient();
-    const codeReview = await prisma.codeReview.findFirst({
-        where: {
-            id: parseInt(actionId.split('-')[1]),
-        }
-    })
-
-    if (codeReview) {
-        const statusMap: {[index:string]: string} = {
-            claim: 'pending',
-            approve: 'approved',
-            remove: 'removed',
-        }
-        const status = statusMap[actionValue];
-        if (status) {
-            await Review.setCodeReviewerStatus(codeReview, actionUserId, status);
-        }
-    }
-
-    const blocks: (KnownBlock | Block)[] = [
-        {
-            type: 'section',
-            text: {
-                type: 'mrkdwn',
-                text: '*Outstanding code review queue:*'
-            }
-        },
-        ...await SlackActions.getCodeReviewList('pending')
-    ];
-
-    await client.views.publish({
-        user_id: actionUserId,
-        view: {
-            type: "home",
-            callback_id: "home_page",
-
-            blocks,
-        }
-    });
-});
-
-app.event('app_home_opened', async ({event, client}) => {
-    logDebug('app_home_opened', event);
-
-    const blocks: (KnownBlock | Block)[] = [
-        {
-            type: 'section',
-            text: {
-                type: 'mrkdwn',
-                text: '*Outstanding code review queue:*'
-            }
-        },
-        ...await SlackActions.getCodeReviewList('pending')
-    ];
-
-    await client.views.publish({
-        user_id: event.user,
-        view: {
-            type: "home",
-            callback_id: "home_page",
-
-            blocks,
-        }
-    });
-});
-
-export default app;
+export default slackBotApp;
