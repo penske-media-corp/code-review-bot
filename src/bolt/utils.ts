@@ -17,7 +17,7 @@ import {
 } from '@slack/bolt/dist/types/events/message-events';
 import SlackActions from '../utils/SlackActions';
 
-let botUserId : string | unknown = null;
+let botUserId : string | null;
 let slackBotApp: App;
 
 export function registerSlackBotApp(app: App) {
@@ -35,7 +35,7 @@ export async function getBotUserId() {
 // https://api.slack.com/methods/users.profile.get
 export async function getUserInfo(user: string): Promise<UserInfo> {
     const info = await slackBotApp.client.users.profile.get({user: user});
-    const {real_name, display_name} = info.profile ?? {};
+    const {profile: { real_name, display_name } = {} } = info?.profile;
 
     return {
         slackUserId: user,

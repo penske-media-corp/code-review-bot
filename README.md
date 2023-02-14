@@ -1,7 +1,5 @@
 # PMC Code Review Bot
 
-# Atlas TTD UID2 API
-
 ---
 
 ## Getting started
@@ -13,7 +11,7 @@
 1. [Node.JS and NPM](https://nodejs.org/)
 1. [git](https://git-scm.com/)
 1. [Node Version Manager (nvm)](https://github.com/nvm-sh/nvm#installing-and-updating)
-2. mysql/mariadb
+1. mysql/mariadb
 
 ### Environment Setup
 

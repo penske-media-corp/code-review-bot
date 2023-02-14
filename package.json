@@ -1,7 +1,7 @@
 {
-  "name": "getting-started-typescript",
+  "name": "code-review-slack-bot",
   "version": "1.0.0",
-  "description": "Bolt getting started app in TypeScript",
+  "description": "Slack Bolt app for tracking code reviews",
   "license": "MIT",
   "main": "build/server.js",
   "scripts": {
