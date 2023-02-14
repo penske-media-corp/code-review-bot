@@ -1,5 +1,5 @@
 import './utils/env';
-import {PORT} from './utils/env';
+import {APP_BASE_URL, PORT} from './utils/env';
 import expressApp from './express/app';
 import slackBotApp from './bolt/app';
 
@@ -7,7 +7,8 @@ import slackBotApp from './bolt/app';
     await slackBotApp.start();
     return expressApp.listen(PORT);
 })().then(() => {
-    console.log('⚡️ Bolt boltApp is running!');
+
+    console.log(`⚡️ Bolt boltApp is running as ${APP_BASE_URL}`);
 }).catch((error) => {
     console.error(error);
 });

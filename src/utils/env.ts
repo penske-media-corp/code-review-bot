@@ -12,8 +12,9 @@ export const DB_USER = process.env.DB_USER ?? 'root';
 export const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID ?? '';
 export const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET ?? '';
 
-export const APP_BASE_URL = process.env.APP_BASE_URL ?? 'http://localhost';
+export const DNS_NAME = process.env.APP_BASE_URL ?? 'localhost';
 export const PORT = parseInt(process.env.PORT ?? '80' );
+export const APP_BASE_URL = process.env.APP_BASE_URL ?? `${DNS_NAME === 'localhost' ? 'http' : 'https'}://${DNS_NAME}${PORT === 80 ? '' : ':' + PORT.toString() }`;
 
 export const SLACK_APP_TOKEN = process.env.SLACK_APP_TOKEN ?? '';
 export const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET ?? '';
