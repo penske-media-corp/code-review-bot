@@ -2,7 +2,7 @@
   "name": "code-review-slack-bot",
   "version": "1.0.0",
   "description": "Slack Bolt app for tracking code reviews",
-  "license": "MIT",
+  "license": "GPLV3",
   "main": "build/server.js",
   "scripts": {
     "build": "rm -rf build && tsc -p .",
