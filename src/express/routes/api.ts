@@ -30,16 +30,8 @@ api.get('/reviews/:status?', (req, res, next) => {
             const approvers: string[] = item.reviewers.filter((r) => r.status === 'approved').map(extractUsers);
 
             return {
-                id: item.id,
-                createdAt: item.createdAt,
-                updatedAt: item.updatedAt,
-                status: item.status,
+                ...item
                 owner: item.user.displayName,
-                jiraTicket: item.jiraTicket,
-                pullRequestLink: item.pullRequestLink,
-                slackPermalink: item.slackPermalink,
-                slackThreadTs: item.slackThreadTs,
-                note: item.note,
                 reviewers,
                 approvers,
             }
