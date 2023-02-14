@@ -8,7 +8,7 @@ api.get('/reviews/:status?', (req, res, next) => {
     const prisma = new PrismaClient();
 
     const status = req.params.status;
-    const where: {[index: string]: string} = {}
+    const where: {status?: string} = {}
 
     if (status && status !== 'all') {
         where.status = status;
