@@ -30,7 +30,7 @@ api.get('/reviews/:status?', (req, res, next) => {
             const approvers: string[] = item.reviewers.filter((r) => r.status === 'approved').map(extractUsers);
 
             return {
-                ...item
+                ...item,
                 owner: item.user.displayName,
                 reviewers,
                 approvers,

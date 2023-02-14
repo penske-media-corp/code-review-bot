@@ -77,6 +77,10 @@ async function setCodeReviewerStatus(codeReview: CodeReview & {reviewers?: CodeR
                 status: status,
             },
         });
+        // We already have the read from the data.
+        // Instead of refresh the records again from the db,
+        // We just do an in memory search and update the single records we had
+        // to match the db update statement above. Avoiding another round if db read.
         codeReview.reviewers.forEach((relation) => {
             if (relation.userId === user.id) {
                 relation.status = status;
