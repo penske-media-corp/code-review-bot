@@ -17,7 +17,7 @@ const formatCodeReview = (codeReview:  CodeReview & {user: User, reviewers: (Cod
     const extractUsers = ({reviewer}: {reviewer: User}) => reviewer.displayName;
     const reviewers: string[] = codeReview.reviewers.map(extractUsers);
 
-    let text = `*<https://${codeReview.pullRequestLink}}|${codeReview.pullRequestLink.replace(/.*penske-media-corp\//,'')}>*\n`;
+    let text = `*<${codeReview.pullRequestLink}|${codeReview.pullRequestLink.replace(/.*penske-media-corp\//,'')}>*\n`;
     const stats = [];
 
     if (reviewerCount) {
