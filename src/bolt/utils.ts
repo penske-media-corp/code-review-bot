@@ -6,12 +6,13 @@ import {
     ReactionRemovedEvent,
 } from '@slack/bolt';
 import {
+    ChatPostMessageArguments,
+    ConversationsRepliesResponse
+} from '@slack/web-api';
+import {
     ReactionData,
     UserInfo
 } from './types';
-import {
-    ConversationsRepliesResponse
-} from '@slack/web-api/dist/response/ConversationsRepliesResponse';
 import {
     GenericMessageEvent
 } from '@slack/bolt/dist/types/events/message-events';
@@ -121,4 +122,8 @@ export async function sentHomePageCodeReviewList(slackUserId: string) {
             blocks,
         }
     });
+}
+
+export async function postSlackMessage(slackMessage: ChatPostMessageArguments) {
+    await slackBotApp.client.chat.postMessage(slackMessage);
 }

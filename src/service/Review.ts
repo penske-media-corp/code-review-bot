@@ -1,6 +1,6 @@
 import {
     CodeReview,
-    CodeReviewRelation,
+    CodeReviewRelation, User,
 } from '@prisma/client';
 import {PrismaClient} from '@prisma/client';
 import {ReactionData} from '../bolt/types';
@@ -178,111 +178,88 @@ const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink,
         codeReview,
     };
 }
-const approve = async ({pullRequestLink, reactionUserId}: ReactionData) => {
-    const prisma = new PrismaClient();
-    const codeReview = await prisma.codeReview.findFirst({
-        where: {
-            pullRequestLink,
-        }
-    })
+const approve = async (codeReview: CodeReview & {user: User}, slackUserId: string) => {
 
-    if (!codeReview) {
-        return {
-            message: 'Cannot locate existing code review request data.',
-        };
-    }
-
-    const user = await setCodeReviewerStatus(codeReview, reactionUserId, 'approved');
+    const requestSlackUserId = codeReview.user.slackUserId ?? '';
+    const user = await setCodeReviewerStatus(codeReview, slackUserId, 'approved');
     const userDisplayName = user.displayName;
     const stats = await calculateReviewStats(codeReview);
-
-    const message = stats.approvalCount === 1
+    let message = stats.approvalCount === 1
         ? 'One more approval :approved: is needed.'
         : `Code has ${stats.approvalCount} approvals, ready to merge.`;
 
-    return {
-        user,
-        message: `*${userDisplayName}* approved the code. ${message}`,
-        codeReview,
-    }
-}
-const claim = async ({pullRequestLink, reactionUserId}: ReactionData) => {
-    const prisma = new PrismaClient();
-    const codeReview = await prisma.codeReview.findFirst({
-        where: {
-            pullRequestLink,
-        }
-    })
-
-    if (!codeReview) {
-        return {
-            message: 'Cannot locate existing code review request data.',
-        };
-    }
-
-    const user = await setCodeReviewerStatus(codeReview, reactionUserId, 'pending');
-    const userDisplayName = user.displayName;
-    const stats = await calculateReviewStats(codeReview);
-
-    const count = stats.reviewerCount + stats.approvalCount;
-    const message = count === 1
-        ? 'One more reviewer :review: is needed.'
-        : `Code has ${count} reviewers.`;
+    message = `*${userDisplayName}* approved the code. ${message}`;
 
     return {
-        user,
-        message: `*${userDisplayName}* claimed the code review. ${message}`,
         codeReview,
+        user,
+        message,
+        slackNotifyMessage: {
+            channel: codeReview.slackChannelId,
+            text: `<@${requestSlackUserId}>, ${message}`,
+            thread_ts: codeReview.slackThreadTs,
+        },
     }
 }
+const claim = async (codeReview: CodeReview & {user: User}, slackUserId: string) => {
 
-const finish = async ({pullRequestLink, reactionUserId}: ReactionData) => {
-    const prisma = new PrismaClient();
-    const codeReview = await prisma.codeReview.findFirst({
-        where: {
-            pullRequestLink,
-        }
-    })
-
-    if (!codeReview) {
-        return {
-            message: 'Cannot locate existing code review request data.',
-        };
-    }
-
-    const user = await setCodeReviewerStatus(codeReview, reactionUserId, 'finish');
+    const requestSlackUserId = codeReview.user.slackUserId ?? '';
+    const user = await setCodeReviewerStatus(codeReview, slackUserId, 'pending');
     const userDisplayName = user.displayName;
     const stats = await calculateReviewStats(codeReview);
     const count = stats.reviewerCount + stats.approvalCount;
-    const message = count === 1
+    let message = count === 1
         ? 'One more reviewer :review: is needed.'
         : `Code has ${count} reviewers.`;
 
+    message = `*${userDisplayName}* claimed the code review. ${message}`;
+console.log('DEBUG', codeReview);
+
     return {
-        user,
-        message: `*${userDisplayName}* withdraw/finished reviewing the code without providing an approval.  ${message}`,
         codeReview,
+        user,
+        message,
+        slackNotifyMessage: {
+            channel: codeReview.slackChannelId,
+            text: `<@${requestSlackUserId}>, ${message}`,
+            thread_ts: codeReview.slackThreadTs,
+        },
     }
 }
 
-const remove = async ({pullRequestLink, reactionUserId}: ReactionData) => {
-    const prisma = new PrismaClient();
-    const codeReview = await prisma.codeReview.findFirst({
-        where: {
-            pullRequestLink,
-        }
-    })
-
-    if (!codeReview) {
-        return {
-            message: 'Cannot locate existing code review request data.',
-        };
-    }
-
-    const user = await findOrCreateUser(reactionUserId);
+const finish = async (codeReview: CodeReview & {user: User}, slackUserId: string) => {
+    const requestSlackUserId = codeReview.user.slackUserId ?? '';
+    const user = await setCodeReviewerStatus(codeReview, slackUserId, 'finish');
     const userDisplayName = user.displayName;
+    const stats = await calculateReviewStats(codeReview);
+    const count = stats.reviewerCount + stats.approvalCount;
+    let message = count === 1
+        ? 'One more reviewer :review: is needed.'
+        : `Code has ${count} reviewers.`;
+
+    message = `*${userDisplayName}* withdraw/finished reviewing the code without providing an approval.  ${message}`;
+
+    return {
+        codeReview,
+        user,
+        message,
+        slackNotifyMessage: {
+            channel: codeReview.slackChannelId,
+            text: `<@${requestSlackUserId}>, ${message}`,
+            thread_ts: codeReview.slackThreadTs,
+        },
+    }
+}
+
+const remove = async (codeReview: CodeReview & {user: User}, slackUserId: string) => {
+    const prisma = new PrismaClient();
+    const user = await findOrCreateUser(slackUserId);
+    const userDisplayName = user.displayName;
+    const requestSlackUserId = codeReview.user.slackUserId ?? '';
+    const message = `*${userDisplayName}* removed the code review.`;
 
     codeReview.status = 'removed';
+
     await prisma.codeReview.update({
         where: {
             id: codeReview.id,
@@ -290,55 +267,40 @@ const remove = async ({pullRequestLink, reactionUserId}: ReactionData) => {
         data: {
             status: codeReview.status,
         }
-    })
+    });
 
     return {
-        user,
-        message: `*${userDisplayName}* removed the code review.`,
         codeReview,
+        message,
+        slackNotifyMessage: {
+            channel: codeReview.slackChannelId,
+            text: requestSlackUserId === slackUserId ? message : `<@${requestSlackUserId}>, ${message}`,
+            thread_ts: codeReview.slackThreadTs,
+        },
     }
 }
 
-const requestChanges = async ({pullRequestLink, reactionUserId}: ReactionData) => {
-    const prisma = new PrismaClient();
-    const codeReview = await prisma.codeReview.findFirst({
-        where: {
-            pullRequestLink,
-        }
-    })
-
-    if (!codeReview) {
-        return {
-            message: 'Cannot locate existing code review request data.',
-        };
-    }
-
-    const user = await setCodeReviewerStatus(codeReview, reactionUserId, 'change');
+const requestChanges = async (codeReview: CodeReview & {user: User}, slackUserId: string) => {
+    const user = await setCodeReviewerStatus(codeReview, slackUserId, 'change');
     const userDisplayName = user.displayName;
+    const requestSlackUserId = codeReview.user.slackUserId ?? '';
+    const message = `*${userDisplayName}* requested changes on the pull request.`;
 
     return {
-        user,
-        message: `*${userDisplayName}* requested changes on the pull request.`,
         codeReview,
+        message,
+        slackNotifyMessage: {
+            channel: codeReview.slackChannelId,
+            text: `<@${requestSlackUserId}>, ${message}`,
+            thread_ts: codeReview.slackThreadTs,
+        },
     }
 }
 
-const withdraw = async ({pullRequestLink, reactionUserId}: ReactionData) => {
+const withdraw = async (codeReview: CodeReview & {user: User}) => {
     const prisma = new PrismaClient();
-    const codeReview = await prisma.codeReview.findFirst({
-        where: {
-            pullRequestLink,
-        }
-    })
-
-    if (!codeReview) {
-        return {
-            message: 'Cannot locate existing code review request data.',
-        };
-    }
-
-    const user = await findOrCreateUser(reactionUserId);
-    const userDisplayName = user.displayName;
+    const userDisplayName = codeReview.user.displayName;
+    const message = `*${userDisplayName}* withdraw the code review request`;
 
     codeReview.status = 'withdraw';
     await prisma.codeReview.update({
@@ -351,9 +313,13 @@ const withdraw = async ({pullRequestLink, reactionUserId}: ReactionData) => {
     })
 
     return {
-        user,
-        message: `*${userDisplayName}* withdraw the code review request`,
         codeReview,
+        message: message,
+        slackNotifyMessage: {
+            channel: codeReview.slackChannelId,
+            text: message,
+            thread_ts: codeReview.slackThreadTs,
+        },
     }
 }
 

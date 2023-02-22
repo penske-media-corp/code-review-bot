@@ -1,9 +1,12 @@
-import {App, Block, KnownBlock} from '@slack/bolt';
+import {
+    postSlackMessage,
+    sentHomePageCodeReviewList
+} from '../utils';
+import {App} from '@slack/bolt';
+import {ChatPostMessageArguments} from '@slack/web-api';
 import {PrismaClient} from '@prisma/client';
 import Review from '../../service/Review';
-import SlackActions from '../../utils/SlackActions';
 import {logDebug} from '../../utils/log';
-import {sentHomePageCodeReviewList} from '../utils';
 
 export default function registerActionHomePage(app: App) {
     app.action({callback_id: 'home_page'}, async ({action, body}) => {
@@ -14,20 +17,30 @@ export default function registerActionHomePage(app: App) {
 
         const prisma = new PrismaClient();
         const codeReview = await prisma.codeReview.findFirst({
+            include: {
+                user: true,
+            },
             where: {
                 id: parseInt(actionId.split('-')[1]),
             }
         })
 
         if (codeReview) {
-            const statusMap: {[index:string]: string} = {
-                claim: 'pending',
-                approve: 'approved',
-                remove: 'removed',
+            let result;
+            switch(actionValue) {
+                case 'claim':
+                    result = await Review.claim(codeReview, actionUserId);
+                    break;
+                case 'approve':
+                    result = await Review.approve(codeReview, actionUserId);
+                    break;
+                case 'remove':
+                    result = await Review.remove(codeReview, actionUserId);
+                    break;
+
             }
-            const status = statusMap[actionValue];
-            if (status) {
-                await Review.setCodeReviewerStatus(codeReview, actionUserId, status);
+            if (result) {
+                await postSlackMessage(result.slackNotifyMessage as ChatPostMessageArguments);
             }
         }
 
