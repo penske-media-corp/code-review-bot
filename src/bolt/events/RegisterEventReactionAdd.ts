@@ -52,6 +52,7 @@ export default function registerEventReactionAdd(app: App) {
         const codeReview = await prisma.codeReview.findFirst({
             include: {
                 user: true,
+                reviewers: true,
             },
             where: {
                 pullRequestLink,

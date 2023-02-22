@@ -19,6 +19,7 @@ export default function registerActionHomePage(app: App) {
         const codeReview = await prisma.codeReview.findFirst({
             include: {
                 user: true,
+                reviewers: true,
             },
             where: {
                 id: parseInt(actionId.split('-')[1]),

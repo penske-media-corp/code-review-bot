@@ -14,6 +14,9 @@ const formatCodeReview = (codeReview:  CodeReview & {user: User, reviewers: (Cod
     const reviewerCount = codeReview.reviewers.length;
     const approvalCount = codeReview.reviewers.filter((r) => r.status === 'approved').length;
 
+    const extractUsers = ({reviewer}: {reviewer: User}) => reviewer.displayName;
+    const reviewers: string[] = codeReview.reviewers.map(extractUsers);
+
     let text = `*<https://${codeReview.pullRequestLink}}|${codeReview.pullRequestLink.replace(/.*penske-media-corp\//,'')}>*\n`;
     const stats = [];
 
@@ -26,7 +29,12 @@ const formatCodeReview = (codeReview:  CodeReview & {user: User, reviewers: (Cod
     if (stats.length) {
         text = `${text}${stats.join(', ')}, `;
     }
-    text = `${text}Requested by *${codeReview.user.displayName}*\n`;
+    text = `${text}\nRequested by *${codeReview.user.displayName}*`;
+
+    if (reviewers.length) {
+        text = `${text}, Claimed by ${reviewers.join(', ')}`;
+    }
+
     if (codeReview.note) {
         text = `${text}\n${codeReview.note}\n`;
     }

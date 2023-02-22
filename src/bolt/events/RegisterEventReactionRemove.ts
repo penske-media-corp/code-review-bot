@@ -26,6 +26,7 @@ export default function registerEventReactionRemove(app: App) {
         const codeReview = await prisma.codeReview.findFirst({
             include: {
                 user: true,
+                reviewers: true,
             },
             where: {
                 pullRequestLink,

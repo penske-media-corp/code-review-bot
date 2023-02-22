@@ -28,7 +28,7 @@ async function findOrCreateUser(slackUserId: string) {
     return user;
 }
 
-async function setCodeReviewerStatus(codeReview: CodeReview & {reviewers?: CodeReviewRelation[]}, slackUserId: string, status: string) {
+async function setCodeReviewerStatus(codeReview: CodeReview & {reviewers: CodeReviewRelation[]}, slackUserId: string, status: string) {
     const user = await findOrCreateUser(slackUserId);
     const prisma = new PrismaClient();
 
@@ -91,7 +91,7 @@ async function setCodeReviewerStatus(codeReview: CodeReview & {reviewers?: CodeR
     return user;
 }
 
-async function calculateReviewStats(codeReview: CodeReview & {reviewers?: CodeReviewRelation[]}) {
+async function calculateReviewStats(codeReview: CodeReview & {reviewers: CodeReviewRelation[]}) {
     let approvalCount = 0;
     let reviewerCount = 0;
     codeReview.reviewers?.forEach((reviewer) => {
@@ -178,7 +178,7 @@ const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink,
         codeReview,
     };
 }
-const approve = async (codeReview: CodeReview & {user: User}, slackUserId: string) => {
+const approve = async (codeReview: CodeReview & {user: User, reviewers: CodeReviewRelation[]}, slackUserId: string) => {
 
     const requestSlackUserId = codeReview.user.slackUserId ?? '';
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'approved');
@@ -201,7 +201,7 @@ const approve = async (codeReview: CodeReview & {user: User}, slackUserId: strin
         },
     }
 }
-const claim = async (codeReview: CodeReview & {user: User}, slackUserId: string) => {
+const claim = async (codeReview: CodeReview & {user: User, reviewers: CodeReviewRelation[]}, slackUserId: string) => {
 
     const requestSlackUserId = codeReview.user.slackUserId ?? '';
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'pending');
@@ -213,7 +213,6 @@ const claim = async (codeReview: CodeReview & {user: User}, slackUserId: string)
         : `Code has ${count} reviewers.`;
 
     message = `*${userDisplayName}* claimed the code review. ${message}`;
-console.log('DEBUG', codeReview);
 
     return {
         codeReview,
@@ -227,7 +226,7 @@ console.log('DEBUG', codeReview);
     }
 }
 
-const finish = async (codeReview: CodeReview & {user: User}, slackUserId: string) => {
+const finish = async (codeReview: CodeReview & {user: User, reviewers: CodeReviewRelation[]}, slackUserId: string) => {
     const requestSlackUserId = codeReview.user.slackUserId ?? '';
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'finish');
     const userDisplayName = user.displayName;
@@ -280,7 +279,7 @@ const remove = async (codeReview: CodeReview & {user: User}, slackUserId: string
     }
 }
 
-const requestChanges = async (codeReview: CodeReview & {user: User}, slackUserId: string) => {
+const requestChanges = async (codeReview: CodeReview & {user: User, reviewers: CodeReviewRelation[]}, slackUserId: string) => {
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'change');
     const userDisplayName = user.displayName;
     const requestSlackUserId = codeReview.user.slackUserId ?? '';
