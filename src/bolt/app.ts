@@ -23,7 +23,7 @@ const slackBotApp = new App({
     token: SLACK_BOT_TOKEN,
 });
 
-slackBotApp.use(async ({ next }) => {
+slackBotApp.use(async ({next}) => {
     await next();
 });
 

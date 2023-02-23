@@ -1,8 +1,8 @@
-import {App} from '@slack/bolt';
+import type {App} from '@slack/bolt';
 import {getBotUserId} from '../utils';
 import {logDebug} from '../../utils/log';
-export default function registerEventMemberJoinedChannel(app: App) {
-    app.event('member_joined_channel',async ({ event, say }) => {
+export default function registerEventMemberJoinedChannel (app: App): void {
+    app.event('member_joined_channel', async ({event, say}) => {
         logDebug('member_joined_channel', event);
 
         if (await getBotUserId() !== event.user) {
