@@ -1,6 +1,7 @@
 import type {
     CodeReview,
-    CodeReviewRelation, User,
+    CodeReviewRelation,
+    User,
 } from '@prisma/client';
 import type {ReactionData} from '../bolt/types';
 import {getUserInfo} from '../bolt/utils';
