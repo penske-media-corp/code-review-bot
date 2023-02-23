@@ -21,8 +21,59 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
     const mrkdwnPrLink = `<${codeReview.pullRequestLink}|:review: ${codeReview.pullRequestLink.replace(/.*penske-media-corp\//, '')}>`;
     const mrkdwnSlackLink = codeReview.slackPermalink && codeReview.slackThreadTs && `<${codeReview.slackPermalink}|:slack: ${codeReview.slackThreadTs}>`;
 
-    let text = `${mrkdwnPrLink} (${mrkdwnSlackLink ?? ''})\n`;
+    const buttonApprove = {
+        type: 'button',
+        text: {
+            type: 'plain_text',
+            text: ':approved: Approve',
+            emoji: true
+        },
+        value: `approve`,
+        action_id: `approve-${codeReview.id}`
+    };
+    const buttonClaim = {
+        type: 'button',
+        text: {
+            type: 'plain_text',
+            text: ':eyes: Claim',
+            emoji: true
+        },
+        value: 'claim',
+        action_id: `claim-${codeReview.id}`,
+        url: codeReview.pullRequestLink,
+    };
+    const buttonRemove = {
+        type: 'button',
+        text: {
+            type: 'plain_text',
+            text: ':trash: Remove',
+            emoji: true
+        },
+        value: 'remove',
+        action_id: `remove-${codeReview.id}`,
+        confirm: {
+            title: {
+                type: 'plain_text',
+                text: 'Are you sure?',
+            },
+            text: {
+                type: 'plain_text',
+                text: 'This will remove all related historical data for this request.',
+            },
+            confirm: {
+                type: 'plain_text',
+                text: 'Yes',
+            },
+            deny: {
+                type: 'plain_text',
+                text: 'No',
+            },
+        },
+    };
     const stats = [];
+
+    let text = `${mrkdwnPrLink} (${mrkdwnSlackLink ?? ''})\n`;
+
 
     if (reviewerCount) {
         stats.push(`${':eyes:'.repeat(reviewerCount)} ${reviewerCount} review(s)`);
@@ -56,57 +107,7 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
         },
         {
             type: 'actions',
-            elements: [
-                {
-                    type: 'button',
-                    text: {
-                        type: 'plain_text',
-                        text: ':eyes: Claim',
-                        emoji: true
-                    },
-                    value: 'claim',
-                    action_id: `claim-${codeReview.id}`,
-                    url: codeReview.pullRequestLink,
-                },
-                {
-                    type: 'button',
-                    text: {
-                        type: 'plain_text',
-                        text: ':approved: Approve',
-                        emoji: true
-                    },
-                    value: `approve`,
-                    action_id: `approve-${codeReview.id}`
-                },
-                {
-                    type: 'button',
-                    text: {
-                        type: 'plain_text',
-                        text: ':trash: Remove',
-                        emoji: true
-                    },
-                    value: 'remove',
-                    action_id: `remove-${codeReview.id}`,
-                    confirm: {
-                        title: {
-                            type: 'plain_text',
-                            text: 'Are you sure?',
-                        },
-                        text: {
-                            type: 'plain_text',
-                            text: 'This will remove all related historical data for this request.',
-                        },
-                        confirm: {
-                            type: 'plain_text',
-                            text: 'Yes',
-                        },
-                        deny: {
-                            type: 'plain_text',
-                            text: 'No',
-                        },
-                    },
-                },
-            ]
+            elements: [buttonClaim, buttonApprove, buttonRemove],
         }
     ] as (Block | KnownBlock)[];
 };
