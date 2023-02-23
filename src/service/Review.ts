@@ -184,7 +184,7 @@ const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink,
 
 const approve = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
 
-    const requestSlackUserId = codeReview.user.slackUserId ?? '';
+    const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'approved');
     const userDisplayName = user.displayName;
     const stats = await calculateReviewStats(codeReview);
@@ -207,7 +207,7 @@ const approve = async (codeReview: CodeReview & {user: User; reviewers: CodeRevi
 
 const claim = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
 
-    const requestSlackUserId = codeReview.user.slackUserId ?? '';
+    const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'pending');
     const userDisplayName = user.displayName;
     const stats = await calculateReviewStats(codeReview);
@@ -230,7 +230,7 @@ const claim = async (codeReview: CodeReview & {user: User; reviewers: CodeReview
 };
 
 const finish = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
-    const requestSlackUserId = codeReview.user.slackUserId ?? '';
+    const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'finish');
     const userDisplayName = user.displayName;
     const stats = await calculateReviewStats(codeReview);
@@ -256,7 +256,7 @@ const remove = async (codeReview: CodeReview & {user: User}, slackUserId: string
     const prisma = new PrismaClient();
     const user = await findOrCreateUser(slackUserId);
     const userDisplayName = user.displayName;
-    const requestSlackUserId = codeReview.user.slackUserId ?? '';
+    const requestSlackUserId = codeReview.user.slackUserId;
     const message = `*${userDisplayName}* removed the code review.`;
 
     codeReview.status = 'removed';
@@ -284,7 +284,7 @@ const remove = async (codeReview: CodeReview & {user: User}, slackUserId: string
 const requestChanges = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'change');
     const userDisplayName = user.displayName;
-    const requestSlackUserId = codeReview.user.slackUserId ?? '';
+    const requestSlackUserId = codeReview.user.slackUserId;
     const message = `*${userDisplayName}* requested changes on the pull request.`;
 
     return {
