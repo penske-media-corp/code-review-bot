@@ -17,12 +17,14 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
 
     const extractDisplayName = ({reviewer}: {reviewer: User}): string => reviewer.displayName;
     const reviewers: string[] = codeReview.reviewers.map(extractDisplayName);
+    const mrkdwnPrLink = `<${codeReview.pullRequestLink}|:review: ${codeReview.pullRequestLink.replace(/.*penske-media-corp\//, '')}>`;
+    const mrkdwnSlackLink = `<${codeReview.slackPermalink}|:slack: ${codeReview.slackThreadTs}>`;
 
-    let text = `*<${codeReview.pullRequestLink}|${codeReview.pullRequestLink.replace(/.*penske-media-corp\//, '')}>*\n`;
+    let text = `*${mrkdwnPrLink}* (${mrkdwnSlackLink})\n`;
     const stats = [];
 
     if (reviewerCount) {
-        stats.push(`${':review:'.repeat(reviewerCount)} ${reviewerCount} review(s)`);
+        stats.push(`${':eyes:'.repeat(reviewerCount)} ${reviewerCount} review(s)`);
     }
     if (approvalCount) {
         stats.push(`${':approved:'.repeat(approvalCount)} ${approvalCount} approval(s)`);

@@ -33,7 +33,7 @@ function App() {
                             <a href={item.pullRequestLink}>{item.pullRequestLink.replace(/.*penske-media-corp\//,'')}</a>
                         </td>
                         <td>
-                            <a href={item.slackMsgLinkUrl}>{item.slackMsgThreadTs}</a>
+                            <a href={item.slackPermalink}>{item.slackThreadTs}</a>
                         </td>
                         <td>{item.reviewers && item.reviewers.join(', ')}</td>
                         <td>{item.reviewers && item.approvers.join(', ')}</td>
