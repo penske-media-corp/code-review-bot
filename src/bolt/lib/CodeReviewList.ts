@@ -18,9 +18,9 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
     const extractDisplayName = ({reviewer}: {reviewer: User}): string => reviewer.displayName;
     const reviewers: string[] = codeReview.reviewers.map(extractDisplayName);
     const mrkdwnPrLink = `<${codeReview.pullRequestLink}|:review: ${codeReview.pullRequestLink.replace(/.*penske-media-corp\//, '')}>`;
-    const mrkdwnSlackLink = `<${codeReview.slackPermalink}|:slack: ${codeReview.slackThreadTs}>`;
+    const mrkdwnSlackLink = codeReview.slackPermalink && codeReview.slackThreadTs && `<${codeReview.slackPermalink}|:slack: ${codeReview.slackThreadTs}>`;
 
-    let text = `*${mrkdwnPrLink}* (${mrkdwnSlackLink})\n`;
+    let text = `*${mrkdwnPrLink}* (${mrkdwnSlackLink ?? ''})\n`;
     const stats = [];
 
     if (reviewerCount) {
@@ -122,6 +122,4 @@ const getCodeReviewList = async (status: string): Promise<(Block | KnownBlock)[]
     return blocks;
 };
 
-export default {
-    getCodeReviewList,
-};
+export default getCodeReviewList;

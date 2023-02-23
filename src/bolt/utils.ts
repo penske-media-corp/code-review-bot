@@ -16,7 +16,7 @@ import type {
 import type {
     GenericMessageEvent
 } from '@slack/bolt/dist/types/events/message-events';
-import SlackActions from '../utils/SlackActions';
+import getCodeReviewList from './lib/CodeReviewList';
 
 let slackBotUserId: string | null = null;
 let slackBotApp: App;
@@ -110,7 +110,7 @@ export async function sentHomePageCodeReviewList (slackUserId: string): Promise<
                 text: '*Outstanding code review queue:*'
             }
         },
-        ...await SlackActions.getCodeReviewList('pending')
+        ...await getCodeReviewList('pending')
     ];
 
     await slackBotApp.client.views.publish({
