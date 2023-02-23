@@ -39,13 +39,14 @@ export default function registerActionHomePage (app: App): void {
                     case 'remove':
                         result = await Review.remove(codeReview, actionUserId);
                         break;
-
                 }
                 if (result) {
                     await postSlackMessage(result.slackNotifyMessage as ChatPostMessageArguments);
                 }
             }
             await sentHomePageCodeReviewList(actionUserId);
+        } else if (['pending', 'inprogress', 'mine'].includes(actionValue)) {
+            await sentHomePageCodeReviewList(actionUserId, actionValue);
         }
     });
 }

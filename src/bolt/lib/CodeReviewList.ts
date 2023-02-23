@@ -10,6 +10,7 @@ import type {
 import {
     PrismaClient
 } from '@prisma/client';
+import {getUserInfo} from '../utils';
 
 const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (CodeReviewRelation & {reviewer: User})[]}): (Block | KnownBlock)[] => {
     const reviewerCount = codeReview.reviewers.length;
@@ -110,15 +111,37 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
     ] as (Block | KnownBlock)[];
 };
 
-const getCodeReviewList = async (status: string): Promise<(Block | KnownBlock)[]> => {
+const getCodeReviewList = async (status: string, slackUserId?: string): Promise<(Block | KnownBlock)[]> => {
 
     const prisma = new PrismaClient();
+    const user = await prisma.user.findFirst({
+        where: {
+            slackUserId,
+        }
+    });
 
-    const where: {[index: string]: string} = {};
+    const where: {[index: string]: unknown} = {};
 
     if (status && status !== 'all') {
-        where.status = status;
+        if (status === 'mine') {
+            where.status = {
+                in: ['pending', 'inprogress'],
+            };
+            where.OR = [
+                {
+                    userId: user?.id,
+                    reviewers: {
+                        every: {
+                            userId: user?.id
+                        }
+                    }
+                }
+            ];
+        } else {
+            where.status = status;
+        }
     }
+
     const reviews = await prisma.codeReview.findMany({
         where,
         include: {

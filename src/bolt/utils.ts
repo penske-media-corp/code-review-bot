@@ -101,7 +101,7 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
     };
 }
 
-export async function sentHomePageCodeReviewList (slackUserId: string): Promise<void> {
+export async function sentHomePageCodeReviewList (slackUserId: string, status: string = 'pending'): Promise<void> {
     const blocks: (Block | KnownBlock)[] = [
         {
             type: 'section',
@@ -117,11 +117,11 @@ export async function sentHomePageCodeReviewList (slackUserId: string): Promise<
                     type: 'button',
                     text: {
                         type: 'plain_text',
-                        text: 'My Reviews',
+                        text: 'Pending Reviews',
                         emoji: true
                     },
-                    value: 'my-reviews',
-                    action_id: `my-reviews`,
+                    value: `pending`,
+                    action_id: `pending`
                 },
                 {
                     type: 'button',
@@ -133,9 +133,19 @@ export async function sentHomePageCodeReviewList (slackUserId: string): Promise<
                     value: `inprogress`,
                     action_id: `inprogress`
                 },
+                {
+                    type: 'button',
+                    text: {
+                        type: 'plain_text',
+                        text: 'My Reviews',
+                        emoji: true
+                    },
+                    value: 'mine',
+                    action_id: `mine`,
+                },
             ]
         },
-        ...await getCodeReviewList('pending')
+        ...await getCodeReviewList(status, slackUserId)
     ];
 
     await slackBotApp.client.views.publish({
