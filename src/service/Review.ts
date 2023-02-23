@@ -2,9 +2,9 @@ import type {
     CodeReview,
     CodeReviewRelation, User,
 } from '@prisma/client';
-import {PrismaClient} from '@prisma/client';
 import type {ReactionData} from '../bolt/types';
 import {getUserInfo} from '../bolt/utils';
+import {prisma} from '../utils/config';
 
 export interface ReviewActionResult {
     codeReview?: CodeReview;
@@ -17,8 +17,6 @@ export interface ReviewActionResult {
 }
 
 async function findOrCreateUser (slackUserId: string): Promise<User> {
-    const prisma = new PrismaClient();
-
     let user = await prisma.user.findFirst({
         where: {
             slackUserId,
@@ -40,7 +38,6 @@ async function findOrCreateUser (slackUserId: string): Promise<User> {
 
 async function setCodeReviewerStatus (codeReview: CodeReview & {reviewers: CodeReviewRelation[]}, slackUserId: string, status: string): Promise<User> {
     const user = await findOrCreateUser(slackUserId);
-    const prisma = new PrismaClient();
 
     if (status === 'removed') {
         codeReview.status = 'removed';
@@ -111,7 +108,6 @@ async function calculateReviewStats (codeReview: CodeReview & {reviewers: CodeRe
 
     if (approvalCount + reviewerCount >= 2) {
         codeReview.status = approvalCount >= 2 ? 'ready' : 'inprogress';
-        const prisma = new PrismaClient();
 
         await prisma.codeReview.update({
             where: {
@@ -136,7 +132,6 @@ const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink,
         };
     }
 
-    const prisma = new PrismaClient();
     let codeReview = await prisma.codeReview.findFirst({
         where: {
             pullRequestLink,
@@ -253,7 +248,6 @@ const finish = async (codeReview: CodeReview & {user: User; reviewers: CodeRevie
 };
 
 const remove = async (codeReview: CodeReview & {user: User}, slackUserId: string): Promise<ReviewActionResult> => {
-    const prisma = new PrismaClient();
     const user = await findOrCreateUser(slackUserId);
     const userDisplayName = user.displayName;
     const requestSlackUserId = codeReview.user.slackUserId;
@@ -299,7 +293,6 @@ const requestChanges = async (codeReview: CodeReview & {user: User; reviewers: C
 };
 
 const withdraw = async (codeReview: CodeReview & {user: User}): Promise<ReviewActionResult> => {
-    const prisma = new PrismaClient();
     const userDisplayName = codeReview.user.displayName;
     const message = `*${userDisplayName}* withdraw the code review request`;
 

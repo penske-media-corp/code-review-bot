@@ -1,13 +1,11 @@
-import {PrismaClient} from '@prisma/client';
 import type {User} from '@prisma/client';
 import express from 'express';
 import {logError} from '../../utils/log';
+import {prisma} from '../../utils/config';
 
 const api = express.Router();
 
 api.get('/reviews/:status?', (req, res) => {
-    const prisma = new PrismaClient();
-
     const status = req.params.status;
     const where: {status?: string} = {};
 

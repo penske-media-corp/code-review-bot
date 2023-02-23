@@ -7,6 +7,7 @@ import type {ChatPostMessageArguments} from '@slack/web-api';
 import {PrismaClient} from '@prisma/client';
 import Review from '../../service/Review';
 import {logDebug} from '../../utils/log';
+import {prisma} from '../../utils/config';
 
 export default function registerActionHomePage (app: App): void {
     app.action({callback_id: 'home_page'}, async ({action, body}) => {
@@ -16,7 +17,6 @@ export default function registerActionHomePage (app: App): void {
         const {action_id: actionId, value: actionValue} = action as {action_id: string; value: string};
 
         if (['claim', 'approve', 'remove'].includes(actionValue)) {
-            const prisma = new PrismaClient();
             const codeReview = await prisma.codeReview.findFirst({
                 include: {
                     user: true,

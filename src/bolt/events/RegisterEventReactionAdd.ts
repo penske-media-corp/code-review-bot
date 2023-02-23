@@ -6,10 +6,10 @@ import {
     slackActions,
     teamToMentionInChannelAlert,
 } from '../../utils/config';
-import {PrismaClient} from '@prisma/client';
 import Review from '../../service/Review';
 import {getReactionData} from '../utils';
 import {logDebug} from '../../utils/log';
+import {prisma} from '../../utils/config';
 
 export default function registerEventReactionAdd (app: App): void {
     app.event('reaction_added', async ({event, say}) => {
@@ -48,7 +48,6 @@ export default function registerEventReactionAdd (app: App): void {
             }
         }
 
-        const prisma = new PrismaClient();
         const codeReview = await prisma.codeReview.findFirst({
             include: {
                 user: true,

@@ -7,10 +7,7 @@ import type {
     CodeReviewRelation,
     User
 } from '@prisma/client';
-import {
-    PrismaClient
-} from '@prisma/client';
-import {getUserInfo} from '../utils';
+import {prisma} from '../../utils/config';
 
 const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (CodeReviewRelation & {reviewer: User})[]}): (Block | KnownBlock)[] => {
     const reviewerCount = codeReview.reviewers.length;
@@ -113,8 +110,6 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
 };
 
 const getCodeReviewList = async (status: string, slackUserId?: string): Promise<(Block | KnownBlock)[]> => {
-
-    const prisma = new PrismaClient();
     const user = await prisma.user.findFirst({
         where: {
             slackUserId,

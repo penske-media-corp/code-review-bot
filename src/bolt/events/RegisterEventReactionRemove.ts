@@ -1,8 +1,8 @@
 import type {App, SayArguments} from '@slack/bolt';
-import {PrismaClient} from '@prisma/client';
 import Review from '../../service/Review';
 import {getReactionData} from '../utils';
 import {logDebug} from '../../utils/log';
+import {prisma} from '../../utils/config';
 import {slackActions} from '../../utils/config';
 
 export default function registerEventReactionRemove (app: App): void {
@@ -21,8 +21,6 @@ export default function registerEventReactionRemove (app: App): void {
         }
 
         const {pullRequestLink, reactionUserId, slackThreadTs} = data;
-
-        const prisma = new PrismaClient();
         const codeReview = await prisma.codeReview.findFirst({
             include: {
                 user: true,
