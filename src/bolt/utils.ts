@@ -107,8 +107,33 @@ export async function sentHomePageCodeReviewList (slackUserId: string): Promise<
             type: 'section',
             text: {
                 type: 'mrkdwn',
-                text: '*Outstanding code review queue:*'
+                text: '*Outstanding Code Review Queue:* <https://code-review.pmcdev.io>'
             }
+        },
+        {
+            type: 'actions',
+            elements: [
+                {
+                    type: 'button',
+                    text: {
+                        type: 'plain_text',
+                        text: 'My Reviews',
+                        emoji: true
+                    },
+                    value: 'my-reviews',
+                    action_id: `my-reviews`,
+                },
+                {
+                    type: 'button',
+                    text: {
+                        type: 'plain_text',
+                        text: 'In Progress Reviews',
+                        emoji: true
+                    },
+                    value: `inprogress`,
+                    action_id: `inprogress`
+                },
+            ]
         },
         ...await getCodeReviewList('pending')
     ];

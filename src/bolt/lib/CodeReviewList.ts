@@ -20,7 +20,7 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
     const mrkdwnPrLink = `<${codeReview.pullRequestLink}|:review: ${codeReview.pullRequestLink.replace(/.*penske-media-corp\//, '')}>`;
     const mrkdwnSlackLink = codeReview.slackPermalink && codeReview.slackThreadTs && `<${codeReview.slackPermalink}|:slack: ${codeReview.slackThreadTs}>`;
 
-    let text = `*${mrkdwnPrLink}* (${mrkdwnSlackLink ?? ''})\n`;
+    let text = `${mrkdwnPrLink} (${mrkdwnSlackLink ?? ''})\n`;
     const stats = [];
 
     if (reviewerCount) {
@@ -85,7 +85,25 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
                         emoji: true
                     },
                     value: 'remove',
-                    action_id: `remove-${codeReview.id}`
+                    action_id: `remove-${codeReview.id}`,
+                    confirm: {
+                        title: {
+                            type: 'plain_text',
+                            text: 'Are you sure?',
+                        },
+                        text: {
+                            type: 'plain_text',
+                            text: 'This will remove all related historical data for this request.',
+                        },
+                        confirm: {
+                            type: 'plain_text',
+                            text: 'Yes',
+                        },
+                        deny: {
+                            type: 'plain_text',
+                            text: 'No',
+                        },
+                    },
                 },
             ]
         }
