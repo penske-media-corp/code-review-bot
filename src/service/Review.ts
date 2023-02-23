@@ -234,7 +234,7 @@ const finish = async (codeReview: CodeReview & {user: User; reviewers: CodeRevie
         ? 'One more reviewer :review: is needed.'
         : `Code has ${count} reviewers.`;
 
-    message = `*${userDisplayName}* withdraw/finished reviewing the code without providing an approval.  ${message}`;
+    message = `*${userDisplayName}* withdrew or finished reviewing the code without providing an approval.  ${message}`;
 
     return {
         codeReview,
@@ -294,7 +294,7 @@ const requestChanges = async (codeReview: CodeReview & {user: User; reviewers: C
 
 const withdraw = async (codeReview: CodeReview & {user: User}): Promise<ReviewActionResult> => {
     const userDisplayName = codeReview.user.displayName;
-    const message = `*${userDisplayName}* withdraw the code review request`;
+    const message = `*${userDisplayName}* withdrew the code review request`;
 
     codeReview.status = 'withdraw';
     await prisma.codeReview.update({
