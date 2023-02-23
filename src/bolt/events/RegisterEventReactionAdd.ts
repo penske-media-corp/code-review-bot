@@ -1,4 +1,4 @@
-import {
+import type {
     App,
     SayArguments
 } from '@slack/bolt';
@@ -11,7 +11,7 @@ import Review from '../../service/Review';
 import {getReactionData} from '../utils';
 import {logDebug} from '../../utils/log';
 
-export default function registerEventReactionAdd(app: App) {
+export default function registerEventReactionAdd (app: App): void {
     app.event('reaction_added', async ({event, say}) => {
         logDebug('reaction_added', event);
 
@@ -30,10 +30,10 @@ export default function registerEventReactionAdd(app: App) {
 
         if (slackActions.request.includes(data.reaction)) {
             const result = await Review.add(data);
-            const {user} = result;
+            const {codeReview} = result;
 
             // If user object isn't available, there must be something wrong.
-            if (!user) {
+            if (!codeReview) {
                 await say({
                     text: `<@${reactionUserId}>, ${result.message}`,
                     thread_ts: slackThreadTs,
@@ -57,7 +57,7 @@ export default function registerEventReactionAdd(app: App) {
             where: {
                 pullRequestLink,
             }
-        })
+        });
 
         // All actions beyond this line must have a valid code review record existed.
         if (!codeReview) {

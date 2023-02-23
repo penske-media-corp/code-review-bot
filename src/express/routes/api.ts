@@ -1,14 +1,15 @@
-import {CodeReviewRelation, PrismaClient, User} from '@prisma/client';
+import {PrismaClient} from '@prisma/client';
+import type {User} from '@prisma/client';
 import express from 'express';
 import {logError} from '../../utils/log';
 
 const api = express.Router();
 
-api.get('/reviews/:status?', (req, res, next) => {
+api.get('/reviews/:status?', (req, res) => {
     const prisma = new PrismaClient();
 
     const status = req.params.status;
-    const where: {status?: string} = {}
+    const where: {status?: string} = {};
 
     if (status && status !== 'all') {
         where.status = status;
@@ -24,18 +25,18 @@ api.get('/reviews/:status?', (req, res, next) => {
             },
         }
     }).then((reviews) => {
-        const extractUsers = ({reviewer}: {reviewer: User}) => reviewer.displayName;
+        const extractDisplayName = ({reviewer}: {reviewer: User}): string => reviewer.displayName;
         const result = reviews.map((item) => {
-            const reviewers: string[] = item.reviewers.map(extractUsers);
-            const approvers: string[] = item.reviewers.filter((r) => r.status === 'approved').map(extractUsers);
+            const reviewers: string[] = item.reviewers.map(extractDisplayName);
+            const approvers: string[] = item.reviewers.filter((r) => r.status === 'approved').map(extractDisplayName);
 
             return {
                 ...item,
                 owner: item.user.displayName,
                 reviewers,
                 approvers,
-            }
-        })
+            };
+        });
         res.json(result);
     }).catch((error) => {
         logError(error);

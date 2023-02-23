@@ -1,12 +1,12 @@
-import {App, SayArguments} from '@slack/bolt';
+import type {App, SayArguments} from '@slack/bolt';
 import {PrismaClient} from '@prisma/client';
 import Review from '../../service/Review';
 import {getReactionData} from '../utils';
 import {logDebug} from '../../utils/log';
 import {slackActions} from '../../utils/config';
 
-export default function registerEventReactionRemove(app: App) {
-    app.event('reaction_removed', async ({ event, say }) => {
+export default function registerEventReactionRemove (app: App): void {
+    app.event('reaction_removed', async ({event, say}) => {
         logDebug('reaction_removed', event);
 
         // Check to make sure we only look into reaction we subscribed to
@@ -31,7 +31,7 @@ export default function registerEventReactionRemove(app: App) {
             where: {
                 pullRequestLink,
             }
-        })
+        });
 
         // All actions beyond this line must have a valid code review record existed.
         if (!codeReview) {
@@ -46,8 +46,7 @@ export default function registerEventReactionRemove(app: App) {
             const result = await Review.withdraw(codeReview);
 
             await say(result.slackNotifyMessage as SayArguments);
-        }
-        else if(slackActions.claim.includes(data.reaction)) {
+        } else if (slackActions.claim.includes(data.reaction)) {
             const result = await Review.finish(codeReview, reactionUserId);
 
             if (['inprogress', 'pending'].includes(codeReview.status)) {

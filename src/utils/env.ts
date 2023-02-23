@@ -1,8 +1,8 @@
-import { config } from 'dotenv';
-import { resolve } from 'path';
+import {config} from 'dotenv';
+import {resolve} from 'path';
 
 const pathToConfig = '../../.env';
-config({ path: resolve(__dirname, pathToConfig) });
+config({path: resolve(__dirname, pathToConfig)});
 
 export const DB_HOST = process.env.DB_HOST ?? 'localhost';
 export const DB_NAME = process.env.DB_NAME ?? 'code_review_bot';

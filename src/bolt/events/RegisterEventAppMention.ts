@@ -1,8 +1,8 @@
-import {App} from '@slack/bolt';
+import type {App} from '@slack/bolt';
 import {logDebug} from '../../utils/log';
 
-export default function registerEventAppMention(app: App) {
-    app.event('app_mention', async ({ event, say }) => {
+export default function registerEventAppMention (app: App): void {
+    app.event('app_mention', async ({event, say}) => {
         logDebug('app_mention', event);
 
         const {text, ts, thread_ts, channel} = event;

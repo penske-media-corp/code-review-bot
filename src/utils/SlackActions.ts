@@ -1,23 +1,24 @@
-import {
+import type {
     Block,
     KnownBlock
 } from '@slack/bolt';
-import {
+import type {
     CodeReview,
     CodeReviewRelation,
-    PrismaClient,
     User
 } from '@prisma/client';
-import {logDebug} from './log';
+import {
+    PrismaClient
+} from '@prisma/client';
 
-const formatCodeReview = (codeReview:  CodeReview & {user: User, reviewers: (CodeReviewRelation & {reviewer: User})[]}) => {
+const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (CodeReviewRelation & {reviewer: User})[]}): (Block | KnownBlock)[] => {
     const reviewerCount = codeReview.reviewers.length;
     const approvalCount = codeReview.reviewers.filter((r) => r.status === 'approved').length;
 
-    const extractUsers = ({reviewer}: {reviewer: User}) => reviewer.displayName;
-    const reviewers: string[] = codeReview.reviewers.map(extractUsers);
+    const extractDisplayName = ({reviewer}: {reviewer: User}): string => reviewer.displayName;
+    const reviewers: string[] = codeReview.reviewers.map(extractDisplayName);
 
-    let text = `*<${codeReview.pullRequestLink}|${codeReview.pullRequestLink.replace(/.*penske-media-corp\//,'')}>*\n`;
+    let text = `*<${codeReview.pullRequestLink}|${codeReview.pullRequestLink.replace(/.*penske-media-corp\//, '')}>*\n`;
     const stats = [];
 
     if (reviewerCount) {
@@ -41,7 +42,7 @@ const formatCodeReview = (codeReview:  CodeReview & {user: User, reviewers: (Cod
 
     return [
         {
-            "type": "divider"
+            'type': 'divider'
         },
         {
             type: 'section',
@@ -65,7 +66,7 @@ const formatCodeReview = (codeReview:  CodeReview & {user: User, reviewers: (Cod
                     url: codeReview.pullRequestLink,
                 },
                 {
-                    type: "button",
+                    type: 'button',
                     text: {
                         type: 'plain_text',
                         text: ':approved: Approve',
@@ -86,14 +87,14 @@ const formatCodeReview = (codeReview:  CodeReview & {user: User, reviewers: (Cod
                 },
             ]
         }
-    ] as (KnownBlock | Block)[];
-}
+    ] as (Block | KnownBlock)[];
+};
 
-const getCodeReviewList = async (status: string) => {
+const getCodeReviewList = async (status: string): Promise<(Block | KnownBlock)[]> => {
 
     const prisma = new PrismaClient();
 
-    const where: { [index: string]: string } = {}
+    const where: {[index: string]: string} = {};
 
     if (status && status !== 'all') {
         where.status = status;
@@ -110,15 +111,15 @@ const getCodeReviewList = async (status: string) => {
         }
     });
 
-    let blocks: (KnownBlock | Block)[] = [];
+    let blocks: (Block | KnownBlock)[] = [];
 
     reviews.forEach((review) => {
         blocks = blocks.concat(formatCodeReview(review));
     });
 
     return blocks;
-}
+};
 
 export default {
     getCodeReviewList,
-}
+};

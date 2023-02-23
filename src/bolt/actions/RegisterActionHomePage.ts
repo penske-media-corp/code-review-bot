@@ -2,18 +2,18 @@ import {
     postSlackMessage,
     sentHomePageCodeReviewList
 } from '../utils';
-import {App} from '@slack/bolt';
-import {ChatPostMessageArguments} from '@slack/web-api';
+import type {App} from '@slack/bolt';
+import type {ChatPostMessageArguments} from '@slack/web-api';
 import {PrismaClient} from '@prisma/client';
 import Review from '../../service/Review';
 import {logDebug} from '../../utils/log';
 
-export default function registerActionHomePage(app: App) {
+export default function registerActionHomePage (app: App): void {
     app.action({callback_id: 'home_page'}, async ({action, body}) => {
         logDebug('action', action);
-        const actionUserId = body.user.id
+        const actionUserId = body.user.id;
 
-        const {action_id: actionId, value: actionValue} = action as {action_id: string, value: string};
+        const {action_id: actionId, value: actionValue} = action as {action_id: string; value: string};
 
         const prisma = new PrismaClient();
         const codeReview = await prisma.codeReview.findFirst({
@@ -24,11 +24,11 @@ export default function registerActionHomePage(app: App) {
             where: {
                 id: parseInt(actionId.split('-')[1]),
             }
-        })
+        });
 
         if (codeReview) {
             let result;
-            switch(actionValue) {
+            switch (actionValue) {
                 case 'claim':
                     result = await Review.claim(codeReview, actionUserId);
                     break;

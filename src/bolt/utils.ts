@@ -1,50 +1,50 @@
-import {
+import type {
     App,
     Block,
     KnownBlock,
     ReactionAddedEvent,
     ReactionRemovedEvent,
 } from '@slack/bolt';
-import {
+import type {
     ChatPostMessageArguments,
     ConversationsRepliesResponse
 } from '@slack/web-api';
-import {
+import type {
     ReactionData,
     UserInfo
 } from './types';
-import {
+import type {
     GenericMessageEvent
 } from '@slack/bolt/dist/types/events/message-events';
 import SlackActions from '../utils/SlackActions';
 
-let botUserId : string | unknown;
+let slackBotUserId: string | null = null;
 let slackBotApp: App;
 
-export function registerSlackBotApp(app: App) {
+export function registerSlackBotApp (app: App): void {
     slackBotApp = app;
 }
 
-export async function getBotUserId() {
-    if (!botUserId) {
+export async function getBotUserId (): Promise<string | null> {
+    if (!slackBotUserId) {
         const result = await slackBotApp.client.auth.test();
-        botUserId = result.user_id;
+        slackBotUserId = result.user_id ?? null;
     }
-    return botUserId;
+    return slackBotUserId;
 }
 
 // https://api.slack.com/methods/users.profile.get
-export async function getUserInfo(user: string): Promise<UserInfo> {
+export async function getUserInfo (user: string): Promise<UserInfo> {
     const info = await slackBotApp.client.users.profile.get({user: user});
-    const {profile: { real_name, display_name } = {} } = info;
+    const {profile: {real_name, display_name} = {}} = info;
 
     return {
         slackUserId: user,
         displayName: display_name?.length ? display_name : real_name as string,
-    }
+    };
 }
 
-export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedEvent): Promise<ReactionData | null> {
+export async function getReactionData (event: ReactionAddedEvent | ReactionRemovedEvent): Promise<ReactionData | null> {
     if (event.item.type !== 'message') {
         return null;
     }
@@ -57,17 +57,17 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
         ts: event.item.ts,
     });
 
-    const getMessageInfo = (data: ConversationsRepliesResponse) => {
+    const getMessageInfo = (data: ConversationsRepliesResponse): ReactionData => {
         const message = (data.messages ?? [])[0] as GenericMessageEvent;
         return {
             slackMsgText: message.text,
             slackMsgId: message.client_msg_id,
             slackMsgUserId: message.user,
             slackThreadTs: message.thread_ts ?? message.ts
-        }
+        } as ReactionData;
     };
     const botUserId = await getBotUserId();
-    let messageInfo;
+    let messageInfo = null;
 
     if (!result.client_msg_id && botUserId === event.item_user) {
         messageInfo = getMessageInfo(result);
@@ -101,8 +101,8 @@ export async function getReactionData(event: ReactionAddedEvent|ReactionRemovedE
     };
 }
 
-export async function sentHomePageCodeReviewList(slackUserId: string) {
-    const blocks: (KnownBlock | Block)[] = [
+export async function sentHomePageCodeReviewList (slackUserId: string): Promise<void> {
+    const blocks: (Block | KnownBlock)[] = [
         {
             type: 'section',
             text: {
@@ -116,14 +116,14 @@ export async function sentHomePageCodeReviewList(slackUserId: string) {
     await slackBotApp.client.views.publish({
         user_id: slackUserId,
         view: {
-            type: "home",
-            callback_id: "home_page",
+            type: 'home',
+            callback_id: 'home_page',
 
             blocks,
         }
     });
 }
 
-export async function postSlackMessage(slackMessage: ChatPostMessageArguments) {
+export async function postSlackMessage (slackMessage: ChatPostMessageArguments): Promise<void> {
     await slackBotApp.client.chat.postMessage(slackMessage);
 }
