@@ -68,7 +68,7 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
         }
 
         // If there is no PR info, try to check the message attachments, message is coming from github event.
-        if (!pullRequestLink.length && message.attachments.?length) {
+        if (!pullRequestLink.length && message.attachments?.length) {
             const {title} = message.attachments[0];
             if (title) {
                 const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(title);
