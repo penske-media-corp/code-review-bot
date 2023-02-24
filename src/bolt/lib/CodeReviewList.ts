@@ -127,8 +127,10 @@ const getCodeReviewList = async (status: string, slackUserId?: string): Promise<
             where.OR = [
                 {
                     userId: user?.id,
+                },
+                {
                     reviewers: {
-                        every: {
+                        some: {
                             userId: user?.id
                         }
                     }
