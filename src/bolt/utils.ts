@@ -127,8 +127,6 @@ export async function postSlackMessage (slackMessage: ChatPostMessageArguments):
 
 export async function sendCodeReviewSummary (channel: string): Promise<void> {
     let text = '*Reminders!*';
-    let pendingCount: number = 0;
-    let inProgressCount: number = 0;
 
     const result = await prisma.codeReview.groupBy({
         by: ['status'],
@@ -143,24 +141,27 @@ export async function sendCodeReviewSummary (channel: string): Promise<void> {
         }
     });
 
-    result.forEach((item) => {
-        switch (item.status) {
-            case 'pending':
-                pendingCount += item._count.status;
-                break;
-            case 'inprogress':
-                inProgressCount += item._count.status;
-        }
-    });
+    // Translate result array into object.  @TODO: Should combine the code an move the groupBy codes into a reusable module.
+    const counts: {pending?: number; inprogress?: number} = result.reduce((acc, item) => {
+        return {
+            ...acc,
+            ...{
+                [item.status]: item._count.status,
+            }
+        };
+    }, {});
 
-    if (!pendingCount && !inProgressCount) {
+    const pendingCount: number = counts.pending ?? 0;
+    const inProgressCount: number = counts.inprogress ?? 0;
+
+    if (pendingCount + inProgressCount === 0) {
         return;
     }
 
-    if (pendingCount) {
+    if (pendingCount > 0) {
         text = `${text}\nThere ${pluralize('is', pendingCount)} <${APP_BASE_URL}|*${pendingCount}* outstanding ${pluralize('request', pendingCount)}> waiting for code review.`;
     }
-    if (inProgressCount) {
+    if (inProgressCount > 0) {
         text = `${text}\n*${inProgressCount}* in progress ${pluralize('request', inProgressCount)} ${pluralize('is', inProgressCount)} waiting for approval.`;
     }
 
