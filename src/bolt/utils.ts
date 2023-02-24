@@ -23,6 +23,7 @@ import type {
 } from '@slack/bolt/dist/types/events/message-events';
 import getCodeReviewList from './lib/CodeReviewList';
 import {logDebug} from '../utils/log';
+import pluralize from 'pluralize';
 import {scheduleJob} from 'node-schedule';
 
 let slackBotUserId: string | null = null;
@@ -157,10 +158,10 @@ export async function sendCodeReviewSummary (channel: string): Promise<void> {
     }
 
     if (pendingCount) {
-        text = `${text}\nThere ${pendingCount === 1 ? 'is' : 'are'} <${APP_BASE_URL}|*${pendingCount}* outstanding request${pendingCount > 1 ? 's' : ''}> waiting for code review.`;
+        text = `${text}\nThere ${pluralize('is', pendingCount)} <${APP_BASE_URL}|*${pendingCount}* outstanding ${pluralize('request', pendingCount)}> waiting for code review.`;
     }
     if (inProgressCount) {
-        text = `${text}\n*${inProgressCount}* in progress request${inProgressCount > 1 ? 's' : ''} ${inProgressCount === 1 ? 'is' : 'are'} waiting for approval.`;
+        text = `${text}\n*${inProgressCount}* in progress ${pluralize('request', inProgressCount)} ${pluralize('is', inProgressCount)} waiting for approval.`;
     }
 
     logDebug(`Sending reminders to channel ${channel}`);

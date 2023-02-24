@@ -7,6 +7,7 @@ import type {
     CodeReviewRelation,
     User
 } from '@prisma/client';
+import pluralize from 'pluralize';
 import {prisma} from '../../utils/config';
 
 const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (CodeReviewRelation & {reviewer: User})[]}): (Block | KnownBlock)[] => {
@@ -73,10 +74,10 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
 
 
     if (reviewerCount) {
-        stats.push(`${':eyes:'.repeat(reviewerCount)} ${reviewerCount} review(s)`);
+        stats.push(`${':eyes:'.repeat(reviewerCount)} ${reviewerCount} ${pluralize('review', reviewerCount)}`);
     }
     if (approvalCount) {
-        stats.push(`${':approved:'.repeat(approvalCount)} ${approvalCount} approval(s)`);
+        stats.push(`${':approved:'.repeat(approvalCount)} ${approvalCount} ${pluralize('approval', approvalCount)}`);
     }
     if (stats.length) {
         text = `${text}${stats.join(', ')}, `;
