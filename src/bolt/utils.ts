@@ -59,18 +59,37 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
 
     const getMessageInfo = (data: ConversationsRepliesResponse): ReactionData => {
         const message = (data.messages ?? [])[0] as GenericMessageEvent;
+        let pullRequestLink = '';
+
+        // Try to parse github pull request from text message if available.
+        if (message.text) {
+            const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(message.text);
+            pullRequestLink = match ? match[0] : '';
+        }
+
+        // If there is no PR info, try to check the message attachments, message is coming from github event.
+        if (!pullRequestLink.length && message.attachments && message.attachments.length) {
+            const {title} = message.attachments[0];
+            if (title) {
+                const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(title);
+                pullRequestLink = match ? match[0] : '';
+            }
+        }
+
         return {
             slackMsgText: message.text,
             slackMsgId: message.client_msg_id,
             slackMsgUserId: message.user,
-            slackThreadTs: message.thread_ts ?? message.ts
+            slackThreadTs: message.thread_ts ?? message.ts,
+            pullRequestLink,
         } as ReactionData;
     };
     const botUserId = await getBotUserId();
-    let messageInfo = null;
+    let messageInfo = getMessageInfo(result);
 
-    if (!result.client_msg_id && botUserId === event.item_user) {
-        messageInfo = getMessageInfo(result);
+    if (!result.client_msg_id && botUserId === event.item_user && !messageInfo.pullRequestLink.length &&
+        messageInfo.slackMsgTs !== messageInfo.slackThreadTs) {
+
         result = await slackBotApp.client.conversations.replies({
             channel: event.item.channel,
             inclusive: true,
@@ -78,10 +97,8 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
             limit: 1,
             ts: messageInfo.slackThreadTs,
         });
-
+        messageInfo = getMessageInfo(result);
     }
-
-    messageInfo = getMessageInfo(result);
 
     result = await slackBotApp.client.chat.getPermalink({
         channel: event.item.channel,
@@ -90,13 +107,11 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
 
     const {permalink} = result;
 
-    const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(messageInfo.slackMsgText as string);
     return {
         ...messageInfo,
         slackPermalink: permalink as string,
         reaction: event.reaction,
         reactionUserId: event.user,
-        pullRequestLink: match ? match[0] : '',
         slackChannelId: event.item.channel,
     };
 }
