@@ -13,17 +13,20 @@ import type {
     ReactionData,
     UserInfo
 } from './types';
+import {
+    prisma,
+    scheduledReminders
+} from '../utils/config';
+import {APP_BASE_URL} from '../utils/env';
 import type {
     GenericMessageEvent
 } from '@slack/bolt/dist/types/events/message-events';
 import getCodeReviewList from './lib/CodeReviewList';
+import {logDebug} from '../utils/log';
+import {scheduleJob} from 'node-schedule';
 
 let slackBotUserId: string | null = null;
 let slackBotApp: App;
-
-export function registerSlackBotApp (app: App): void {
-    slackBotApp = app;
-}
 
 export async function getBotUserId (): Promise<string | null> {
     if (!slackBotUserId) {
@@ -116,13 +119,65 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
     };
 }
 
+
+export async function postSlackMessage (slackMessage: ChatPostMessageArguments): Promise<void> {
+    await slackBotApp.client.chat.postMessage(slackMessage);
+}
+
+export async function sendCodeReviewSummary (channel: string): Promise<void> {
+    let text = '*Reminders!*';
+    let pendingCount: number = 0;
+    let inProgressCount: number = 0;
+
+    const result = await prisma.codeReview.groupBy({
+        by: ['status'],
+        where: {
+            status: {
+                in: ['pending', 'inprogress'],
+            },
+            slackChannelId: channel,
+        },
+        _count: {
+            status: true,
+        }
+    });
+
+    result.forEach((item) => {
+        switch (item.status) {
+            case 'pending':
+                pendingCount += item._count.status;
+                break;
+            case 'inprogress':
+                inProgressCount += item._count.status;
+        }
+    });
+
+    if (!pendingCount && !inProgressCount) {
+        return;
+    }
+
+    if (pendingCount) {
+        text = `${text}\nThere ${pendingCount === 1 ? 'is' : 'are'} <${APP_BASE_URL}|*${pendingCount}* outstanding request${pendingCount > 1 ? 's' : ''}> waiting for code review.`;
+    }
+    if (inProgressCount) {
+        text = `${text}\n*${inProgressCount}* in progress request${inProgressCount > 1 ? 's' : ''} ${inProgressCount === 1 ? 'is' : 'are'} waiting for approval.`;
+    }
+
+    logDebug(`Sending reminders to channel ${channel}`);
+    await postSlackMessage({
+        mrkdwn: true,
+        channel,
+        text,
+    });
+}
+
 export async function sentHomePageCodeReviewList (slackUserId: string, status: string = 'pending'): Promise<void> {
     const blocks: (Block | KnownBlock)[] = [
         {
             type: 'section',
             text: {
                 type: 'mrkdwn',
-                text: '*Outstanding Code Review Queue:* <https://code-review.pmcdev.io>'
+                text: `*Outstanding Code Review Queue:* <${APP_BASE_URL}>`
             }
         },
         {
@@ -174,6 +229,26 @@ export async function sentHomePageCodeReviewList (slackUserId: string, status: s
     });
 }
 
-export async function postSlackMessage (slackMessage: ChatPostMessageArguments): Promise<void> {
-    await slackBotApp.client.chat.postMessage(slackMessage);
+// @TODO: Support different schedule for each channel
+export async function sendReminders (): Promise<void> {
+    const result = await prisma.codeReview.findMany({
+        where: {
+            status: {
+                in: ['pending', 'inprogress'],
+            },
+        },
+        distinct: ['slackChannelId'],
+    });
+
+    result.forEach((item) => {
+        if (!item.slackChannelId) {
+            return;
+        }
+        void sendCodeReviewSummary(item.slackChannelId);
+    });
+}
+
+export function registerSlackBotApp (app: App): void {
+    slackBotApp = app;
+    scheduledReminders.forEach((rule) => scheduleJob(rule, sendReminders));
 }
