@@ -4,7 +4,6 @@ import {
 } from '../utils';
 import type {App} from '@slack/bolt';
 import type {ChatPostMessageArguments} from '@slack/web-api';
-import {PrismaClient} from '@prisma/client';
 import Review from '../../service/Review';
 import {logDebug} from '../../utils/log';
 import {prisma} from '../../utils/config';

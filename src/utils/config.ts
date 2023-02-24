@@ -14,7 +14,7 @@ export const teamToMentionInChannelAlert: {[key: string]: string} = {
 };
 
 export const scheduledReminders = [
-    '0 0 14 * * 1-5' // Mon-Fri @14:00
+    '0 20 * * 1-5', // Mon-Fri 12:00p PT, 3:00p ET, 20:00 UTC
 ];
 
 export const prisma = new PrismaClient();

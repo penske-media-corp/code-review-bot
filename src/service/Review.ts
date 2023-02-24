@@ -5,6 +5,7 @@ import type {
 } from '@prisma/client';
 import type {ReactionData} from '../bolt/types';
 import {getUserInfo} from '../bolt/utils';
+import pluralize from 'pluralize';
 import {prisma} from '../utils/config';
 
 export interface ReviewActionResult {
@@ -186,7 +187,7 @@ const approve = async (codeReview: CodeReview & {user: User; reviewers: CodeRevi
     const stats = await calculateReviewStats(codeReview);
     let message = stats.approvalCount === 1
         ? 'One more approval :approved: is needed.'
-        : `Code has ${stats.approvalCount} approvals, ready to merge.`;
+        : `Code has ${stats.approvalCount} ${pluralize('approval', stats.approvalCount)}, ready to merge.`;
 
     message = `*${userDisplayName}* approved the code. ${message}`;
 
@@ -210,7 +211,7 @@ const claim = async (codeReview: CodeReview & {user: User; reviewers: CodeReview
     const count = stats.reviewerCount + stats.approvalCount;
     let message = count === 1
         ? 'One more reviewer :review: is needed.'
-        : `Code has ${count} reviewers.`;
+        : `Code has ${count} ${pluralize('reviewer', count)}.`;
 
     message = `*${userDisplayName}* claimed the code review. ${message}`;
 
@@ -233,7 +234,7 @@ const finish = async (codeReview: CodeReview & {user: User; reviewers: CodeRevie
     const count = stats.reviewerCount + stats.approvalCount;
     let message = count === 1
         ? 'One more reviewer :review: is needed.'
-        : `Code has ${count} reviewers.`;
+        : `Code has ${count} ${pluralize('reviewer', count)}.`;
 
     message = `*${userDisplayName}* withdrew or finished reviewing the code without providing an approval.  ${message}`;
 

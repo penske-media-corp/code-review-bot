@@ -16,11 +16,12 @@ export default function registerEventReactionRemove (app: App): void {
 
         const data = await getReactionData(event);
 
-        if (!data) {
+        if (!data?.pullRequestLink) {
             return;
         }
 
         const {pullRequestLink, reactionUserId, slackThreadTs} = data;
+
         const codeReview = await prisma.codeReview.findFirst({
             include: {
                 user: true,
