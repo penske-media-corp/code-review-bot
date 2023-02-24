@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Slack Bolt app for tracking code reviews",
   "license": "GPLv2",
+  "engines": {
+    "npm": ">=9",
+    "node": ">=18"
+  },
   "main": "build/server.js",
   "scripts": {
     "build": "rm -rf build && tsc -p .",
