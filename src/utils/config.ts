@@ -1,3 +1,4 @@
+import {LOG_DEBUG} from './env';
 import {PrismaClient} from '@prisma/client';
 
 export const slackActions = {
@@ -17,4 +18,12 @@ export const scheduledReminders = [
     '0 20 * * 1-5', // Mon-Fri 12:00p PT, 3:00p ET, 20:00 UTC
 ];
 
-export const prisma = new PrismaClient();
+const prismaClientOptions = {};
+
+if (LOG_DEBUG) {
+    Object.assign(prismaClientOptions, {
+        log: ['query', 'info', 'warn', 'error'],
+    });
+}
+
+export const prisma = new PrismaClient(prismaClientOptions);

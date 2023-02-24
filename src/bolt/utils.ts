@@ -64,6 +64,7 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
     const getMessageInfo = (data: ConversationsRepliesResponse): ReactionData => {
         const message = (data.messages ?? [])[0] as GenericMessageEvent;
         let pullRequestLink = '';
+        let slackMsgUserId = message.user;
 
         // Try to parse github pull request from text message if available.
         if (message.text) {
@@ -78,12 +79,14 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
                 const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(title);
                 pullRequestLink = match ? match[0] : '';
             }
+            // If the message coming from the event bot, we want to assign the request to the reaction user.
+            slackMsgUserId = event.user;
         }
 
         return {
             slackMsgText: message.text,
             slackMsgId: message.client_msg_id,
-            slackMsgUserId: message.user,
+            slackMsgUserId,
             slackThreadTs: message.thread_ts ?? message.ts,
             pullRequestLink,
         } as ReactionData;
