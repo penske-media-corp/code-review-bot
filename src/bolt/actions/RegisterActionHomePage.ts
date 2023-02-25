@@ -5,8 +5,8 @@ import {
 import type {App} from '@slack/bolt';
 import type {ChatPostMessageArguments} from '@slack/web-api';
 import Review from '../../service/Review';
-import {logDebug} from '../../utils/log';
-import {prisma} from '../../utils/config';
+import {logDebug} from '../../lib/log';
+import {prisma} from '../../lib/config';
 
 export default function registerActionHomePage (app: App): void {
     app.action({callback_id: 'home_page'}, async ({action, body}) => {
@@ -46,7 +46,6 @@ export default function registerActionHomePage (app: App): void {
                     await postSlackMessage(result.slackNotifyMessage as ChatPostMessageArguments);
                 }
             }
-            // TODO: Need code to keep track user's action and pass it here.  Possible stored in User db record.
             await sentHomePageCodeReviewList({slackUserId: actionUserId});
         } else if (actionValue && ['pending', 'inprogress', 'mine'].includes(actionValue)) {
             await sentHomePageCodeReviewList({slackUserId: actionUserId, codeReviewStatus: actionValue});

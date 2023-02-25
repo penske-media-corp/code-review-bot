@@ -51,7 +51,7 @@ model User {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   displayName String   @map("display_name") @db.VarChar(40)
-  slackUserId String  @map("slack_user_id") @db.VarChar(20)
+  slackUserId String   @map("slack_user_id") @db.VarChar(20)
   email       String?  @map("email") @db.VarChar(128)
 
   codeReviews  CodeReviewRelation[]
@@ -60,4 +60,15 @@ model User {
   session Json?
 
   @@map("users")
+}
+
+model Option {
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  slackChannelId String   @map("slack_channel_id") @db.VarChar(20)
+  name           String   @db.VarChar(128)
+  value          Json?
+
+  @@id([slackChannelId, name])
+  @@map("options")
 }

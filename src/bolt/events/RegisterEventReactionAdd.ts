@@ -3,13 +3,13 @@ import type {
     SayArguments
 } from '@slack/bolt';
 import {
+    getGroupToMentionInChannel,
     slackActions,
-    teamToMentionInChannelAlert,
-} from '../../utils/config';
+} from '../../lib/config';
 import Review from '../../service/Review';
 import {getReactionData} from '../utils';
-import {logDebug} from '../../utils/log';
-import {prisma} from '../../utils/config';
+import {logDebug} from '../../lib/log';
+import {prisma} from '../../lib/config';
 
 export default function registerEventReactionAdd (app: App): void {
     app.event('reaction_added', async ({event, say}) => {
@@ -39,7 +39,7 @@ export default function registerEventReactionAdd (app: App): void {
                     thread_ts: slackThreadTs,
                 });
             } else {
-                const notify = teamToMentionInChannelAlert[data.slackChannelId] || teamToMentionInChannelAlert.default;
+                const notify = await getGroupToMentionInChannel(data.slackChannelId);
 
                 await say({
                     text: `<${notify}>, ${result.message}`,

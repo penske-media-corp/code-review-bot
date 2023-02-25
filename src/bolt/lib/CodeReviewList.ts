@@ -8,7 +8,7 @@ import type {
     User
 } from '@prisma/client';
 import pluralize from 'pluralize';
-import {prisma} from '../../utils/config';
+import {prisma} from '../../lib/config';
 
 const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (CodeReviewRelation & {reviewer: User})[]}): (Block | KnownBlock)[] => {
     const reviewerCount = codeReview.reviewers.length;

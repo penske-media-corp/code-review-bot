@@ -6,7 +6,7 @@ import {
     SLACK_APP_TOKEN,
     SLACK_BOT_TOKEN,
     SLACK_SIGNING_SECRET
-} from '../utils/env';
+} from '../lib/env';
 import registerActionHomePage from './actions/RegisterActionHomePage';
 import registerEventAppHomeOpened from './events/RegisterEventAppHomeOpened';
 import registerEventAppMention from './events/RegisterEventAppMention';

@@ -1,7 +1,7 @@
 import type {User} from '@prisma/client';
 import express from 'express';
-import {logError} from '../../utils/log';
-import {prisma} from '../../utils/config';
+import {logError} from '../../lib/log';
+import {prisma} from '../../lib/config';
 
 const api = express.Router();
 

@@ -14,31 +14,17 @@ import type {
     ReactionData,
     UserInfo
 } from './types';
-import {
-    prisma,
-    scheduledReminders
-} from '../utils/config';
-import {APP_BASE_URL} from '../utils/env';
+import {APP_BASE_URL} from '../lib/env';
 import type {GithubBotEventData} from './types';
+import {extractPullRequestLink}  from '../lib/utils';
 import getCodeReviewList from './lib/CodeReviewList';
-import {logDebug} from '../utils/log';
+import {logDebug} from '../lib/log';
 import pluralize from 'pluralize';
-import {scheduleJob} from 'node-schedule';
+import {prisma} from '../lib/config';
+import {registerSchedule} from '../lib/schedule';
 
 let slackBotUserId: string | null = null;
 let slackBotApp: App;
-
-const GITHUB_PR_REGEX = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/;
-
-export function extractPullRequestLink (data?: string): string {
-    if (!data) {
-        return '';
-    }
-
-    const match = GITHUB_PR_REGEX.exec(data);
-
-    return match ? match[0] : '';
-}
 
 export async function getBotUserId (): Promise<string | null> {
     if (!slackBotUserId) {
@@ -240,6 +226,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         action_id: `mine`,
     };
 
+    // Retrieve the user session info from user record in db.
     const user = await prisma.user.findFirst({
         where: {
             slackUserId,
@@ -251,6 +238,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
     const filterStatus = codeReviewStatus ?? session.filterStatus;
 
     if (user) {
+        // If the request filter changed, save them to the session.
         if (filterChannel !== session.filterChannel || filterStatus !== session.filterStatus) {
             Object.assign(session, {filterChannel, filterStatus});
             await prisma.user.update({
@@ -321,26 +309,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
     });
 }
 
-// @TODO: Support different schedule for each channel
-export async function sendReminders (): Promise<void> {
-    const result = await prisma.codeReview.findMany({
-        where: {
-            status: {
-                in: ['pending', 'inprogress'],
-            },
-        },
-        distinct: ['slackChannelId'],
-    });
-
-    result.forEach((item) => {
-        if (!item.slackChannelId) {
-            return;
-        }
-        void sendCodeReviewSummary(item.slackChannelId);
-    });
-}
-
 export function registerSlackBotApp (app: App): void {
     slackBotApp = app;
-    scheduledReminders.forEach((rule) => scheduleJob(rule, sendReminders));
+    registerSchedule();
 }

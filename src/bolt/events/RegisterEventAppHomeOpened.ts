@@ -1,5 +1,5 @@
 import type {App} from '@slack/bolt';
-import {logDebug} from '../../utils/log';
+import {logDebug} from '../../lib/log';
 import {sentHomePageCodeReviewList} from '../utils';
 
 export default function registerEventAppHomeOpened (app: App): void {
