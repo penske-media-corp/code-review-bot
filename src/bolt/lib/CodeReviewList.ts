@@ -85,7 +85,7 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
 
 
     if (reviewerCount) {
-        stats.push(`':eyes:' ${reviewerCount} ${pluralize('review', reviewerCount)}`);
+        stats.push(`:eyes: ${reviewerCount} ${pluralize('review', reviewerCount)}`);
     }
     if (approvalCount) {
         stats.push(`:approved: ${approvalCount} ${pluralize('approval', approvalCount)}`);
