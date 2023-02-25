@@ -89,6 +89,12 @@ export default function registerEventReactionAdd (app: App): void {
             if (['inprogress', 'pending'].includes(codeReview.status)) {
                 await say(result.slackNotifyMessage as SayArguments);
             }
+        } else if (slackActions.close.includes(data.reaction)) {
+            const result = await Review.close(codeReview);
+
+            if (codeReview.status === 'closed') {
+                await say(result.slackNotifyMessage as SayArguments);
+            }
         }
     });
 }
