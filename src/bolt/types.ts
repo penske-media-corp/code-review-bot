@@ -15,3 +15,9 @@ export interface UserInfo {
     slackUserId: string;
     displayName: string;
 }
+
+export interface GithubBotEventData {
+    action: string;
+    message: string;
+    pullRequestLink: string;
+}

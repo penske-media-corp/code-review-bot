@@ -319,10 +319,35 @@ const withdraw = async (codeReview: CodeReview & {user: User}): Promise<ReviewAc
     };
 };
 
+const close = async (codeReview: CodeReview & {user: User}, closeMessage?: string): Promise<ReviewActionResult> => {
+    const message = closeMessage ?? 'Pull request has been closed.';
+
+    codeReview.status = 'closed';
+    await prisma.codeReview.update({
+        where: {
+            id: codeReview.id,
+        },
+        data: {
+            status: codeReview.status,
+        }
+    });
+
+    return {
+        codeReview,
+        message,
+        slackNotifyMessage: {
+            channel: codeReview.slackChannelId,
+            text: message,
+            thread_ts: codeReview.slackThreadTs,
+        },
+    };
+};
+
 export default {
     add,
     approve,
     claim,
+    close,
     finish,
     remove,
     requestChanges,

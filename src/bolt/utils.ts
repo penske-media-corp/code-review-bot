@@ -1,6 +1,7 @@
 import type {
     App,
     Block,
+    GenericMessageEvent,
     KnownBlock,
     ReactionAddedEvent,
     ReactionRemovedEvent,
@@ -18,9 +19,7 @@ import {
     scheduledReminders
 } from '../utils/config';
 import {APP_BASE_URL} from '../utils/env';
-import type {
-    GenericMessageEvent
-} from '@slack/bolt/dist/types/events/message-events';
+import type {GithubBotEventData} from './types';
 import getCodeReviewList from './lib/CodeReviewList';
 import {logDebug} from '../utils/log';
 import pluralize from 'pluralize';
@@ -28,6 +27,18 @@ import {scheduleJob} from 'node-schedule';
 
 let slackBotUserId: string | null = null;
 let slackBotApp: App;
+
+const GITHUB_PR_REGEX = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/;
+
+export function extractPullRequestLink (data?: string): string {
+    if (!data) {
+        return '';
+    }
+
+    const match = GITHUB_PR_REGEX.exec(data);
+
+    return match ? match[0] : '';
+}
 
 export async function getBotUserId (): Promise<string | null> {
     if (!slackBotUserId) {
@@ -67,18 +78,11 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
         let slackMsgUserId = message.user;
 
         // Try to parse github pull request from text message if available.
-        if (message.text) {
-            const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(message.text);
-            pullRequestLink = match ? match[0] : '';
-        }
+        pullRequestLink = extractPullRequestLink(message.text);
 
         // If there is no PR info, try to check the message attachments, message is coming from github event.
         if (!pullRequestLink.length && message.attachments?.length) {
-            const {title} = message.attachments[0];
-            if (title) {
-                const match = /https:\/\/github.com\/[^ ]+?\/pull\/\d+/.exec(title);
-                pullRequestLink = match ? match[0] : '';
-            }
+            pullRequestLink = extractPullRequestLink(message.attachments[0].title);
             // If the message coming from the event bot, we want to assign the request to the reaction user.
             slackMsgUserId = event.user;
         }
@@ -123,6 +127,34 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
     };
 }
 
+/**
+ * Parse and return the data we needed.
+ * Currently only process Github bot pull request closed message.
+ *
+ * @param event
+ */
+export function getGithubBotEventData (event: GenericMessageEvent): GithubBotEventData | null {
+    if (!event.bot_id || !event.attachments?.length) {
+        return null;
+    }
+
+    const {pretext, title} = event.attachments[0];
+    const pullRequestLink = extractPullRequestLink(title);
+
+    if (pullRequestLink === '' || !pretext) {
+        return null;
+    }
+
+    if (!pretext.includes('Pull request closed by')) {
+        return null;
+    }
+
+    return {
+        pullRequestLink,
+        action: 'close',
+        message: pretext,
+    };
+}
 
 export async function postSlackMessage (slackMessage: ChatPostMessageArguments): Promise<void> {
     await slackBotApp.client.chat.postMessage(slackMessage);

@@ -11,6 +11,7 @@ import registerActionHomePage from './actions/RegisterActionHomePage';
 import registerEventAppHomeOpened from './events/RegisterEventAppHomeOpened';
 import registerEventAppMention from './events/RegisterEventAppMention';
 import registerEventMemberJoinedChannel from './events/RegisterEventMemberJoinedChannel';
+import registerEventMessage from './events/RegisterEventMessage';
 import registerEventReactionAdd from './events/RegisterEventReactionAdd';
 import registerEventReactionRemove from './events/RegisterEventReactionRemove';
 import {registerSlackBotApp} from './utils';
@@ -34,5 +35,5 @@ registerEventAppMention(slackBotApp);
 registerEventMemberJoinedChannel(slackBotApp);
 registerEventReactionAdd(slackBotApp);
 registerEventReactionRemove(slackBotApp);
-
+registerEventMessage(slackBotApp);
 export default slackBotApp;
