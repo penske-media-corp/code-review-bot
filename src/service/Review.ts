@@ -257,12 +257,14 @@ const remove = async (codeReview: CodeReview & {user: User}, slackUserId: string
 
     codeReview.status = 'removed';
 
-    await prisma.codeReview.update({
+    await prisma.codeReviewRelation.deleteMany({
+        where: {
+            codeReviewId: codeReview.id,
+        }
+    });
+    await prisma.codeReview.delete({
         where: {
             id: codeReview.id,
-        },
-        data: {
-            status: codeReview.status,
         }
     });
 
@@ -352,5 +354,4 @@ export default {
     remove,
     requestChanges,
     withdraw,
-    setCodeReviewerStatus,
 };
