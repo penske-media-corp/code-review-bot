@@ -40,6 +40,17 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
         action_id: `claim-${codeReview.id}`,
         url: codeReview.pullRequestLink,
     };
+    const buttonClose = {
+        type: 'button',
+        text: {
+            type: 'plain_text',
+            text: ':done: Close',
+            emoji: true
+        },
+        value: 'close',
+        action_id: `close-${codeReview.id}`,
+        url: codeReview.pullRequestLink,
+    };
     const buttonRemove = {
         type: 'button',
         text: {
@@ -105,7 +116,7 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
         },
         {
             type: 'actions',
-            elements: [buttonClaim, buttonApprove, buttonRemove],
+            elements: [buttonClaim, buttonApprove, buttonClose, buttonRemove],
         }
     ] as (Block | KnownBlock)[];
 };

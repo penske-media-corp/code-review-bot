@@ -15,7 +15,7 @@ export default function registerActionHomePage (app: App): void {
 
         const {action_id: actionId, value: actionValue} = action as {action_id: string; value: string};
 
-        if (['claim', 'approve', 'remove'].includes(actionValue)) {
+        if (['approve', 'claim', 'close', 'remove'].includes(actionValue)) {
             const codeReview = await prisma.codeReview.findFirst({
                 include: {
                     user: true,
@@ -29,11 +29,14 @@ export default function registerActionHomePage (app: App): void {
             if (codeReview) {
                 let result;
                 switch (actionValue) {
+                    case 'approve':
+                        result = await Review.approve(codeReview, actionUserId);
+                        break;
                     case 'claim':
                         result = await Review.claim(codeReview, actionUserId);
                         break;
-                    case 'approve':
-                        result = await Review.approve(codeReview, actionUserId);
+                    case 'close':
+                        result = await Review.close(codeReview);
                         break;
                     case 'remove':
                         result = await Review.remove(codeReview, actionUserId);
