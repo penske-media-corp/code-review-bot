@@ -12,7 +12,7 @@ function App() {
         fetch(`/api/reviews/${channel}/${status}`)
             .then((res) => res.json())
             .then((reviews) => {
-                if (channel) {
+                if (channel && channel !== 'all') {
                     fetch(`/api/channel/${channel}`)
                         .then((r) => r.json())
                         .then((channel) => {
