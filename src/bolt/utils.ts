@@ -209,6 +209,36 @@ export async function sendCodeReviewSummary (channel: string): Promise<void> {
 }
 
 export async function sentHomePageCodeReviewList (slackUserId: string, status: string = 'pending'): Promise<void> {
+    const buttonPendingReviews = {
+        type: 'button',
+        text: {
+            type: 'plain_text',
+            text: 'Pending Reviews',
+            emoji: true
+        },
+        value: `pending`,
+        action_id: `pending`
+    };
+    const buttonInProgressReviews = {
+        type: 'button',
+        text: {
+            type: 'plain_text',
+            text: 'In Progress Reviews',
+            emoji: true
+        },
+        value: `inprogress`,
+        action_id: `inprogress`
+    };
+    const buttonMyReviews = {
+        type: 'button',
+        text: {
+            type: 'plain_text',
+            text: 'My Reviews',
+            emoji: true
+        },
+        value: 'mine',
+        action_id: `mine`,
+    };
     const blocks: (Block | KnownBlock)[] = [
         {
             type: 'section',
@@ -219,41 +249,22 @@ export async function sentHomePageCodeReviewList (slackUserId: string, status: s
         },
         {
             type: 'actions',
-            elements: [
-                {
-                    type: 'button',
-                    text: {
-                        type: 'plain_text',
-                        text: 'Pending Reviews',
-                        emoji: true
-                    },
-                    value: `pending`,
-                    action_id: `pending`
-                },
-                {
-                    type: 'button',
-                    text: {
-                        type: 'plain_text',
-                        text: 'In Progress Reviews',
-                        emoji: true
-                    },
-                    value: `inprogress`,
-                    action_id: `inprogress`
-                },
-                {
-                    type: 'button',
-                    text: {
-                        type: 'plain_text',
-                        text: 'My Reviews',
-                        emoji: true
-                    },
-                    value: 'mine',
-                    action_id: `mine`,
-                },
-            ]
+            elements: [buttonPendingReviews, buttonInProgressReviews, buttonMyReviews ],
         },
         ...await getCodeReviewList(status, slackUserId)
     ];
+
+    switch (status) {
+        case 'mine':
+            Object.assign(buttonMyReviews, {style: 'primary'});
+            break;
+        case 'inprogress':
+            Object.assign(buttonInProgressReviews, {style: 'primary'});
+            break;
+        default:
+            Object.assign(buttonPendingReviews, {style: 'primary'});
+            break;
+    }
 
     await slackBotApp.client.views.publish({
         user_id: slackUserId,

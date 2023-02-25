@@ -46,6 +46,7 @@ export default function registerActionHomePage (app: App): void {
                     await postSlackMessage(result.slackNotifyMessage as ChatPostMessageArguments);
                 }
             }
+            // TODO: Need code to keep track user's action and pass it here.  Possible stored in User db record.
             await sentHomePageCodeReviewList(actionUserId);
         } else if (['pending', 'inprogress', 'mine'].includes(actionValue)) {
             await sentHomePageCodeReviewList(actionUserId, actionValue);
