@@ -208,7 +208,7 @@ export async function sendCodeReviewSummary (channel: string): Promise<void> {
     });
 }
 
-export async function sentHomePageCodeReviewList (slackUserId: string, status: string = 'pending'): Promise<void> {
+export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus, slackChannelId}: {slackUserId: string; codeReviewStatus?: string; slackChannelId?: string}): Promise<void> {
     const buttonPendingReviews = {
         type: 'button',
         text: {
@@ -239,6 +239,45 @@ export async function sentHomePageCodeReviewList (slackUserId: string, status: s
         value: 'mine',
         action_id: `mine`,
     };
+
+    const user = await prisma.user.findFirst({
+        where: {
+            slackUserId,
+        }
+    });
+
+    const session = (user?.session ?? {filterChannel: '', filterStatus: ''}) as {filterChannel: string; filterStatus: string};
+    const filterChannel = slackChannelId ?? session.filterChannel;
+    const filterStatus = codeReviewStatus ?? session.filterStatus;
+
+    if (user) {
+        if (filterChannel !== session.filterChannel || filterStatus !== session.filterStatus) {
+            Object.assign(session, {filterChannel, filterStatus});
+            await prisma.user.update({
+                where: {
+                    id: user.id,
+                },
+                data: {
+                    session,
+                }
+            });
+        }
+    }
+
+    const filterByChannel = {
+        type: 'channels_select',
+        placeholder: {
+            type: 'plain_text',
+            text: 'Filter by channel',
+            emoji: true
+        },
+        // initial_channel: '',
+        action_id: 'channel',
+        ...filterChannel && {
+            initial_channel: filterChannel,
+        } || {}
+    };
+
     const blocks: (Block | KnownBlock)[] = [
         {
             type: 'section',
@@ -249,12 +288,17 @@ export async function sentHomePageCodeReviewList (slackUserId: string, status: s
         },
         {
             type: 'actions',
-            elements: [buttonPendingReviews, buttonInProgressReviews, buttonMyReviews ],
+            elements: [
+                filterByChannel,
+                buttonPendingReviews,
+                buttonInProgressReviews,
+                buttonMyReviews,
+            ],
         },
-        ...await getCodeReviewList(status, slackUserId)
+        ...await getCodeReviewList({codeReviewStatus: filterStatus, slackChannelId: filterChannel})
     ];
 
-    switch (status) {
+    switch (filterStatus) {
         case 'mine':
             Object.assign(buttonMyReviews, {style: 'primary'});
             break;

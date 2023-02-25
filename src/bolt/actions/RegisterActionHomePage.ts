@@ -13,9 +13,9 @@ export default function registerActionHomePage (app: App): void {
         logDebug('action', action);
         const actionUserId = body.user.id;
 
-        const {action_id: actionId, value: actionValue} = action as {action_id: string; value: string};
+        const {action_id: actionId, value: actionValue, selected_channel: slackChannelId} = (action as unknown) as {action_id: string; value?: string; selected_channel?: string};
 
-        if (['approve', 'claim', 'close', 'remove'].includes(actionValue)) {
+        if (actionValue && ['approve', 'claim', 'close', 'remove'].includes(actionValue)) {
             const codeReview = await prisma.codeReview.findFirst({
                 include: {
                     user: true,
@@ -47,9 +47,11 @@ export default function registerActionHomePage (app: App): void {
                 }
             }
             // TODO: Need code to keep track user's action and pass it here.  Possible stored in User db record.
-            await sentHomePageCodeReviewList(actionUserId);
-        } else if (['pending', 'inprogress', 'mine'].includes(actionValue)) {
-            await sentHomePageCodeReviewList(actionUserId, actionValue);
+            await sentHomePageCodeReviewList({slackUserId: actionUserId});
+        } else if (actionValue && ['pending', 'inprogress', 'mine'].includes(actionValue)) {
+            await sentHomePageCodeReviewList({slackUserId: actionUserId, codeReviewStatus: actionValue});
+        } else if (actionId === 'channel') {
+            await sentHomePageCodeReviewList({slackUserId: actionUserId, slackChannelId});
         }
     });
 }

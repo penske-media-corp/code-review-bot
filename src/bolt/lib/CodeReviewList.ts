@@ -121,34 +121,31 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
     ] as (Block | KnownBlock)[];
 };
 
-const getCodeReviewList = async (status: string, slackUserId?: string): Promise<(Block | KnownBlock)[]> => {
-    const user = await prisma.user.findFirst({
-        where: {
-            slackUserId,
-        }
-    });
-
+const getCodeReviewList = async ({codeReviewStatus, slackChannelId, userId}: {codeReviewStatus?: string; slackChannelId?: string; userId?: string}): Promise<(Block | KnownBlock)[]> => {
     const where: {[index: string]: unknown} = {};
 
-    if (status && status !== 'all') {
-        if (status === 'mine') {
+    if (slackChannelId) {
+        where.slackChannelId = slackChannelId;
+    }
+    if (codeReviewStatus && codeReviewStatus !== 'all') {
+        if (codeReviewStatus === 'mine') {
             where.status = {
                 in: ['pending', 'inprogress'],
             };
             where.OR = [
                 {
-                    userId: user?.id,
+                    userId,
                 },
                 {
                     reviewers: {
                         some: {
-                            userId: user?.id
+                            userId,
                         }
                     }
                 }
             ];
         } else {
-            where.status = status;
+            where.status = codeReviewStatus;
         }
     }
 

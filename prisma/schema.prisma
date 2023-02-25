@@ -57,5 +57,7 @@ model User {
   codeReviews  CodeReviewRelation[]
   codeRequests CodeReview[]
 
+  session Json?
+
   @@map("users")
 }
