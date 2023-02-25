@@ -60,10 +60,6 @@ export default function registerEventReactionAdd (app: App): void {
 
         // All actions beyond this line must have a valid code review record existed.
         if (!codeReview) {
-            await say({
-                text: `<@${reactionUserId}>, Cannot locate existing code review request data.`,
-                thread_ts: slackThreadTs,
-            });
             return;
         }
 
