@@ -21,3 +21,8 @@ export interface GithubBotEventData {
     message: string;
     pullRequestLink: string;
 }
+
+export interface ChannelInfo {
+    id: string;
+    name: string;
+}

@@ -15,6 +15,7 @@ import type {
     UserInfo
 } from './types';
 import {APP_BASE_URL} from '../lib/env';
+import type {ChannelInfo} from './types';
 import type {GithubBotEventData} from './types';
 import {extractPullRequestLink}  from '../lib/utils';
 import getCodeReviewList from './lib/CodeReviewList';
@@ -43,6 +44,35 @@ export async function getUserInfo (user: string): Promise<UserInfo> {
         slackUserId: user,
         displayName: display_name?.length ? display_name : real_name as string,
     };
+}
+
+/**
+ * Return the list of channel information that the bot is a member of.
+ */
+export async function getChannels (): Promise<ChannelInfo[]> {
+    const result = await slackBotApp.client.users.conversations({
+        types: 'public_channel, private_channel',
+    });
+    if (!result?.channels) {
+        return [];
+    }
+
+    return result.channels.reduce((acc, val) => {
+        acc.push({
+            id: val.id,
+            name: val.name,
+        } as ChannelInfo);
+        return acc;
+    }, [] as ChannelInfo[]);
+}
+
+export const channelList: {[index: string]: ChannelInfo} = {};
+export function updateChannelInfo (): void {
+    void getChannels().then((result) => {
+        result.forEach((channelInfo) => {
+            channelList[channelInfo.id] = channelList[channelInfo.name] = channelInfo;
+        });
+    });
 }
 
 export async function getReactionData (event: ReactionAddedEvent | ReactionRemovedEvent): Promise<ReactionData | null> {
@@ -312,4 +342,5 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
 export function registerSlackBotApp (app: App): void {
     slackBotApp = app;
     registerSchedule();
+    updateChannelInfo();
 }
