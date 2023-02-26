@@ -1,10 +1,10 @@
 import type {RequestHandler} from 'express';
-import {channelList} from '../../bolt/utils';
+import {channelList, channelMaps} from '../../bolt/utils';
 
-const channelController: RequestHandler = (req, res) => {
-    const id = req.params.id;
-
-    res.json(channelList[id]);
+export const channelController: RequestHandler = (req, res) => {
+    res.json(channelMaps[req.params.id]);
 };
 
-export default channelController;
+export const channelListController: RequestHandler = (req, res) => {
+    res.json(channelList);
+};

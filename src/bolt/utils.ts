@@ -66,11 +66,13 @@ export async function getChannels (): Promise<ChannelInfo[]> {
     }, [] as ChannelInfo[]);
 }
 
-export const channelList: {[index: string]: ChannelInfo} = {};
+export const channelMaps: {[index: string]: ChannelInfo} = {};
+export let channelList: ChannelInfo[] = [];
 export function updateChannelInfo (): void {
     void getChannels().then((result) => {
+        channelList = result;
         result.forEach((channelInfo) => {
-            channelList[channelInfo.id] = channelList[channelInfo.name] = channelInfo;
+            channelMaps[channelInfo.id] = channelMaps[channelInfo.name] = channelInfo;
         });
     });
 }
