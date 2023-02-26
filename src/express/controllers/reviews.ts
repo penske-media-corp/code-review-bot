@@ -1,5 +1,6 @@
 import type {RequestHandler} from 'express';
 import type {User} from '@prisma/client';
+import {channelList} from '../../bolt/utils';
 import {logError} from '../../lib/log';
 import {prisma} from '../../lib/config';
 
@@ -9,7 +10,7 @@ const reviewsController: RequestHandler = (req, res) => {
     const where: {status?: string; slackChannelId?: string} = {};
 
     if (channel && channel !== 'all') {
-        where.slackChannelId = channel;
+        where.slackChannelId = channelList[channel]?.id ?? channel;
     }
     if (status && status !== 'all') {
         where.status = status;

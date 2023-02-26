@@ -16,6 +16,7 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
 
     const extractDisplayName = ({reviewer}: {reviewer: User}): string => reviewer.displayName;
     const reviewers: string[] = codeReview.reviewers.map(extractDisplayName);
+    const approvers: string[] = codeReview.reviewers.filter((r) => r.status === 'approved').map(extractDisplayName);
     const mrkdwnPrLink = `<${codeReview.pullRequestLink}|:review: ${codeReview.pullRequestLink.replace(/.*penske-media-corp\//, '')}>`;
     const mrkdwnSlackLink = codeReview.slackPermalink && codeReview.slackThreadTs && `<${codeReview.slackPermalink}|:slack: ${codeReview.slackThreadTs}>`;
 
@@ -97,6 +98,9 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
 
     if (reviewers.length) {
         text = `${text}, Claimed by ${reviewers.join(', ')}`;
+    }
+    if (approvers.length) {
+        text = `${text}, Approved by ${approvers.join(', ')}`;
     }
 
     if (codeReview.note) {
