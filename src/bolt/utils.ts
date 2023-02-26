@@ -265,7 +265,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         }
     });
 
-    const session = (user?.session ?? {filterChannel: '', filterStatus: ''}) as {filterChannel: string; filterStatus: string};
+    const session = (user?.session ?? {filterChannel: '', filterStatus: ''}) as {filterChannel?: string; filterStatus?: string};
     const filterChannel = slackChannelId ?? session.filterChannel;
     const filterStatus = codeReviewStatus ?? session.filterStatus;
 
@@ -293,7 +293,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         },
         // initial_channel: '',
         action_id: 'channel',
-        ...filterChannel && {
+        ...filterChannel?.length && {
             initial_channel: filterChannel,
         } || {}
     };

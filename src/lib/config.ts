@@ -1,4 +1,4 @@
-import {LOG_DEBUG} from './env';
+import {PRISMA_DEBUG} from './env';
 import {PrismaClient} from '@prisma/client';
 import cache from './cache';
 import option from './option';
@@ -26,7 +26,7 @@ export const defaultScheduleReminder = {
 
 const prismaClientOptions = {};
 
-if (LOG_DEBUG) {
+if (PRISMA_DEBUG) {
     Object.assign(prismaClientOptions, {
         log: ['query', 'info', 'warn', 'error'],
     });
@@ -63,11 +63,6 @@ export const setGroupToMentionInChannel = async (slackChannelId: string, notify:
     await option.set(slackChannelId, 'group-to-alert', notify);
 };
 
-const repository: {[key: string]: string} = {
-    // @see https://api.slack.com/reference/surfaces/formatting#mentioning-groups
-    default: '!here',
-};
-
 export const getRepositoryNumberOfReview = async (repositoryName: string): Promise<number> => {
     const cacheKey = `repo-review-${repositoryName}`;
     const value = await cache.get(cacheKey) as number;
@@ -88,10 +83,10 @@ export const getRepositoryNumberOfApproval = async (repositoryName: string): Pro
     if (!value) {
         const options = (await option.get(GLOBAL_OPTION_CHANNEL_ID, OPTION_NAME_REPO_NUMBER_APPROVAL) ?? {}) as {[index: string]: number};
 
-        return options[repositoryName] || DEFAULT_NUMBER_REVIEW;
+        return options[repositoryName] || DEFAULT_NUMBER_APPROVAL;
     }
 
-    return value || DEFAULT_NUMBER_REVIEW;
+    return value || DEFAULT_NUMBER_APPROVAL;
 };
 
 export const setRepositoryNumberOfReview = async (repositoryName: string, numberReviewRequired: number): Promise<void> => {
