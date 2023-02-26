@@ -45,3 +45,8 @@ table.CodeReviewList td, th {
     border: 1px solid grey;
     padding: 2px;
 }
+
+#reviews-list {
+    height: 95vh;
+    width: 98vw;
+}
