@@ -74,7 +74,7 @@ const RenderReviewList = () => {
         fetchData(1);
     }, []);
 
-    const expandedRowComponent = ({data}) => <pre>data.note</pre>;
+    const expandedRowComponent = ({data}) => <pre>{data.note}</pre>;
 
     // @see https://react-data-table-component.netlify.app/?path=/docs/api-columns--page
     const columns = React.useMemo (() =>[
