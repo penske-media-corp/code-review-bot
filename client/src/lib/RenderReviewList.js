@@ -130,7 +130,7 @@ const RenderReviewList = () => {
         fetchData({
             channel: selectedChannel,
             limit: pageSize,
-            page: page,
+            page,
             status,
             description: 'handlePageChange',
         });
@@ -142,7 +142,7 @@ const RenderReviewList = () => {
         fetchData({
             channel: selectedChannel,
             limit: newPerPage,
-            page: page,
+            page,
             status,
             description: 'handlePerRowsChange',
         });
@@ -150,7 +150,7 @@ const RenderReviewList = () => {
 
     const handleChannelSelectionChange = React.useCallback((data) => {
         console.log('handleChannelSelectionChange', data);
-        const label = channelOptions.find((item) => item.value === data.value).label;
+        const { label } = channelOptions.find(({ value }) => value === data?.value) || {};
         if (label !== selectPlaceHolder) {
             setSelectedChannel(data.value);
             setSelectPlaceHolder(label);
