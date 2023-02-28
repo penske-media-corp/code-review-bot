@@ -7,7 +7,6 @@ const RenderReviewList = () => {
     let lastFetch;
     const queryString = new URLSearchParams(window.location.search);
     const status = queryString.get('status') ?? 'pending';
-
     const [data, setData] = React.useState([]);
     const [loading, setLoading] = React.useState(false);
     const [totalRows, setTotalRows] = React.useState(0);
@@ -188,7 +187,6 @@ const RenderReviewList = () => {
                 placeholder={selectPlaceHolder}
                 options={channelOptions}
                 onChange={handleChannelSelectionChange}
-                value={selectedChannel}
             />
             <DataTable
                 customStyles={customStyle}
