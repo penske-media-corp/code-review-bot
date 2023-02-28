@@ -8,6 +8,9 @@
     "node": ">=18"
   },
   "main": "build/server.js",
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "scripts": {
     "build": "rm -rf build && tsc -p .",
     "build:client": "cd client && rm -rf build && npm run build",
@@ -16,7 +19,7 @@
     "lint": "eslint ./src",
     "start": "npm run build && node build/server.js",
     "dev": "concurrently \"cd client && npm start\" \"nodemon --watch build build/server.js\" ",
-    "dev-once": "npm ci && prisma migrate dev && prisma generate && npm run build && cd client && npm ci && npm run build"
+    "dev-once": "npm ci && prisma migrate dev && prisma generate && prisma db seed && npm run build && cd client && npm ci && npm run build"
   },
   "nodemonConfig": {
     "ignore": [
@@ -36,6 +39,7 @@
     "tslib": "^2.5.0"
   },
   "devDependencies": {
+    "@faker-js/faker": "^7.6.0",
     "@types/cookie-parser": "^1.4.3",
     "@types/express": "^4.17.16",
     "@types/node": "^14.14.35",

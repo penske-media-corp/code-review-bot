@@ -4,6 +4,7 @@ import {format} from 'date-fns';
 import Select from 'react-select';
 
 const RenderReviewList = () => {
+    let lastFetch;
     const queryString = new URLSearchParams(window.location.search);
     const status = queryString.get('status') ?? 'pending';
 
@@ -16,37 +17,59 @@ const RenderReviewList = () => {
     const [selectedChannel, setSelectedChannel] = React.useState(queryString.get('channel') ?? 'all');
     const [selectPlaceHolder, setSelectPlaceHolder] = React.useState('Code Reviews For All Slack Channels');
 
-    const fetchData = async ({channel, limit, page, status}) => {
+    const fetchData = async ({channel, limit, page, status, description}) => {
+        // Check last fetch to avoid data refresh during first page loading.
+        if (lastFetch && lastFetch === `${channel}-${limit}-${page}-${status}`) {
+            return;
+        }
+        lastFetch = `${channel}-${limit}-${page}-${status}`;
+        console.log('fetchData', description, lastFetch)
         setLoading(true);
-        fetch(`/api/reviews/${channel}/${status}`)
+        fetch(`/api/reviews/${channel}/${status}?limit=${limit}&page=${page}`)
             .then((res) => res.json())
             .then((result) => {
-                setData(result);
-                setTotalRows(result.length);
+                setData(result.dataset);
+                setTotalRows(result.total);
                 setLoading(false);
             });
     };
 
     const handlePageChange = page => {
+        console.log('handlePageChange', page);
         setCurrentPage(page);
-        // @TODO
-        // fetchData(page);
+        fetchData({
+            channel: selectedChannel,
+            limit: perPage,
+            page: page,
+            status,
+            description: 'handlePageChange',
+        });
     };
 
     const handlePerRowsChange = async (newPerPage, page) => {
-        // @TODO
-        // fetchData(page, newPerPage);
+        console.log('handlePerRowsChange', newPerPage, page);
         setPerPage(newPerPage);
+        fetchData({
+            channel: selectedChannel,
+            limit: newPerPage,
+            page: page,
+            status,
+            description: 'handlePerRowsChange',
+        });
     };
 
     const handleChannelSelectionChange = (data) => {
+        console.log('handleChannelSelectionChange', data);
         const label = channelOptions.find((item) => item.value === data.value).label;
         if (label !== selectPlaceHolder) {
             setSelectedChannel(data.value);
             setSelectPlaceHolder(label);
             fetchData({
                 channel: data.value,
+                limit: perPage,
+                page: currentPage,
                 status,
+                description: 'handleChannelSelectionChange',
             });
         }
     }
@@ -77,14 +100,16 @@ const RenderReviewList = () => {
                     }
                 });
                 setChannelOptions(options);
+            })
+            .finally(() => {
+                fetchData({
+                    channel: selectedChannel,
+                    limit: perPage,
+                    page: currentPage,
+                    status,
+                    description: 'useEffect',
+                });
             });
-    }, []);
-
-    React.useEffect(() => {
-        fetchData({
-            channel: selectedChannel,
-            status,
-        });
     }, []);
 
     const expandedRowComponent = ({data}) => <pre>{data.note}</pre>;
@@ -149,6 +174,11 @@ const RenderReviewList = () => {
                 backgroundColor: '#505050',
                 color: '#eeeeee',
             },
+        },
+        expanderRow: {
+            style: {
+                backgroundColor: '#252525',
+            }
         }
     };
 

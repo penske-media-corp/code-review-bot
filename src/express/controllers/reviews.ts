@@ -7,16 +7,27 @@ import {prisma} from '../../lib/config';
 const reviewsController: RequestHandler = (req, res) => {
     const status = req.params.status;
     const channel = req.params.channel;
+    let page = 1;
+    let limit = 0;
+
+    if (typeof req.query.page === 'string') {
+        page = parseInt(req.query.page || '1') || 1;
+    }
+    if (typeof req.query.limit === 'string') {
+        limit = parseInt(req.query.limit || '1') || 1;
+    }
+
     const where: {status?: string; slackChannelId?: string} = {};
 
     if (channel && channel !== 'all') {
-        where.slackChannelId = channelMaps[channel]?.id || channel;
+        where.slackChannelId = channelMaps[channel].id || channel;
     }
     if (status && status !== 'all') {
         where.status = status;
     }
 
-    prisma.codeReview.findMany({
+
+    const findParams = {
         where,
         include: {
             user: true,
@@ -26,6 +37,15 @@ const reviewsController: RequestHandler = (req, res) => {
                 }
             },
         }
+    };
+
+    const countPromise = prisma.codeReview.count({where}).then((c) => ({total: c}));
+    const findPromise = prisma.codeReview.findMany({
+        ...findParams,
+        ...page && limit && {
+            skip: limit * (page - 1),
+            take: limit
+        },
     }).then((reviews) => {
         const extractDisplayName = ({reviewer}: {reviewer: User}): string => reviewer.displayName;
         const result = reviews.map((item) => {
@@ -49,7 +69,15 @@ const reviewsController: RequestHandler = (req, res) => {
                 updatedAt: item.updatedAt,
             };
         });
-        res.json(result);
+        return {
+            page,
+            limit,
+            dataset: result,
+        };
+    });
+
+    Promise.all([countPromise, findPromise]).then((values) => {
+        res.json(values.reduce((acc, item) => Object.assign(acc, item), {}));
     }).catch((error) => {
         logError(error);
     });
