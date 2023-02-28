@@ -64,7 +64,7 @@ export const setGroupToMentionInChannel = async (slackChannelId: string, notify:
     await option.set(slackChannelId, 'group-to-alert', notify);
 };
 
-export const getRepositoryNumberOfReview = async (repositoryName: string): Promise<number> => {
+export const getRepositoryNumberOfReviews = async (repositoryName: string): Promise<number> => {
     const cacheKey = `repo-review-${repositoryName}`;
     const value = await cache.get(cacheKey) as number;
 
@@ -77,7 +77,7 @@ export const getRepositoryNumberOfReview = async (repositoryName: string): Promi
     return value || DEFAULT_NUMBER_REVIEW;
 };
 
-export const getRepositoryNumberOfApproval = async (repositoryName: string): Promise<number> => {
+export const getRepositoryNumberOfApprovals = async (repositoryName: string): Promise<number> => {
     const cacheKey = `repo-approval-${repositoryName}`;
     const value = await cache.get(cacheKey) as number;
 
@@ -90,7 +90,7 @@ export const getRepositoryNumberOfApproval = async (repositoryName: string): Pro
     return value || DEFAULT_NUMBER_APPROVAL;
 };
 
-export const setRepositoryNumberOfReview = async (repositoryName: string, numberReviewRequired: number): Promise<void> => {
+export const setRepositoryNumberOfReviews = async (repositoryName: string, numberReviewRequired: number): Promise<void> => {
     if (!numberReviewRequired) {
         return;
     }
@@ -102,7 +102,7 @@ export const setRepositoryNumberOfReview = async (repositoryName: string, number
     await option.set(GLOBAL_OPTION_CHANNEL_ID, OPTION_NAME_REPO_NUMBER_REVIEW, options);
 };
 
-export const setRepositoryNumberOfApproval = async (repositoryName: string, numberReviewRequired: number): Promise<void> => {
+export const setRepositoryNumberOfApprovals = async (repositoryName: string, numberReviewRequired: number): Promise<void> => {
     if (!numberReviewRequired) {
         return;
     }

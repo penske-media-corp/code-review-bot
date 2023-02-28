@@ -1,11 +1,11 @@
 import {
     getGroupToMentionInChannel,
-    getRepositoryNumberOfApproval,
-    getRepositoryNumberOfReview,
+    getRepositoryNumberOfApprovals,
+    getRepositoryNumberOfReviews,
     setGroupToMentionInChannel,
     setJiraTicketRegEx,
-    setRepositoryNumberOfApproval,
-    setRepositoryNumberOfReview,
+    setRepositoryNumberOfApprovals,
+    setRepositoryNumberOfReviews,
 } from '../../lib/config';
 import type {App} from '@slack/bolt';
 import {logDebug} from '../../lib/log';
@@ -34,16 +34,16 @@ export default function registerEventAppMention (app: App): void {
             logDebug('set command', result);
             switch (result[1]) {
                 case 'review':
-                    await setRepositoryNumberOfReview(result[2], parseInt(result[3]));
+                    await setRepositoryNumberOfReviews(result[2], parseInt(result[3]));
                     await say({
-                        text: `Set number of review required for *${result[2]}* to ${await getRepositoryNumberOfReview(result[2])}`,
+                        text: `Set number of review required for *${result[2]}* to ${await getRepositoryNumberOfReviews(result[2])}`,
                         thread_ts: thread_ts ?? ts,
                     });
                     break;
                 case 'approval':
-                    await setRepositoryNumberOfApproval(result[2], parseInt(result[3]));
+                    await setRepositoryNumberOfApprovals(result[2], parseInt(result[3]));
                     await say({
-                        text: `Set number of approval required for *${result[2]}* to ${await getRepositoryNumberOfApproval(result[2])}`,
+                        text: `Set number of approval required for *${result[2]}* to ${await getRepositoryNumberOfApprovals(result[2])}`,
                         thread_ts: thread_ts ?? ts,
                     });
                     break;

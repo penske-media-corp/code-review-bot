@@ -4,8 +4,8 @@ import type {
     User,
 } from '@prisma/client';
 import {
-    getRepositoryNumberOfApproval,
-    getRepositoryNumberOfReview,
+    getRepositoryNumberOfApprovals,
+    getRepositoryNumberOfReviews,
     prisma
 } from '../lib/config';
 import type {ReactionData} from '../bolt/types';
@@ -102,7 +102,7 @@ async function setCodeReviewerStatus (codeReview: CodeReview & {reviewers: CodeR
 }
 
 async function calculateReviewStats (codeReview: CodeReview & {reviewers: CodeReviewRelation[]}): Promise<{approvalCount: number; reviewerCount: number}> {
-    const numberReviewRequired = await getRepositoryNumberOfReview(extractRepository(codeReview.pullRequestLink));
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     let approvalCount = 0;
     let reviewerCount = 0;
 
@@ -181,7 +181,7 @@ const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink,
     }
 
     const userDisplayName = user.displayName;
-    const numberApprovalRequired = await getRepositoryNumberOfApproval(extractRepository(codeReview.pullRequestLink));
+    const numberApprovalRequired = await getRepositoryNumberOfApprovals(extractRepository(codeReview.pullRequestLink));
 
     return {
         message: `*${userDisplayName}* has request a code review! ${numberApprovalRequired} ${pluralize('reviewer', numberApprovalRequired)} :eyes: ${pluralize('is', numberApprovalRequired)} needed.`,
@@ -190,7 +190,7 @@ const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink,
 };
 
 const approve = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
-    const numberApprovalRequired = await getRepositoryNumberOfApproval(extractRepository(codeReview.pullRequestLink));
+    const numberApprovalRequired = await getRepositoryNumberOfApprovals(extractRepository(codeReview.pullRequestLink));
     const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'approved');
     const userDisplayName = user.displayName;
@@ -227,7 +227,7 @@ const getNumberReviewMessage = (count: number, required: number): string => {
 };
 
 const claim = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
-    const numberReviewRequired = await getRepositoryNumberOfReview(extractRepository(codeReview.pullRequestLink));
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'pending');
     const userDisplayName = user.displayName;
@@ -249,7 +249,7 @@ const claim = async (codeReview: CodeReview & {user: User; reviewers: CodeReview
 };
 
 const finish = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
-    const numberReviewRequired = await getRepositoryNumberOfReview(extractRepository(codeReview.pullRequestLink));
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'finish');
     const userDisplayName = user.displayName;
@@ -301,7 +301,7 @@ const remove = async (codeReview: CodeReview & {user: User}, slackUserId: string
 };
 
 const requestChanges = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
-    const numberReviewRequired = await getRepositoryNumberOfReview(extractRepository(codeReview.pullRequestLink));
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'change');
     const userDisplayName = user.displayName;
     const requestSlackUserId = codeReview.user.slackUserId;

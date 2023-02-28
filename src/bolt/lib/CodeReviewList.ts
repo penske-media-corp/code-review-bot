@@ -27,7 +27,7 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
             text: ':approved: Approve',
             emoji: true
         },
-        value: `approve`,
+        value: 'approve',
         action_id: `approve-${codeReview.id}`
     };
     const buttonClaim = {

@@ -243,8 +243,8 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
             text: 'Pending Reviews',
             emoji: true
         },
-        value: `pending`,
-        action_id: `pending`
+        value: 'pending',
+        action_id: 'pending'
     };
     const buttonInProgressReviews = {
         type: 'button',
@@ -253,8 +253,8 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
             text: 'In Progress Reviews',
             emoji: true
         },
-        value: `inprogress`,
-        action_id: `inprogress`
+        value: 'inprogress',
+        action_id: 'inprogress'
     };
     const buttonMyReviews = {
         type: 'button',
@@ -264,7 +264,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
             emoji: true
         },
         value: 'mine',
-        action_id: `mine`,
+        action_id: 'mine',
     };
 
     // Retrieve the user session info from user record in db.
