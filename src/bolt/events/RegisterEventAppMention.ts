@@ -2,7 +2,8 @@ import {
     getGroupToMentionInChannel,
     getRepositoryNumberOfApproval,
     getRepositoryNumberOfReview,
-    setGroupToMentionInChannel, setJiraTicketRegEx,
+    setGroupToMentionInChannel,
+    setJiraTicketRegEx,
     setRepositoryNumberOfApproval,
     setRepositoryNumberOfReview,
 } from '../../lib/config';

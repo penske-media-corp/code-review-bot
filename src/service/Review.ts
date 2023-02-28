@@ -125,6 +125,9 @@ async function calculateReviewStats (codeReview: CodeReview & {reviewers: CodeRe
                 status: codeReview.status,
             }
         });
+    } else if (['ready', 'inprogress'].includes(codeReview.status)) {
+        // For whatever reason, if request is un-claim, the request may be kick back into pending queue.
+        codeReview.status = 'pending';
     }
 
     return {
@@ -298,10 +301,15 @@ const remove = async (codeReview: CodeReview & {user: User}, slackUserId: string
 };
 
 const requestChanges = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
+    const numberReviewRequired = await getRepositoryNumberOfReview(extractRepository(codeReview.pullRequestLink));
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'change');
     const userDisplayName = user.displayName;
     const requestSlackUserId = codeReview.user.slackUserId;
-    const message = `*${userDisplayName}* requested changes on the pull request.`;
+    const stats = await calculateReviewStats(codeReview);
+    const count = stats.reviewerCount + stats.approvalCount;
+    let message = getNumberReviewMessage(count, numberReviewRequired);
+
+    message = `*${userDisplayName}* requested changes on the pull request. ${message}`;
 
     return {
         codeReview,

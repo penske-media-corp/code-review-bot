@@ -3,7 +3,6 @@ import type {User} from '@prisma/client';
 import {channelMaps} from '../../bolt/utils';
 import {logError} from '../../lib/log';
 import {prisma} from '../../lib/config';
-
 const reviewsController: RequestHandler = (req, res) => {
     const status = req.params.status;
     const channel = req.params.channel;
@@ -25,7 +24,6 @@ const reviewsController: RequestHandler = (req, res) => {
     if (status && status !== 'all') {
         where.status = status;
     }
-
 
     const findParams = {
         where,
