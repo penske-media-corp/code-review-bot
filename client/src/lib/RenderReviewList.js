@@ -215,6 +215,8 @@ const RenderReviewList = () => {
                     options={channelOptions}
                     onChange={handleChannelSelectionChange}
                     styles={{option: (base) => ({...base, color: '#303030'})}}
+                    defaultValue=""
+                    value={selectedChannel}
                 />
             </HeaderDiv>
             <DataTable
