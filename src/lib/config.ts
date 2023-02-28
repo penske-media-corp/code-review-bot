@@ -6,6 +6,7 @@ import option from './option';
 const GLOBAL_OPTION_CHANNEL_ID         = 'global';
 const OPTION_NAME_REPO_NUMBER_REVIEW   = 'repository-number-review';
 const OPTION_NAME_REPO_NUMBER_APPROVAL = 'repository-number-approval';
+const OPTION_NAME_JIRA_TICKET_PATTERNS = 'jira-ticket-regex';
 
 const DEFAULT_NUMBER_REVIEW   = 2;
 const DEFAULT_NUMBER_APPROVAL = 2;
@@ -111,4 +112,19 @@ export const setRepositoryNumberOfApproval = async (repositoryName: string, numb
 
     Object.assign(options, {[repositoryName]: numberReviewRequired});
     await option.set(GLOBAL_OPTION_CHANNEL_ID, OPTION_NAME_REPO_NUMBER_APPROVAL, options);
+};
+
+export const getJiraTicketRegEx = async (): Promise<RegExp | null> => {
+    // eg. (?:REV|PMC|WI|PASE|GUT)-\d+
+    let patterns = await cache.get(OPTION_NAME_JIRA_TICKET_PATTERNS);
+
+    if (!patterns) {
+        patterns = await option.get(GLOBAL_OPTION_CHANNEL_ID, OPTION_NAME_JIRA_TICKET_PATTERNS) as string;
+    }
+    return patterns ? new RegExp(`\b${patterns}\b`) : null;
+};
+
+export const setJiraTicketRegEx = async (patterns: string): Promise<void> => {
+    await cache.set(OPTION_NAME_JIRA_TICKET_PATTERNS, patterns);
+    await option.set(GLOBAL_OPTION_CHANNEL_ID, OPTION_NAME_JIRA_TICKET_PATTERNS, patterns);
 };

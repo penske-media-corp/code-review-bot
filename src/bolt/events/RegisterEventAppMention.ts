@@ -2,7 +2,7 @@ import {
     getGroupToMentionInChannel,
     getRepositoryNumberOfApproval,
     getRepositoryNumberOfReview,
-    setGroupToMentionInChannel,
+    setGroupToMentionInChannel, setJiraTicketRegEx,
     setRepositoryNumberOfApproval,
     setRepositoryNumberOfReview,
 } from '../../lib/config';
@@ -23,7 +23,7 @@ export default function registerEventAppMention (app: App): void {
                 thread_ts: thread_ts ?? ts,
             });
         } else {
-            const regExCmd = /\s+set\s+(\w+)\s+([^\s]+)(?:\s+)?(\d+)?/i;
+            const regExCmd = /\s+set\s+([^\s]+)\s+([^\s]+)(?:\s+)?(\d+)?/i;
             const result = regExCmd.exec(text);
 
             if (!result) {
@@ -58,6 +58,13 @@ export default function registerEventAppMention (app: App): void {
                             });
                         }
                     }
+                    break;
+                case 'jira-ticket-regex':
+                    await setJiraTicketRegEx(result[2]);
+                    await say({
+                        text: `Set Jira Ticket Patterns to *${result[2]}*`,
+                        thread_ts: thread_ts ?? ts,
+                    });
                     break;
             }
 

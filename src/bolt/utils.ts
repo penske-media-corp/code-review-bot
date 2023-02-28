@@ -14,10 +14,13 @@ import type {
     ReactionData,
     UserInfo
 } from './types';
+import {
+    extractJiraTicket,
+    extractPullRequestLink
+} from '../lib/utils';
 import {APP_BASE_URL} from '../lib/env';
 import type {ChannelInfo} from './types';
 import type {GithubBotEventData} from './types';
-import {extractPullRequestLink}  from '../lib/utils';
 import getCodeReviewList from './lib/CodeReviewList';
 import {logDebug} from '../lib/log';
 import pluralize from 'pluralize';
@@ -53,7 +56,7 @@ export async function getChannels (): Promise<ChannelInfo[]> {
     const result = await slackBotApp.client.users.conversations({
         types: 'public_channel, private_channel',
     });
-    if (!result?.channels) {
+    if (!result.channels) {
         return [];
     }
 
@@ -90,31 +93,37 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
         ts: event.item.ts,
     });
 
-    const getMessageInfo = (data: ConversationsRepliesResponse): ReactionData => {
+    const getMessageInfo = async (data: ConversationsRepliesResponse): Promise<ReactionData> => {
         const message = (data.messages ?? [])[0] as GenericMessageEvent;
         let pullRequestLink = '';
+        let jiraTicket = '';
         let slackMsgUserId = message.user;
 
         // Try to parse github pull request from text message if available.
-        pullRequestLink = extractPullRequestLink(message.text);
+        if (message.text) {
+            pullRequestLink = extractPullRequestLink(message.text) || pullRequestLink;
+            jiraTicket = await extractJiraTicket(message.text) || jiraTicket;
+        }
 
         // If there is no PR info, try to check the message attachments, message is coming from github event.
         if (!pullRequestLink.length && message.attachments?.length) {
-            pullRequestLink = extractPullRequestLink(message.attachments[0].title);
+            const title = message.attachments[0].title;
+            pullRequestLink = title && extractPullRequestLink(title) || pullRequestLink;
             // If the message coming from the event bot, we want to assign the request to the reaction user.
             slackMsgUserId = event.user;
         }
 
         return {
+            jiraTicket,
+            pullRequestLink,
             slackMsgText: message.text,
             slackMsgId: message.client_msg_id,
             slackMsgUserId,
             slackThreadTs: message.thread_ts ?? message.ts,
-            pullRequestLink,
         } as ReactionData;
     };
     const botUserId = await getBotUserId();
-    let messageInfo = getMessageInfo(result);
+    let messageInfo = await getMessageInfo(result);
 
     if (!result.client_msg_id && botUserId === event.item_user && !messageInfo.pullRequestLink.length &&
         messageInfo.slackMsgTs !== messageInfo.slackThreadTs) {
@@ -126,7 +135,7 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
             limit: 1,
             ts: messageInfo.slackThreadTs,
         });
-        messageInfo = getMessageInfo(result);
+        messageInfo = await getMessageInfo(result);
     }
 
     result = await slackBotApp.client.chat.getPermalink({
@@ -157,7 +166,7 @@ export function getGithubBotEventData (event: GenericMessageEvent): GithubBotEve
     }
 
     const {pretext, title} = event.attachments[0];
-    const pullRequestLink = extractPullRequestLink(title);
+    const pullRequestLink = title && extractPullRequestLink(title) || '';
 
     if (pullRequestLink === '' || !pretext) {
         return null;
