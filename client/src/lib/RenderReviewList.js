@@ -16,9 +16,9 @@ const RenderReviewList = () => {
     const [selectedChannel, setSelectedChannel] = React.useState(queryString.get('channel') ?? 'all');
     const [selectPlaceHolder, setSelectPlaceHolder] = React.useState('Code Reviews For All Slack Channels');
 
-    const fetchData = async (page, perPage) => {
+    const fetchData = async ({channel, limit, page, status}) => {
         setLoading(true);
-        fetch(`/api/reviews/${selectedChannel}/${status}`)
+        fetch(`/api/reviews/${channel}/${status}`)
             .then((res) => res.json())
             .then((result) => {
                 setData(result);
@@ -40,8 +40,15 @@ const RenderReviewList = () => {
     };
 
     const handleChannelSelectionChange = (data) => {
-        setSelectedChannel(data.value);
-        fetchData(1);
+        const label = channelOptions.find((item) => item.value === data.value).label;
+        if (label !== selectPlaceHolder) {
+            setSelectedChannel(data.value);
+            setSelectPlaceHolder(label);
+            fetchData({
+                channel: data.value,
+                status,
+            });
+        }
     }
 
     React.useEffect(() => {
@@ -54,16 +61,19 @@ const RenderReviewList = () => {
                         value: 'all',
                     }
                 ];
-                let selected;
 
                 result.forEach((item) => {
                     const option = {
                         label: `Code Reviews For Channel "#${item.name}"`,
                         value: item.id,
                     };
+
                     options.push(option);
                     if (selectedChannel !== 'all' && [item.id, item.name].includes(selectedChannel)) {
                         setSelectPlaceHolder(option.label);
+                        if (selectedChannel !== item.id) {
+                            setSelectedChannel(selectedChannel);
+                        }
                     }
                 });
                 setChannelOptions(options);
@@ -71,7 +81,10 @@ const RenderReviewList = () => {
     }, []);
 
     React.useEffect(() => {
-        fetchData(1);
+        fetchData({
+            channel: selectedChannel,
+            status,
+        });
     }, []);
 
     const expandedRowComponent = ({data}) => <pre>{data.note}</pre>;
