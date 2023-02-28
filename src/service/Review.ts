@@ -181,7 +181,7 @@ const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink,
     const numberApprovalRequired = await getRepositoryNumberOfApproval(extractRepository(codeReview.pullRequestLink));
 
     return {
-        message: `*${userDisplayName}* has request a code review! ${numberApprovalRequired} ${pluralize('reviewer', numberApprovalRequired)} :review: ${pluralize('is', numberApprovalRequired)} needed.`,
+        message: `*${userDisplayName}* has request a code review! ${numberApprovalRequired} ${pluralize('reviewer', numberApprovalRequired)} :eyes: ${pluralize('is', numberApprovalRequired)} needed.`,
         codeReview,
     };
 };
@@ -220,7 +220,7 @@ const getNumberReviewMessage = (count: number, required: number): string => {
     }
     const numberNeeded = required - count;
 
-    return `${numberNeeded} more ${pluralize('reviewer', numberNeeded)} :review: ${pluralize('is', numberNeeded)} needed.`;
+    return `${numberNeeded} more ${pluralize('reviewer', numberNeeded)} :eyes: ${pluralize('is', numberNeeded)} needed.`;
 };
 
 const claim = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
