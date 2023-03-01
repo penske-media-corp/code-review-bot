@@ -1,6 +1,6 @@
 import './App.css';
 import React from 'react';
-import RenderReviewList from './lib/RenderReviewList';
+import RenderReviewList from './components/RenderReviewList';
 
 function App() {
     return (

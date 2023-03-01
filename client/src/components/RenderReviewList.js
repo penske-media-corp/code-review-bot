@@ -73,7 +73,6 @@ const customStyle = {
     }
 };
 
-
 createTheme('custom', {
     text: {
         primary: '#c0c0c0',
