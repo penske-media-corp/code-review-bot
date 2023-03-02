@@ -19,26 +19,38 @@ const columns = [
     {
         name: 'Date',
         selector: row => format(new Date(row.createdAt), 'MMM dd, yyyy hh:mmaaaaa'),
+        maxWidth: '12em',
+        compact: true,
     },
     {
         name: 'Owner',
         selector: row => row.owner,
+        maxWidth: '12em',
+        compact: true,
     },
     {
         name: 'Pull Request',
-        selector: row => <a href={row.pullRequestLink}>{row.pullRequestLink.replace(/.*\/(.*?\/pull\/\d+)/,'$1')}</a>
+        selector: row => <a href={row.pullRequestLink}>{row.pullRequestLink.replace(/.*\/(.*?\/pull\/\d+)/,'$1')}</a>,
+        maxWidth: '20em',
+        compact: true,
     },
     {
         name: 'Slack Link',
-        selector: row => <a href={row.slackPermalink}>{row.slackThreadTs}</a>
+        selector: row => <a href={row.slackPermalink}>{row.slackThreadTs}</a>,
+        maxWidth: '12em',
+        compact: true,
     },
     {
         name: 'Reviewers',
-        selector: row => row.reviewers?.join(', ')
+        selector: row => row.reviewers?.join(', '),
+        wrap: true,
+        compact: true,
     },
     {
         name: 'Approvers',
-        selector: row => row.approvers?.join(', ')
+        selector: row => row.approvers?.join(', '),
+        wrap: true,
+        compact: true,
     },
 ];
 
@@ -49,10 +61,46 @@ const paginationComponentOptions = {
     selectAllRowsItem: false,
 };
 
-// @TODO: Show details information about the ticket, eg. notes, etc.
-const expandedRowComponent = ({data}) => <pre>{data.note}</pre>;
+const useExpandedRowComponent = (refreshHandler) => {
+    const expandedRowComponent = ({data}) => {
+        const handleClick = ({target}) => {
+            const {id, name, value} = target;
+            fetch(`/api/action/${name}/${value}`).
+                then((res) => res.json()).
+                then((result) => {
+                    refreshHandler && refreshHandler({id, name, value});
+                }).catch((e) => {
+                    logDebug(e);
+                })
+        };
+        const Button = ({id, name}) => {
+            const sanitizedName = name.toLowerCase().replace(' ', '-');
+            return (
+                <button
+                    id={`${sanitizedName}-${id}`}
+                    name={sanitizedName}
+                    value={id}
+                    onClick={handleClick}
+                >{name}</button>
+            );
+        };
+        return (
+            <div style={{paddingLeft: '3em'}}>
+                <div>
+                    <Button name="Claim" id={data.id}/>
+                    <Button name="Change Request" id={data.id}/>
+                    <Button name="Approve" id={data.id}/>
+                    <Button name="Close" id={data.id}/>
+                    <Button name="Remove" id={data.id}/>
+                </div>
+                <pre>{data.note}</pre>
+            </div>
+        );
+    };
+    return expandedRowComponent;
+}
 
-const customStyle = {
+const customStyles = {
     header: {
         style: {
             backgroundColor: '#555555',
@@ -98,7 +146,7 @@ const RenderReviewList = () => {
     const queryString = new URLSearchParams(window.location.search);
     const status = queryString.get('status') ?? 'pending';
     const [dataSet, setDataSet] = React.useState([]);
-    const [loading, setLoading] = React.useState(false);
+    const [loading, setLoading] = React.useState(true);
     const [totalRows, setTotalRows] = React.useState(0);
     const [pageSize, setPageSize] = React.useState(10);
     const [currentPage, setCurrentPage] = React.useState(1);
@@ -108,11 +156,12 @@ const RenderReviewList = () => {
 
     const fetchData = async ({channel, limit, page, status, description}) => {
         // Check last fetch to avoid data request multiple times during first page loading.
-        if (lastFetchData && lastFetchData === `${channel}-${limit}-${page}-${status}`) {
+        const newFetchData = `${channel}-${limit}-${page}-${status}`;
+        if (lastFetchData && lastFetchData === newFetchData) {
             return;
         }
+        logDebug('fetchData', description, lastFetchData, newFetchData)
         lastFetchData = `${channel}-${limit}-${page}-${status}`;
-        logDebug('fetchData', description, lastFetchData)
         setLoading(true);
         fetch(`/api/reviews/${channel}/${status}?limit=${limit}&page=${page}`)
             .then((res) => res.json())
@@ -161,6 +210,16 @@ const RenderReviewList = () => {
                 description: 'handleChannelSelectionChange',
             });
         }
+    });
+
+    const handleRefresh = React.useCallback(() => {
+        fetchData({
+            channel: selectedChannel,
+            limit: pageSize,
+            page: currentPage,
+            status,
+            description: 'handleRefresh',
+        });
     });
 
     React.useEffect(() => {
@@ -219,7 +278,7 @@ const RenderReviewList = () => {
                 />
             </HeaderDiv>
             <DataTable
-                customStyles={customStyle}
+                customStyles={customStyles}
                 theme="custom"
                 columns={columns}
                 data={dataSet}
@@ -233,14 +292,14 @@ const RenderReviewList = () => {
                 onChangeRowsPerPage={handlePerRowsChange}
                 onChangePage={handlePageChange}
 
+                fixedHeader
                 striped
                 highlightOnHover
                 dense
                 persistTableHead
 
                 expandableRows
-                expandableRowsComponent={expandedRowComponent}
-                expandableRowDisabled={row => !row.note}
+                expandableRowsComponent={useExpandedRowComponent(handleRefresh)}
             />
         </div>
     );
