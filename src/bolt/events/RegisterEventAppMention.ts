@@ -1,5 +1,14 @@
+import {
+    getGroupToMentionInChannel,
+    getRepositoryNumberOfApprovals,
+    getRepositoryNumberOfReviews,
+    setGroupToMentionInChannel,
+    setJiraTicketRegEx,
+    setRepositoryNumberOfApprovals,
+    setRepositoryNumberOfReviews,
+} from '../../lib/config';
 import type {App} from '@slack/bolt';
-import {logDebug} from '../../utils/log';
+import {logDebug} from '../../lib/log';
 
 export default function registerEventAppMention (app: App): void {
     app.event('app_mention', async ({event, say}) => {
@@ -7,29 +16,73 @@ export default function registerEventAppMention (app: App): void {
 
         const {text, ts, thread_ts, channel} = event;
 
-        if (/.*?\btime\b/.test(text)) {
+        if (/What time is it\?/i.test(text)) {
             const dateString = new Date().toString();
 
             await say({
                 text: `The current date and time is ${dateString}`,
                 thread_ts: thread_ts ?? ts,
             });
+        } else {
+            const regExCmd = /\s+set\s+([^\s]+)\s+([^\s]+)(?:\s+)?(\d+)?/i;
+            const result = regExCmd.exec(text);
+
+            if (!result) {
+                return;
+            }
+
+            logDebug('set command', result);
+            switch (result[1]) {
+                case 'review':
+                    await setRepositoryNumberOfReviews(result[2], parseInt(result[3]));
+                    await say({
+                        text: `Set number of review required for *${result[2]}* to ${await getRepositoryNumberOfReviews(result[2])}`,
+                        thread_ts: thread_ts ?? ts,
+                    });
+                    break;
+                case 'approval':
+                    await setRepositoryNumberOfApprovals(result[2], parseInt(result[3]));
+                    await say({
+                        text: `Set number of approval required for *${result[2]}* to ${await getRepositoryNumberOfApprovals(result[2])}`,
+                        thread_ts: thread_ts ?? ts,
+                    });
+                    break;
+                case 'notify':
+                    {
+                        const match = /^<?(.+?)>?$/.exec(result[2]);
+
+                        if (match && match[1]) {
+                            await setGroupToMentionInChannel(channel, match[1]);
+                            await say({
+                                text: `Set notify to *${await getGroupToMentionInChannel(channel)}*`,
+                                thread_ts: thread_ts ?? ts,
+                            });
+                        }
+                    }
+                    break;
+                case 'jira-ticket-regex':
+                    await setJiraTicketRegEx(result[2]);
+                    await say({
+                        text: `Set Jira Ticket Patterns to *${result[2]}*`,
+                        thread_ts: thread_ts ?? ts,
+                    });
+                    break;
+            }
+
         }
         /**
          * @TODO custom bot commands:
          *
-         * @pmc_code_review_bot schedule add "0 0 14 * * 1-5"
+         * @pmc_code_review_bot schedule set "0 12 * * 1-5" "America/Los_Angeles"
          * @pmc_code_review_bot schedule list
-         * @pmc_code_review_bot schedule remove <schedule-id>
-         * @pmc_code_review_bot schedule clear all
-         * @pmc_code_review_bot schedule reload
+         * @pmc_code_review_bot schedule clear
          * @pmc_code_review_bot login
          *    https://api.slack.com/methods/chat.postEphemeral
          *
-         * @pmc_code_review_bot status
          * @pmc_code_review_bot set notify <@team>
-         * @pmc_code_review_bot set number review <repo-name> 2
-         * @pmc_code_review_bot time
+         * @pmc_code_review_bot set review <repo-name> 2
+         * @pmc_code_review_bot set approval <repo-name> 2
+         * @pmc_code_review_bot load setting {json-string}
          */
     });
 }

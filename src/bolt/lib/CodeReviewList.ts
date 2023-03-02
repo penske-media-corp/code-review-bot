@@ -8,7 +8,7 @@ import type {
     User
 } from '@prisma/client';
 import pluralize from 'pluralize';
-import {prisma} from '../../utils/config';
+import {prisma} from '../../lib/config';
 
 const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (CodeReviewRelation & {reviewer: User})[]}): (Block | KnownBlock)[] => {
     const reviewerCount = codeReview.reviewers.length;
@@ -16,6 +16,7 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
 
     const extractDisplayName = ({reviewer}: {reviewer: User}): string => reviewer.displayName;
     const reviewers: string[] = codeReview.reviewers.map(extractDisplayName);
+    const approvers: string[] = codeReview.reviewers.filter((r) => r.status === 'approved').map(extractDisplayName);
     const mrkdwnPrLink = `<${codeReview.pullRequestLink}|:review: ${codeReview.pullRequestLink.replace(/.*penske-media-corp\//, '')}>`;
     const mrkdwnSlackLink = codeReview.slackPermalink && codeReview.slackThreadTs && `<${codeReview.slackPermalink}|:slack: ${codeReview.slackThreadTs}>`;
 
@@ -26,7 +27,7 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
             text: ':approved: Approve',
             emoji: true
         },
-        value: `approve`,
+        value: 'approve',
         action_id: `approve-${codeReview.id}`
     };
     const buttonClaim = {
@@ -38,6 +39,17 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
         },
         value: 'claim',
         action_id: `claim-${codeReview.id}`,
+        url: codeReview.pullRequestLink,
+    };
+    const buttonClose = {
+        type: 'button',
+        text: {
+            type: 'plain_text',
+            text: ':done: Close',
+            emoji: true
+        },
+        value: 'close',
+        action_id: `close-${codeReview.id}`,
         url: codeReview.pullRequestLink,
     };
     const buttonRemove = {
@@ -74,10 +86,10 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
 
 
     if (reviewerCount) {
-        stats.push(`${':eyes:'.repeat(reviewerCount)} ${reviewerCount} ${pluralize('review', reviewerCount)}`);
+        stats.push(`:eyes: ${reviewerCount} ${pluralize('review', reviewerCount)}`);
     }
     if (approvalCount) {
-        stats.push(`${':approved:'.repeat(approvalCount)} ${approvalCount} ${pluralize('approval', approvalCount)}`);
+        stats.push(`:approved: ${approvalCount} ${pluralize('approval', approvalCount)}`);
     }
     if (stats.length) {
         text = `${text}${stats.join(', ')}, `;
@@ -86,6 +98,9 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
 
     if (reviewers.length) {
         text = `${text}, Claimed by ${reviewers.join(', ')}`;
+    }
+    if (approvers.length) {
+        text = `${text}, Approved by ${approvers.join(', ')}`;
     }
 
     if (codeReview.note) {
@@ -105,39 +120,36 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
         },
         {
             type: 'actions',
-            elements: [buttonClaim, buttonApprove, buttonRemove],
+            elements: [buttonClaim, buttonApprove, buttonClose, buttonRemove],
         }
     ] as (Block | KnownBlock)[];
 };
 
-const getCodeReviewList = async (status: string, slackUserId?: string): Promise<(Block | KnownBlock)[]> => {
-    const user = await prisma.user.findFirst({
-        where: {
-            slackUserId,
-        }
-    });
-
+const getCodeReviewList = async ({codeReviewStatus, slackChannelId, userId}: {codeReviewStatus?: string; slackChannelId?: string; userId?: string}): Promise<(Block | KnownBlock)[]> => {
     const where: {[index: string]: unknown} = {};
 
-    if (status && status !== 'all') {
-        if (status === 'mine') {
+    if (slackChannelId) {
+        where.slackChannelId = slackChannelId;
+    }
+    if (codeReviewStatus && codeReviewStatus !== 'all') {
+        if (codeReviewStatus === 'mine') {
             where.status = {
                 in: ['pending', 'inprogress'],
             };
             where.OR = [
                 {
-                    userId: user?.id,
+                    userId,
                 },
                 {
                     reviewers: {
                         some: {
-                            userId: user?.id
+                            userId,
                         }
                     }
                 }
             ];
         } else {
-            where.status = status;
+            where.status = codeReviewStatus;
         }
     }
 

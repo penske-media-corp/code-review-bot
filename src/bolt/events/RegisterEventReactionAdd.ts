@@ -3,13 +3,13 @@ import type {
     SayArguments
 } from '@slack/bolt';
 import {
+    getGroupToMentionInChannel,
     slackActions,
-    teamToMentionInChannelAlert,
-} from '../../utils/config';
+} from '../../lib/config';
 import Review from '../../service/Review';
 import {getReactionData} from '../utils';
-import {logDebug} from '../../utils/log';
-import {prisma} from '../../utils/config';
+import {logDebug} from '../../lib/log';
+import {prisma} from '../../lib/config';
 
 export default function registerEventReactionAdd (app: App): void {
     app.event('reaction_added', async ({event, say}) => {
@@ -39,7 +39,7 @@ export default function registerEventReactionAdd (app: App): void {
                     thread_ts: slackThreadTs,
                 });
             } else {
-                const notify = teamToMentionInChannelAlert[data.slackChannelId] || teamToMentionInChannelAlert.default;
+                const notify = await getGroupToMentionInChannel(data.slackChannelId);
 
                 await say({
                     text: `<${notify}>, ${result.message}`,
@@ -60,10 +60,6 @@ export default function registerEventReactionAdd (app: App): void {
 
         // All actions beyond this line must have a valid code review record existed.
         if (!codeReview) {
-            await say({
-                text: `<@${reactionUserId}>, Cannot locate existing code review request data.`,
-                thread_ts: slackThreadTs,
-            });
             return;
         }
 
@@ -87,6 +83,12 @@ export default function registerEventReactionAdd (app: App): void {
             const result = await Review.requestChanges(codeReview, reactionUserId);
 
             if (['inprogress', 'pending'].includes(codeReview.status)) {
+                await say(result.slackNotifyMessage as SayArguments);
+            }
+        } else if (slackActions.close.includes(data.reaction)) {
+            const result = await Review.close(codeReview);
+
+            if (codeReview.status === 'closed') {
                 await say(result.slackNotifyMessage as SayArguments);
             }
         }

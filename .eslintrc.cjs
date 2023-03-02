@@ -26,7 +26,7 @@ module.exports = {
         '@typescript-eslint/no-magic-numbers': 'off',
         '@typescript-eslint/non-nullable-type-assertion-style': 'off',
         '@typescript-eslint/prefer-readonly-parameter-types': 'off',
-        '@typescript-eslint/quotes': ['error', 'single', { 'allowTemplateLiterals': true }],
+        '@typescript-eslint/quotes': ['error', 'single', { 'allowTemplateLiterals': false }],
         '@typescript-eslint/require-await': 'off',
         '@typescript-eslint/strict-boolean-expressions': 'off',
         'no-empty-function':'off',

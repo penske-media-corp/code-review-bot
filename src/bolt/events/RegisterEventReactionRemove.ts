@@ -1,9 +1,9 @@
 import type {App, SayArguments} from '@slack/bolt';
 import Review from '../../service/Review';
 import {getReactionData} from '../utils';
-import {logDebug} from '../../utils/log';
-import {prisma} from '../../utils/config';
-import {slackActions} from '../../utils/config';
+import {logDebug} from '../../lib/log';
+import {prisma} from '../../lib/config';
+import {slackActions} from '../../lib/config';
 
 export default function registerEventReactionRemove (app: App): void {
     app.event('reaction_removed', async ({event, say}) => {

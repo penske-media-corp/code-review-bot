@@ -3,10 +3,15 @@ import type {
     CodeReviewRelation,
     User,
 } from '@prisma/client';
+import {
+    getRepositoryNumberOfApprovals,
+    getRepositoryNumberOfReviews,
+    prisma
+} from '../lib/config';
 import type {ReactionData} from '../bolt/types';
+import {extractRepository} from '../lib/utils';
 import {getUserInfo} from '../bolt/utils';
 import pluralize from 'pluralize';
-import {prisma} from '../utils/config';
 
 export interface ReviewActionResult {
     codeReview?: CodeReview;
@@ -97,10 +102,11 @@ async function setCodeReviewerStatus (codeReview: CodeReview & {reviewers: CodeR
 }
 
 async function calculateReviewStats (codeReview: CodeReview & {reviewers: CodeReviewRelation[]}): Promise<{approvalCount: number; reviewerCount: number}> {
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     let approvalCount = 0;
     let reviewerCount = 0;
-    codeReview.reviewers.forEach((reviewer) => {
 
+    codeReview.reviewers.forEach((reviewer) => {
         if (reviewer.status === 'approved') {
             approvalCount += 1;
         } else if (['pending', 'change'].includes(reviewer.status)) {
@@ -108,8 +114,8 @@ async function calculateReviewStats (codeReview: CodeReview & {reviewers: CodeRe
         }
     });
 
-    if (approvalCount + reviewerCount >= 2) {
-        codeReview.status = approvalCount >= 2 ? 'ready' : 'inprogress';
+    if (approvalCount + reviewerCount >= numberReviewRequired) {
+        codeReview.status = approvalCount >= numberReviewRequired ? 'ready' : 'inprogress';
 
         await prisma.codeReview.update({
             where: {
@@ -119,6 +125,9 @@ async function calculateReviewStats (codeReview: CodeReview & {reviewers: CodeRe
                 status: codeReview.status,
             }
         });
+    } else if (['ready', 'inprogress'].includes(codeReview.status)) {
+        // For whatever reason, if request is un-claim, the request may be kick back into pending queue.
+        codeReview.status = 'pending';
     }
 
     return {
@@ -172,22 +181,28 @@ const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink,
     }
 
     const userDisplayName = user.displayName;
+    const numberApprovalRequired = await getRepositoryNumberOfApprovals(extractRepository(codeReview.pullRequestLink));
 
     return {
-        message: `*${userDisplayName}* has request a code review! 2 reviewers :review: are needed.`,
+        message: `*${userDisplayName}* has request a code review! ${numberApprovalRequired} ${pluralize('reviewer', numberApprovalRequired)} :eyes: ${pluralize('is', numberApprovalRequired)} needed.`,
         codeReview,
     };
 };
 
 const approve = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
-
+    const numberApprovalRequired = await getRepositoryNumberOfApprovals(extractRepository(codeReview.pullRequestLink));
     const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'approved');
     const userDisplayName = user.displayName;
     const stats = await calculateReviewStats(codeReview);
-    let message = stats.approvalCount === 1
-        ? 'One more approval :approved: is needed.'
-        : `Code has ${stats.approvalCount} ${pluralize('approval', stats.approvalCount)}, ready to merge.`;
+    let message = '';
+
+    if (stats.approvalCount >= numberApprovalRequired) {
+        message = `Code has ${stats.approvalCount} ${pluralize('approval', stats.approvalCount)}, ready to merge.`;
+    } else {
+        const numberNeeded = numberApprovalRequired - stats.approvalCount;
+        message = `${numberNeeded} more ${pluralize('approval', numberNeeded)} :approved: ${pluralize('is', numberNeeded)} needed.`;
+    }
 
     message = `*${userDisplayName}* approved the code. ${message}`;
 
@@ -202,16 +217,23 @@ const approve = async (codeReview: CodeReview & {user: User; reviewers: CodeRevi
     };
 };
 
-const claim = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
+const getNumberReviewMessage = (count: number, required: number): string => {
+    if (count >= required) {
+        return `Code has ${count} ${pluralize('reviewer', count)}.`;
+    }
+    const numberNeeded = required - count;
 
+    return `${numberNeeded} more ${pluralize('reviewer', numberNeeded)} :eyes: ${pluralize('is', numberNeeded)} needed.`;
+};
+
+const claim = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'pending');
     const userDisplayName = user.displayName;
     const stats = await calculateReviewStats(codeReview);
     const count = stats.reviewerCount + stats.approvalCount;
-    let message = count === 1
-        ? 'One more reviewer :review: is needed.'
-        : `Code has ${count} ${pluralize('reviewer', count)}.`;
+    let message = getNumberReviewMessage(count, numberReviewRequired);
 
     message = `*${userDisplayName}* claimed the code review. ${message}`;
 
@@ -227,14 +249,13 @@ const claim = async (codeReview: CodeReview & {user: User; reviewers: CodeReview
 };
 
 const finish = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'finish');
     const userDisplayName = user.displayName;
     const stats = await calculateReviewStats(codeReview);
     const count = stats.reviewerCount + stats.approvalCount;
-    let message = count === 1
-        ? 'One more reviewer :review: is needed.'
-        : `Code has ${count} ${pluralize('reviewer', count)}.`;
+    let message = getNumberReviewMessage(count, numberReviewRequired);
 
     message = `*${userDisplayName}* withdrew or finished reviewing the code without providing an approval.  ${message}`;
 
@@ -257,12 +278,14 @@ const remove = async (codeReview: CodeReview & {user: User}, slackUserId: string
 
     codeReview.status = 'removed';
 
-    await prisma.codeReview.update({
+    await prisma.codeReviewRelation.deleteMany({
+        where: {
+            codeReviewId: codeReview.id,
+        }
+    });
+    await prisma.codeReview.delete({
         where: {
             id: codeReview.id,
-        },
-        data: {
-            status: codeReview.status,
         }
     });
 
@@ -278,10 +301,15 @@ const remove = async (codeReview: CodeReview & {user: User}, slackUserId: string
 };
 
 const requestChanges = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'change');
     const userDisplayName = user.displayName;
     const requestSlackUserId = codeReview.user.slackUserId;
-    const message = `*${userDisplayName}* requested changes on the pull request.`;
+    const stats = await calculateReviewStats(codeReview);
+    const count = stats.reviewerCount + stats.approvalCount;
+    let message = getNumberReviewMessage(count, numberReviewRequired);
+
+    message = `*${userDisplayName}* requested changes on the pull request. ${message}`;
 
     return {
         codeReview,
@@ -319,13 +347,37 @@ const withdraw = async (codeReview: CodeReview & {user: User}): Promise<ReviewAc
     };
 };
 
+const close = async (codeReview: CodeReview & {user: User}, closeMessage?: string): Promise<ReviewActionResult> => {
+    const message = closeMessage ?? 'Pull request has been closed.';
+
+    codeReview.status = 'closed';
+    await prisma.codeReview.update({
+        where: {
+            id: codeReview.id,
+        },
+        data: {
+            status: codeReview.status,
+        }
+    });
+
+    return {
+        codeReview,
+        message,
+        slackNotifyMessage: {
+            channel: codeReview.slackChannelId,
+            text: message,
+            thread_ts: codeReview.slackThreadTs,
+        },
+    };
+};
+
 export default {
     add,
     approve,
     claim,
+    close,
     finish,
     remove,
     requestChanges,
     withdraw,
-    setCodeReviewerStatus,
 };

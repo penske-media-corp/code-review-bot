@@ -1,5 +1,5 @@
-import './utils/env';
-import {APP_BASE_URL, PORT} from './utils/env';
+import './lib/env';
+import {APP_BASE_URL, PORT} from './lib/env';
 import expressApp from './express/app';
 import slackBotApp from './bolt/app';
 
