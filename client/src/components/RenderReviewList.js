@@ -61,20 +61,29 @@ const paginationComponentOptions = {
     selectAllRowsItem: false,
 };
 
-const useExpandedRowComponent = (refreshHandler) => {
+const useExpandedRowComponent = (updatedHandler) => {
     const expandedRowComponent = ({data}) => {
         const handleClick = ({target}) => {
             const {id, name, value} = target;
-            fetch(`/api/action/${name}/${value}`).
-                then((res) => res.json()).
-                then((result) => {
-                    refreshHandler && refreshHandler({id, name, value});
-                }).catch((e) => {
+
+            fetch(`/api/action/${name}/${value}`,{
+                credentials: 'same-origin',
+            })
+                .then((res) => res.json())
+                .then((data) => {
+                    data && updatedHandler && updatedHandler({
+                        data,
+                        action: name,
+                    });
+                })
+                .catch((e) => {
+                    // @TODO
                     logDebug(e);
                 })
         };
         const Button = ({id, name}) => {
             const sanitizedName = name.toLowerCase().replace(' ', '-');
+
             return (
                 <button
                     id={`${sanitizedName}-${id}`}
@@ -163,7 +172,9 @@ const RenderReviewList = () => {
         logDebug('fetchData', description, lastFetchData, newFetchData)
         lastFetchData = `${channel}-${limit}-${page}-${status}`;
         setLoading(true);
-        fetch(`/api/reviews/${channel}/${status}?limit=${limit}&page=${page}`)
+        fetch(`/api/reviews/${channel}/${status}?limit=${limit}&page=${page}`, {
+            credentials: 'same-origin',
+        })
             .then((res) => res.json())
             .then((result) => {
                 setDataSet(result.dataset);
@@ -184,15 +195,15 @@ const RenderReviewList = () => {
         });
     });
 
-    const handlePerRowsChange = React.useCallback(async (newPerPage, page) => {
-        logDebug('handlePerRowsChange', newPerPage, page);
-        setPageSize(newPerPage);
+    const handlePageSizeChange = React.useCallback(async (newPageSize, page) => {
+        logDebug('handlePerRowsChange', newPageSize, page);
+        setPageSize(newPageSize);
         fetchData({
             channel: selectedChannel,
-            limit: newPerPage,
+            limit: newPageSize,
             page,
             status,
-            description: 'handlePerRowsChange',
+            description: 'handlePageSizeChange',
         });
     });
 
@@ -212,14 +223,22 @@ const RenderReviewList = () => {
         }
     });
 
-    const handleRefresh = React.useCallback(() => {
-        fetchData({
-            channel: selectedChannel,
-            limit: pageSize,
-            page: currentPage,
-            status,
-            description: 'handleRefresh',
-        });
+    const handleRowUpdate = React.useCallback(({data, action}) => {
+        logDebug('handleRowUpdate', data.id);
+
+        if (data?.status === status) {
+            // If row data status is the same, just need to trigger data refresh and render
+            const newDataSet = dataSet.map((row) => row.id === data.id ? data : row);
+            setDataSet(newDataSet);
+        } else {
+            fetchData({
+                channel: selectedChannel,
+                limit: pageSize,
+                page: currentPage,
+                status,
+                description: 'handleRowUpdate',
+            });
+        }
     });
 
     React.useEffect(() => {
@@ -289,7 +308,7 @@ const RenderReviewList = () => {
                 paginationServer
                 paginationTotalRows={totalRows}
                 paginationComponentOptions={paginationComponentOptions}
-                onChangeRowsPerPage={handlePerRowsChange}
+                onChangeRowsPerPage={handlePageSizeChange}
                 onChangePage={handlePageChange}
 
                 fixedHeader
@@ -299,7 +318,7 @@ const RenderReviewList = () => {
                 persistTableHead
 
                 expandableRows
-                expandableRowsComponent={useExpandedRowComponent(handleRefresh)}
+                expandableRowsComponent={useExpandedRowComponent(handleRowUpdate)}
             />
         </div>
     );
