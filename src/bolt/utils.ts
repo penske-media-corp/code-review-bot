@@ -21,6 +21,7 @@ import {
 import {APP_BASE_URL} from '../lib/env';
 import type {ChannelInfo} from './types';
 import type {GithubBotEventData} from './types';
+import {generateAuthToken} from '../service/User';
 import getCodeReviewList from './lib/CodeReviewList';
 import {logDebug} from '../lib/log';
 import pluralize from 'pluralize';
@@ -307,12 +308,26 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         } || {}
     };
 
+    let webLoginUrl = APP_BASE_URL;
+
+    if (user) {
+        let {authToken} = user.session as Partial<{authToken: string}>;
+
+        if (!authToken?.length) {
+            authToken = await generateAuthToken(user) as string;
+        }
+
+        if (authToken?.length) {
+            webLoginUrl = `${APP_BASE_URL}/auth/slack/${slackUserId}/${authToken}`;
+        }
+    }
+
     const blocks: (Block | KnownBlock)[] = [
         {
             type: 'section',
             text: {
                 type: 'mrkdwn',
-                text: `*Outstanding Code Review Queue:* <${APP_BASE_URL}>`
+                text: `*Outstanding Code Review Queue:* <${webLoginUrl}|${APP_BASE_URL}>`
             }
         },
         {
@@ -324,7 +339,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
                 buttonMyReviews,
             ],
         },
-        ...await getCodeReviewList({codeReviewStatus: filterStatus, slackChannelId: filterChannel})
+        ...await getCodeReviewList({codeReviewStatus: filterStatus, slackChannelId: filterChannel, userId: user?.id})
     ];
 
     switch (filterStatus) {

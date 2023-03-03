@@ -2,7 +2,7 @@ import express from 'express';
 
 const authRouter = express.Router();
 
-authRouter.get('/auth/slack/:token?', (req, res) => {
+authRouter.get('/slack/:slackUserId/:token', (req, res) => {
     // @TODO
     res.redirect('/');
 });

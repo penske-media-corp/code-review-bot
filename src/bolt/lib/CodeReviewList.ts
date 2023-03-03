@@ -125,7 +125,7 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
     ] as (Block | KnownBlock)[];
 };
 
-const getCodeReviewList = async ({codeReviewStatus, slackChannelId, userId}: {codeReviewStatus?: string; slackChannelId?: string; userId?: string}): Promise<(Block | KnownBlock)[]> => {
+const getCodeReviewList = async ({codeReviewStatus, slackChannelId, userId}: {codeReviewStatus?: string; slackChannelId?: string; userId?: number}): Promise<(Block | KnownBlock)[]> => {
     const where: {[index: string]: unknown} = {};
 
     if (slackChannelId) {
