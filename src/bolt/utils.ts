@@ -23,7 +23,7 @@ import type {ChannelInfo} from './types';
 import type {GithubBotEventData} from './types';
 import {generateAuthToken} from '../service/User';
 import getCodeReviewList from './lib/CodeReviewList';
-import {logDebug} from '../lib/log';
+import {logDebug, logError} from '../lib/log';
 import pluralize from 'pluralize';
 import {prisma} from '../lib/config';
 import {registerSchedule} from '../lib/schedule';
@@ -322,7 +322,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         }
     }
 
-    const blocks: (Block | KnownBlock)[] = [
+    let blocks: (Block | KnownBlock)[] = [
         {
             type: 'section',
             text: {
@@ -341,6 +341,24 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         },
         ...await getCodeReviewList({codeReviewStatus: filterStatus, slackChannelId: filterChannel, userId: user?.id})
     ];
+
+    logDebug('sentHomePageCodeReviewList blocks.length', blocks.length);
+    if (blocks.length > 100) {
+        logError(`Blocks limit reach, maximum blocks size allow in slack api is 100.  Current size is ${blocks.length}`);
+        blocks.splice(98);
+        blocks = blocks.concat([
+            {
+                'type': 'divider'
+            },
+            {
+                type: 'section',
+                text: {
+                    type: 'mrkdwn',
+                    text: '...additional items cannot be displayed.',
+                }
+            }
+        ]);
+    }
 
     switch (filterStatus) {
         case 'mine':
