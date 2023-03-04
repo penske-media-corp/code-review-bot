@@ -1,12 +1,11 @@
+import Review, {findCodeReviewRecord} from '../../service/Review';
 import {
     postSlackMessage,
     sentHomePageCodeReviewList
 } from '../utils';
 import type {App} from '@slack/bolt';
 import type {ChatPostMessageArguments} from '@slack/web-api';
-import Review from '../../service/Review';
 import {logDebug} from '../../lib/log';
-import {prisma} from '../../lib/config';
 
 export default function registerActionHomePage (app: App): void {
     app.action({callback_id: 'home_page'}, async ({action, body}) => {
@@ -16,15 +15,7 @@ export default function registerActionHomePage (app: App): void {
         const {action_id: actionId, value: actionValue, selected_channel: slackChannelId} = (action as unknown) as {action_id: string; value?: string; selected_channel?: string};
 
         if (actionValue && ['approve', 'claim', 'close', 'remove'].includes(actionValue)) {
-            const codeReview = await prisma.codeReview.findFirst({
-                include: {
-                    user: true,
-                    reviewers: true,
-                },
-                where: {
-                    id: parseInt(actionId.split('-')[1]),
-                }
-            });
+            const codeReview = await findCodeReviewRecord({id: parseInt(actionId.split('-')[1])});
 
             if (codeReview) {
                 let result;

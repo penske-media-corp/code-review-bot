@@ -70,9 +70,9 @@ const useExpandedRowComponent = (updatedHandler) => {
                 credentials: 'same-origin',
             })
                 .then((res) => res.json())
-                .then((data) => {
-                    data && updatedHandler && updatedHandler({
-                        data,
+                .then((result) => {
+                    result?.data && updatedHandler && updatedHandler({
+                        data: result.data,
                         action: name,
                     });
                 })

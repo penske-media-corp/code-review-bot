@@ -3,7 +3,6 @@ import type {
     Express,
 } from 'express';
 import apiRouter from './routes/api';
-import authMiddleware from './middlewares/auth';
 import authRouter from './routes/auth';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -20,7 +19,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
-app.use(authMiddleware);
 app.use(express.static(APP_CLIENT_BUILD));
 
 app.use('/api', apiRouter);

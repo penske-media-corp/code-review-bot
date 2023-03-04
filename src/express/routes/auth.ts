@@ -1,10 +1,8 @@
+import {authSlackController} from '../controllers/auth/slack';
 import express from 'express';
 
 const authRouter = express.Router();
 
-authRouter.get('/slack/:slackUserId/:token', (req, res) => {
-    // @TODO
-    res.redirect('/');
-});
+authRouter.get('/slack/:slackUserId/:token', authSlackController);
 
 export default authRouter;

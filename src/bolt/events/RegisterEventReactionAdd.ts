@@ -2,14 +2,13 @@ import type {
     App,
     SayArguments
 } from '@slack/bolt';
+import Review, {findCodeReviewRecord} from '../../service/Review';
 import {
     getGroupToMentionInChannel,
     slackActions,
 } from '../../lib/config';
-import Review from '../../service/Review';
 import {getReactionData} from '../utils';
 import {logDebug} from '../../lib/log';
-import {prisma} from '../../lib/config';
 
 export default function registerEventReactionAdd (app: App): void {
     app.event('reaction_added', async ({event, say}) => {
@@ -48,15 +47,7 @@ export default function registerEventReactionAdd (app: App): void {
             }
         }
 
-        const codeReview = await prisma.codeReview.findFirst({
-            include: {
-                user: true,
-                reviewers: true,
-            },
-            where: {
-                pullRequestLink,
-            }
-        });
+        const codeReview = await findCodeReviewRecord({pullRequestLink});
 
         // All actions beyond this line must have a valid code review record existed.
         if (!codeReview) {

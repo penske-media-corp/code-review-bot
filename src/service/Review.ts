@@ -13,14 +13,55 @@ import {extractRepository} from '../lib/utils';
 import {getUserInfo} from '../bolt/utils';
 import pluralize from 'pluralize';
 
+export interface ReviewerRecord extends CodeReviewRelation {
+    reviewer: User;
+}
+
+export interface CodeReviewRecord extends CodeReview {
+    user: User;
+    reviewers: ReviewerRecord[];
+}
+
 export interface ReviewActionResult {
-    codeReview?: CodeReview;
+    codeReview?: CodeReviewRecord;
     message: string;
     slackNotifyMessage?: {
         channel?: string | null;
         text?: string | null;
         thread_ts?: string | null;
     };
+}
+
+export async function findCodeReviewRecord ({id, pullRequestLink}: {id?: number; pullRequestLink?: string}): Promise<CodeReviewRecord | null> {
+    let where;
+
+    if (id) {
+        where = {id};
+    } else if (pullRequestLink) {
+        where = {pullRequestLink};
+    }
+
+    if (!where) {
+        return null;
+    }
+
+    const result = await prisma.codeReview.findFirst({
+        where,
+        include: {
+            user: true,
+            reviewers: {
+                include: {
+                    reviewer: true,
+                },
+            },
+        },
+    });
+
+    if (!result) {
+        return null;
+    }
+
+    return result;
 }
 
 async function findOrCreateUser (slackUserId: string): Promise<User> {
@@ -43,7 +84,7 @@ async function findOrCreateUser (slackUserId: string): Promise<User> {
     return user;
 }
 
-async function setCodeReviewerStatus (codeReview: CodeReview & {reviewers: CodeReviewRelation[]}, slackUserId: string, status: string): Promise<User> {
+async function setCodeReviewerStatus (codeReview: CodeReviewRecord, slackUserId: string, status: string): Promise<User> {
     const user = await findOrCreateUser(slackUserId);
 
     if (status === 'removed') {
@@ -74,7 +115,7 @@ async function setCodeReviewerStatus (codeReview: CodeReview & {reviewers: CodeR
                 userId: user.id,
             }
         });
-        codeReview.reviewers.push(relation);
+        codeReview.reviewers.push(Object.assign(relation, {reviewer: user}) as ReviewerRecord);
     } else {
         await prisma.codeReviewRelation.update({
             where: {
@@ -101,7 +142,7 @@ async function setCodeReviewerStatus (codeReview: CodeReview & {reviewers: CodeR
     return user;
 }
 
-async function calculateReviewStats (codeReview: CodeReview & {reviewers: CodeReviewRelation[]}): Promise<{approvalCount: number; reviewerCount: number}> {
+async function calculateReviewStats (codeReview: CodeReviewRecord): Promise<{approvalCount: number; reviewerCount: number}> {
     const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     let approvalCount = 0;
     let reviewerCount = 0;
@@ -143,11 +184,7 @@ const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink,
         };
     }
 
-    let codeReview = await prisma.codeReview.findFirst({
-        where: {
-            pullRequestLink,
-        }
-    });
+    let codeReview = await findCodeReviewRecord({pullRequestLink});
 
     const user = await findOrCreateUser(slackMsgUserId);
 
@@ -162,7 +199,7 @@ const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink,
                 status: 'pending',
                 userId: user.id,
             }
-        });
+        }) as CodeReviewRecord;
     } else {
         await prisma.codeReviewRelation.deleteMany({
             where: {
@@ -189,7 +226,7 @@ const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink,
     };
 };
 
-const approve = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
+const approve = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
     const numberApprovalRequired = await getRepositoryNumberOfApprovals(extractRepository(codeReview.pullRequestLink));
     const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'approved');
@@ -226,7 +263,7 @@ const getNumberReviewMessage = (count: number, required: number): string => {
     return `${numberNeeded} more ${pluralize('reviewer', numberNeeded)} :eyes: ${pluralize('is', numberNeeded)} needed.`;
 };
 
-const claim = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
+const claim = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
     const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'pending');
@@ -248,7 +285,7 @@ const claim = async (codeReview: CodeReview & {user: User; reviewers: CodeReview
     };
 };
 
-const finish = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
+const finish = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
     const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'finish');
@@ -270,7 +307,7 @@ const finish = async (codeReview: CodeReview & {user: User; reviewers: CodeRevie
     };
 };
 
-const remove = async (codeReview: CodeReview & {user: User}, slackUserId: string): Promise<ReviewActionResult> => {
+const remove = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
     const user = await findOrCreateUser(slackUserId);
     const userDisplayName = user.displayName;
     const requestSlackUserId = codeReview.user.slackUserId;
@@ -300,7 +337,7 @@ const remove = async (codeReview: CodeReview & {user: User}, slackUserId: string
     };
 };
 
-const requestChanges = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
+const requestChanges = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
     const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'change');
     const userDisplayName = user.displayName;
@@ -322,7 +359,7 @@ const requestChanges = async (codeReview: CodeReview & {user: User; reviewers: C
     };
 };
 
-const withdraw = async (codeReview: CodeReview & {user: User}): Promise<ReviewActionResult> => {
+const withdraw = async (codeReview: CodeReviewRecord): Promise<ReviewActionResult> => {
     const userDisplayName = codeReview.user.displayName;
     const message = `*${userDisplayName}* withdrew the code review request`;
 
@@ -347,7 +384,7 @@ const withdraw = async (codeReview: CodeReview & {user: User}): Promise<ReviewAc
     };
 };
 
-const close = async (codeReview: CodeReview & {user: User}, closeMessage?: string): Promise<ReviewActionResult> => {
+const close = async (codeReview: CodeReviewRecord, closeMessage?: string): Promise<ReviewActionResult> => {
     const message = closeMessage ?? 'Pull request has been closed.';
 
     codeReview.status = 'closed';

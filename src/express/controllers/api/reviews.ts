@@ -1,11 +1,38 @@
+import type {
+    CodeReviewRecord,
+    ReviewerRecord
+} from '../../../service/Review';
 import type {RequestHandler} from 'express';
-import type {User} from '@prisma/client';
-import {channelMaps} from '../../bolt/utils';
-import {logError} from '../../lib/log';
-import {prisma} from '../../lib/config';
+import {channelMaps} from '../../../bolt/utils';
+import {logError} from '../../../lib/log';
+import {prisma} from '../../../lib/config';
+
+const extractDisplayName = ({reviewer}: ReviewerRecord): string => reviewer.displayName;
+export const formatApiCodeReviewRecord = (codeReview: CodeReviewRecord): unknown => {
+    const reviewers: string[] = codeReview.reviewers.map(extractDisplayName);
+    const approvers: string[] = codeReview.reviewers.filter((r) => r.status === 'approved').map(extractDisplayName);
+
+    return {
+        approvers,
+        createdAt: codeReview.createdAt,
+        id: codeReview.id,
+        jiraTicket: codeReview.jiraTicket,
+        note: codeReview.note,
+        owner: codeReview.user.displayName,
+        pullRequestLink: codeReview.pullRequestLink,
+        reviewers,
+        slackChannelId: codeReview.slackChannelId,
+        slackChannelName: codeReview.slackChannelId ? channelMaps[codeReview.slackChannelId] : codeReview.slackChannelId,
+        slackPermalink: codeReview.slackPermalink,
+        slackThreadTs: codeReview.slackThreadTs,
+        status: codeReview.status,
+        updatedAt: codeReview.updatedAt,
+    };
+};
+
 const reviewsController: RequestHandler = (req, res) => {
-    const status = req.params.status;
     const channel = req.params.channel;
+    const status = req.params.status;
     let page = 1;
     let limit = 0;
 
@@ -45,28 +72,7 @@ const reviewsController: RequestHandler = (req, res) => {
             take: limit
         },
     }).then((reviews) => {
-        const extractDisplayName = ({reviewer}: {reviewer: User}): string => reviewer.displayName;
-        const result = reviews.map((item) => {
-            const reviewers: string[] = item.reviewers.map(extractDisplayName);
-            const approvers: string[] = item.reviewers.filter((r) => r.status === 'approved').map(extractDisplayName);
-
-            return {
-                approvers,
-                createdAt: item.createdAt,
-                id: item.id,
-                jiraTicket: item.jiraTicket,
-                note: item.note,
-                owner: item.user.displayName,
-                pullRequestLink: item.pullRequestLink,
-                reviewers,
-                slackChannelId: item.slackChannelId,
-                slackChannelName: item.slackChannelId ? channelMaps[item.slackChannelId] : item.slackChannelId,
-                slackPermalink: item.slackPermalink,
-                slackThreadTs: item.slackThreadTs,
-                status: item.status,
-                updatedAt: item.updatedAt,
-            };
-        });
+        const result = reviews.map(formatApiCodeReviewRecord);
         return {
             page,
             limit,

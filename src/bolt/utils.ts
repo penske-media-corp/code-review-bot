@@ -18,12 +18,15 @@ import {
     extractJiraTicket,
     extractPullRequestLink
 } from '../lib/utils';
+import {
+    logDebug,
+    logError
+} from '../lib/log';
 import {APP_BASE_URL} from '../lib/env';
 import type {ChannelInfo} from './types';
 import type {GithubBotEventData} from './types';
 import {generateAuthToken} from '../service/User';
 import getCodeReviewList from './lib/CodeReviewList';
-import {logDebug, logError} from '../lib/log';
 import pluralize from 'pluralize';
 import {prisma} from '../lib/config';
 import {registerSchedule} from '../lib/schedule';
@@ -61,13 +64,13 @@ export async function getChannels (): Promise<ChannelInfo[]> {
         return [];
     }
 
-    return result.channels.reduce((acc, val) => {
+    return result.channels.reduce<ChannelInfo[]>((acc, val) => {
         acc.push({
             id: val.id,
             name: val.name,
         } as ChannelInfo);
         return acc;
-    }, [] as ChannelInfo[]);
+    }, []);
 }
 
 export const channelMaps: {[index: string]: ChannelInfo} = {};
@@ -185,7 +188,7 @@ export function getGithubBotEventData (event: GenericMessageEvent): GithubBotEve
 }
 
 export async function postSlackMessage (slackMessage: ChatPostMessageArguments): Promise<void> {
-    await slackBotApp.client.chat.postMessage(slackMessage);
+    await slackBotApp.client.chat.postMessage(slackMessage).catch(logError);
 }
 
 export async function sendCodeReviewSummary (channel: string): Promise<void> {
@@ -305,7 +308,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         action_id: 'channel',
         ...filterChannel?.length && {
             initial_channel: filterChannel,
-        } || {}
+        }
     };
 
     let webLoginUrl = APP_BASE_URL;
@@ -314,10 +317,10 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         let {authToken} = user.session as Partial<{authToken: string}>;
 
         if (!authToken?.length) {
-            authToken = await generateAuthToken(user) as string;
+            authToken = await generateAuthToken(user);
         }
 
-        if (authToken?.length) {
+        if (authToken.length) {
             webLoginUrl = `${APP_BASE_URL}/auth/slack/${slackUserId}/${authToken}`;
         }
     }
@@ -380,7 +383,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
 
             blocks,
         }
-    });
+    }).catch(logError);
 }
 
 export function registerSlackBotApp (app: App): void {
