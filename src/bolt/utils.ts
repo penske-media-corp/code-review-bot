@@ -176,7 +176,8 @@ export function getGithubBotEventData (event: GenericMessageEvent): GithubBotEve
         return null;
     }
 
-    if (!pretext.includes('Pull request closed by')) {
+    if (!['Pull request merged by', 'Pull request closed by']
+        .some((search) => pretext.includes('Pull request closed by'))) {
         return null;
     }
 
@@ -321,7 +322,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         }
 
         if (authToken.length) {
-            webLoginUrl = `${APP_BASE_URL}/auth/slack/${slackUserId}/${authToken}`;
+            webLoginUrl = `${APP_BASE_URL}/auth/slack/token/${slackUserId}/${authToken}`;
         }
     }
 

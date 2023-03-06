@@ -4,7 +4,7 @@ import {
 } from '../../../service/User';
 import type {RequestHandler} from 'express';
 
-export const authSlackController: RequestHandler = (req, res) => {
+export const authSlackTokenController: RequestHandler = (req, res) => {
     const slackUserId = req.params.slackUserId;
     const token = req.params.token;
 

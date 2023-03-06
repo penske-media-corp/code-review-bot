@@ -1,8 +1,8 @@
-import {authSlackController} from '../controllers/auth/slack';
+import {authSlackTokenController} from '../controllers/auth/slack';
 import express from 'express';
 
 const authRouter = express.Router();
 
-authRouter.get('/slack/:slackUserId/:token', authSlackController);
+authRouter.get('/slack/token/:slackUserId/:token', authSlackTokenController);
 
 export default authRouter;
