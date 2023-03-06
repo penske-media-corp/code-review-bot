@@ -324,7 +324,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
                 buttonMyReviews,
             ],
         },
-        ...await getCodeReviewList({codeReviewStatus: filterStatus, slackChannelId: filterChannel})
+        ...await getCodeReviewList({codeReviewStatus: filterStatus, slackChannelId: filterChannel, userId: user?.id})
     ];
 
     switch (filterStatus) {
