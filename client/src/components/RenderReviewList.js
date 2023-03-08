@@ -2,11 +2,8 @@ import DataTable, {createTheme} from 'react-data-table-component';
 import React from 'react';
 import {format} from 'date-fns';
 import Select from 'react-select';
+import {logDebug} from '../services/log';
 import styled from 'styled-components';
-
-const logDebug = (...args) => {
-    console.debug(...args);
-}
 
 const HeaderDiv = styled.div`
       min-width: 350px;

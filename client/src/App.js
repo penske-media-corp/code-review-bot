@@ -2,24 +2,13 @@ import './App.css';
 import {useEffect, useState} from 'react';
 import RenderReviewList from './components/RenderReviewList';
 import SingInWithSlack from './components/SingInWithSlack';
+import {fetchAuthUser} from './services/user';
 
 function App() {
     const [user, setUser] = useState(null);
-    let isFetching = false;
 
     useEffect(() => {
-        if (user || isFetching) {
-            return;
-        }
-        isFetching = true;
-        fetch(`/api/user`, {
-            credentials: 'same-origin',
-        })
-            .then((res) => res.json())
-            .then((result) => {
-                setUser(result);
-                isFetching = false;
-            });
+        fetchAuthUser().then((result) => setUser(result));
     });
 
     return (
