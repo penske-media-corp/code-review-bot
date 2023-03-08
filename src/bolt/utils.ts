@@ -25,7 +25,6 @@ import {
 import {APP_BASE_URL} from '../lib/env';
 import type {ChannelInfo} from './types';
 import type {GithubBotEventData} from './types';
-import {generateAuthToken} from '../service/User';
 import getCodeReviewList from './lib/CodeReviewList';
 import pluralize from 'pluralize';
 import {prisma} from '../lib/config';
@@ -312,26 +311,14 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         }
     };
 
-    let webLoginUrl = APP_BASE_URL;
-
-    if (user) {
-        let {authToken} = user.session as Partial<{authToken: string}>;
-
-        if (!authToken?.length) {
-            authToken = await generateAuthToken(user);
-        }
-
-        if (authToken.length) {
-            webLoginUrl = `${APP_BASE_URL}/auth/slack/token/${slackUserId}/${authToken}`;
-        }
-    }
+    const webLoginUrl = `${APP_BASE_URL}/auth/slack`;
 
     let blocks: (Block | KnownBlock)[] = [
         {
             type: 'section',
             text: {
                 type: 'mrkdwn',
-                text: `*Outstanding Code Review Queue:* <${webLoginUrl}|${APP_BASE_URL}>`
+                text: `*Outstanding Code Review Queue:* <${webLoginUrl}>`
             }
         },
         {
