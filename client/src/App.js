@@ -14,7 +14,7 @@ function App() {
     return (
         <div className="App">
             {!user && (<SingInWithSlack/>)}
-            {user && (<RenderReviewList/>)}
+            {user && (<RenderReviewList user={user}/>)}
         </div>
     );
 }

@@ -1,9 +1,21 @@
-import DataTable, {createTheme} from 'react-data-table-component';
-import React from 'react';
-import {format} from 'date-fns';
+import DataTable,
+    {
+        createTheme
+    } from 'react-data-table-component';
 import Select from 'react-select';
+import {
+    fetchChannel,
+    fetchReviews
+} from '../services/data';
+import {
+    useCallback,
+    useEffect,
+    useState
+} from 'react';
+import {format} from 'date-fns';
 import {logDebug} from '../services/log';
 import styled from 'styled-components';
+import {useExpandedRowComponent} from './ExpandedRowComponent';
 
 const HeaderDiv = styled.div`
       min-width: 350px;
@@ -15,8 +27,8 @@ const HeaderDiv = styled.div`
 const columns = [
     {
         name: 'Date',
-        selector: row => format(new Date(row.createdAt), 'MMM dd, yyyy hh:mmaaaaa'),
-        maxWidth: '12em',
+        selector: row => format(new Date(row.createdAt), 'MMM dd, yyyy'),
+        maxWidth: '7em',
         compact: true,
     },
     {
@@ -49,6 +61,12 @@ const columns = [
         wrap: true,
         compact: true,
     },
+    {
+        name: 'Request Changes',
+        selector: row => row.requestChanges?.join(', '),
+        wrap: true,
+        compact: true,
+    },
 ];
 
 // @seet https://react-data-table-component.netlify.app/?path=/docs/pagination-options--options
@@ -57,54 +75,6 @@ const paginationComponentOptions = {
     rangeSeparatorText: 'of',
     selectAllRowsItem: false,
 };
-
-const useExpandedRowComponent = (updatedHandler) => {
-    const expandedRowComponent = ({data}) => {
-        const handleClick = ({target}) => {
-            const {name, value} = target;
-
-            fetch(`/api/action/${name}/${value}`,{
-                credentials: 'same-origin',
-            })
-                .then((res) => res.json())
-                .then((result) => {
-                    result?.data && updatedHandler && updatedHandler({
-                        data: result.data,
-                        action: name,
-                    });
-                })
-                .catch((e) => {
-                    // @TODO
-                    logDebug(e);
-                })
-        };
-        const Button = ({id, name}) => {
-            const sanitizedName = name.toLowerCase().replace(' ', '-');
-
-            return (
-                <button
-                    id={`${sanitizedName}-${id}`}
-                    name={sanitizedName}
-                    value={id}
-                    onClick={handleClick}
-                >{name}</button>
-            );
-        };
-        return (
-            <div style={{paddingLeft: '3em'}}>
-                <div>
-                    <Button name="Claim" id={data.id}/>
-                    <Button name="Change Request" id={data.id}/>
-                    <Button name="Approve" id={data.id}/>
-                    <Button name="Close" id={data.id}/>
-                    <Button name="Remove" id={data.id}/>
-                </div>
-                <pre>{data.note}</pre>
-            </div>
-        );
-    };
-    return expandedRowComponent;
-}
 
 const customStyles = {
     header: {
@@ -146,81 +116,70 @@ createTheme('custom', {
     }
 }, 'dark');
 
-const RenderReviewList = () => {
-    let lastFetchData;
-    let lastFetchChannel;
+const RenderReviewList = (props) => {
+    const {user} = props;
     const queryString = new URLSearchParams(window.location.search);
     const status = queryString.get('status') ?? 'pending';
-    const [dataSet, setDataSet] = React.useState([]);
-    const [loading, setLoading] = React.useState(true);
-    const [totalRows, setTotalRows] = React.useState(0);
-    const [pageSize, setPageSize] = React.useState(10);
-    const [currentPage, setCurrentPage] = React.useState(1);
-    const [channelOptions, setChannelOptions] = React.useState([]);
-    const [selectedChannel, setSelectedChannel] = React.useState(queryString.get('channel') ?? 'all');
-    const [selectPlaceHolder, setSelectPlaceHolder] = React.useState('Code Reviews For All Slack Channels');
+    const [dataSet, setDataSet] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [totalRows, setTotalRows] = useState(0);
+    const [pageSize, setPageSize] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [channelOptions, setChannelOptions] = useState([]);
+    const [selectedChannel, setSelectedChannel] = useState(queryString.get('channel') ?? 'all');
+    const [selectPlaceHolder, setSelectPlaceHolder] = useState('Code Reviews For All Slack Channels');
 
-    const fetchData = async ({channel, limit, page, status, description}) => {
-        // Check last fetch to avoid data request multiple times during first page loading.
-        const newFetchData = `${channel}-${limit}-${page}-${status}`;
-        if (lastFetchData && lastFetchData === newFetchData) {
-            return;
-        }
-        logDebug('fetchData', description, lastFetchData, newFetchData)
-        lastFetchData = `${channel}-${limit}-${page}-${status}`;
+    const updateFilter = ({channel, limit, page, status}) => {
         setLoading(true);
-        fetch(`/api/reviews/${channel}/${status}?limit=${limit}&page=${page}`, {
-            credentials: 'same-origin',
-        })
-            .then((res) => res.json())
+        fetchReviews({channel, limit, page, status})
             .then((result) => {
+                if (!result) {
+                    return;
+                }
                 setDataSet(result.dataset);
                 setTotalRows(result.total);
                 setLoading(false);
             });
     };
 
-    const handlePageChange = React.useCallback((page) => {
+    const handlePageChange = useCallback((page) => {
         logDebug('handlePageChange', page);
         setCurrentPage(page);
-        fetchData({
+        updateFilter({
             channel: selectedChannel,
             limit: pageSize,
             page,
             status,
-            description: 'handlePageChange',
         });
     });
 
-    const handlePageSizeChange = React.useCallback(async (newPageSize, page) => {
+    const handlePageSizeChange = useCallback(async (newPageSize, page) => {
         logDebug('handlePerRowsChange', newPageSize, page);
         setPageSize(newPageSize);
-        fetchData({
+        updateFilter({
             channel: selectedChannel,
             limit: newPageSize,
             page,
             status,
-            description: 'handlePageSizeChange',
         });
     });
 
-    const handleChannelSelectionChange = React.useCallback((data) => {
+    const handleChannelSelectionChange = useCallback((data) => {
         console.log('handleChannelSelectionChange', data);
         const { label } = channelOptions.find(({ value }) => value === data?.value) || {};
         if (label !== selectPlaceHolder) {
             setSelectedChannel(data.value);
             setSelectPlaceHolder(label);
-            fetchData({
+            updateFilter({
                 channel: data.value,
                 limit: pageSize,
                 page: currentPage,
                 status,
-                description: 'handleChannelSelectionChange',
             });
         }
     });
 
-    const handleRowUpdate = React.useCallback(({data, action}) => {
+    const handleRowUpdate = useCallback(({data, action}) => {
         logDebug('handleRowUpdate', data.id);
 
         if (data?.status === status) {
@@ -228,24 +187,17 @@ const RenderReviewList = () => {
             const newDataSet = dataSet.map((row) => row.id === data.id ? data : row);
             setDataSet(newDataSet);
         } else {
-            fetchData({
+            updateFilter({
                 channel: selectedChannel,
                 limit: pageSize,
                 page: currentPage,
                 status,
-                description: 'handleRowUpdate',
             });
         }
     });
 
-    React.useEffect(() => {
-        // Channel list should never be change, should only fetch once.
-        if (lastFetchChannel) {
-            return;
-        }
-        lastFetchChannel = true;
-        fetch(`/api/channels`)
-            .then((res) => res.json())
+    useEffect(() => {
+        fetchChannel()
             .then((result) => {
                 const options = [
                     {
@@ -271,12 +223,11 @@ const RenderReviewList = () => {
                 setChannelOptions(options);
             })
             .finally(() => {
-                fetchData({
+                updateFilter({
                     channel: selectedChannel,
                     limit: pageSize,
                     page: currentPage,
                     status,
-                    description: 'useEffect',
                 });
             });
     }, []);
@@ -284,7 +235,7 @@ const RenderReviewList = () => {
     return (
         <div id="reviews-list">
             <HeaderDiv>
-                <Select
+                <Select id="channel-filter"
                     placeholder={selectPlaceHolder}
                     options={channelOptions}
                     onChange={handleChannelSelectionChange}
@@ -315,7 +266,7 @@ const RenderReviewList = () => {
                 persistTableHead
 
                 expandableRows
-                expandableRowsComponent={useExpandedRowComponent(handleRowUpdate)}
+                expandableRowsComponent={useExpandedRowComponent({onUpdate: handleRowUpdate, user})}
             />
         </div>
     );

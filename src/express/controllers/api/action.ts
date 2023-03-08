@@ -13,7 +13,7 @@ export const actionController: RequestHandler = (req, res) => {
         return;
     }
 
-    const {sid: slackUserId} = req.user as Partial<{sid: string}>;
+    const {sid: slackUserId, fn: displayName} = req.user as {sid: string; fn: string};
 
     if (!slackUserId) {
         res.json({
@@ -58,7 +58,7 @@ export const actionController: RequestHandler = (req, res) => {
                     });
                     break;
                 case 'close':
-                    void Review.close(codeReview, slackUserId).then((result) => {
+                    void Review.close(codeReview, `${displayName} closed the the code review.`).then((result) => {
                         if (!result.codeReview) {
                             res.json({error: result.message});
                             return;
@@ -101,7 +101,10 @@ export const actionController: RequestHandler = (req, res) => {
                     break;
             }
         });
+        return;
     }
+
+    res.json({error: `Invalid action: ${action}`});
 };
 
 export default actionController;

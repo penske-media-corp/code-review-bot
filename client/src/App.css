@@ -50,3 +50,13 @@ table.CodeReviewList td, th {
     height: 95vh;
     width: 98vw;
 }
+
+#reviews-list button:hover {
+    color: red;
+    background-color: #c2c2d2;
+    cursor: pointer;
+}
+
+#channel-filter {
+    z-index: 2;
+}

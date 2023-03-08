@@ -11,9 +11,11 @@ const extractDisplayName = ({reviewer}: ReviewerRecord): string => reviewer.disp
 export const formatApiCodeReviewRecord = (codeReview: CodeReviewRecord): unknown => {
     const reviewers: string[] = codeReview.reviewers.map(extractDisplayName);
     const approvers: string[] = codeReview.reviewers.filter((r) => r.status === 'approved').map(extractDisplayName);
+    const requestChanges: string[] = codeReview.reviewers.filter((r) => r.status === 'change').map(extractDisplayName);
 
     return {
         approvers,
+        requestChanges,
         createdAt: codeReview.createdAt,
         id: codeReview.id,
         jiraTicket: codeReview.jiraTicket,

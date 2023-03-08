@@ -17,7 +17,15 @@ export const load = async ({slackUserId, userId, id}: {slackUserId?: string; use
     }
 
     if (where) {
-        user = await prisma.user.findFirst({where});
+        user = await prisma.user.findFirst({
+            select: {
+                displayName: true,
+                email: true,
+                id: true,
+                slackUserId: true,
+            },
+            where
+        }) as User;
     }
 
     logDebug('User.load', {slackUserId, userId, id, where, user});

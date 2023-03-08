@@ -188,6 +188,7 @@ export function getGithubBotEventData (event: GenericMessageEvent): GithubBotEve
 }
 
 export async function postSlackMessage (slackMessage: ChatPostMessageArguments): Promise<void> {
+    logDebug('postSlackMessage', slackMessage);
     await slackBotApp.client.chat.postMessage(slackMessage).catch(logError);
 }
 
