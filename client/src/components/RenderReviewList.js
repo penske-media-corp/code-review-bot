@@ -64,7 +64,7 @@ const paginationComponentOptions = {
 const useExpandedRowComponent = (updatedHandler) => {
     const expandedRowComponent = ({data}) => {
         const handleClick = ({target}) => {
-            const {id, name, value} = target;
+            const {name, value} = target;
 
             fetch(`/api/action/${name}/${value}`,{
                 credentials: 'same-origin',

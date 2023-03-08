@@ -1,5 +1,4 @@
 import type {User} from '@prisma/client';
-import crypto from 'crypto';
 import {logDebug} from '../lib/log';
 import {prisma} from '../lib/config';
 

@@ -52,9 +52,10 @@ const registerAuthentication = (app: Express): void => {
 
     // start authentication request
     app.get('/auth/slack', (req, res, next) => {
-        const {sid} = req.user as Partial<{sid: string}>;
 
-        if (sid) {
+        const user =  req.user as Partial<{sid: string}> | null;
+
+        if (user?.sid) {
             res.redirect('/');
             return;
         }
