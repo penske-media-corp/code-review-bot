@@ -42,11 +42,11 @@ export async function getSlackInfo (): Promise<SlackAppInfo> {
     if (!slackAppInfo) {
         const result = await slackBotApp.client.auth.test();
         slackAppInfo = {
-            botUserId: result?.user_id ?? null,
-            teamId: result?.team_id ?? null,
+            botUserId: result.user_id ?? null,
+            teamId: result.team_id ?? null,
         };
     }
-    return slackAppInfo ?? {};
+    return slackAppInfo;
 }
 
 export async function getBotUserId (): Promise<string | null> {
