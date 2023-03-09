@@ -2,26 +2,15 @@ import DataTable,
     {
         createTheme
     } from 'react-data-table-component';
-import Select from 'react-select';
-import {
-    fetchChannel,
-    fetchReviews
-} from '../services/data';
 import {
     useCallback,
     useEffect,
     useState
 } from 'react';
+import {fetchReviews} from '../services/data';
 import {format} from 'date-fns';
 import {logDebug} from '../services/log';
-import styled from 'styled-components';
 import {useExpandedRowComponent} from './ExpandedRowComponent';
-
-const HeaderDiv = styled.div`
-      min-width: 350px;
-      width: 25%;
-      flex-grow: 1;
-    `;
 
 // @see https://react-data-table-component.netlify.app/?path=/docs/api-columns--page
 const columns = [
@@ -117,17 +106,12 @@ createTheme('custom', {
 }, 'dark');
 
 const RenderReviewList = (props) => {
-    const {user} = props;
-    const queryString = new URLSearchParams(window.location.search);
-    const status = queryString.get('status') ?? 'pending';
+    const {channel, status, user} = props;
     const [dataSet, setDataSet] = useState([]);
     const [loading, setLoading] = useState(true);
     const [totalRows, setTotalRows] = useState(0);
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
-    const [channelOptions, setChannelOptions] = useState([]);
-    const [selectedChannel, setSelectedChannel] = useState(queryString.get('channel') ?? 'all');
-    const [selectPlaceHolder, setSelectPlaceHolder] = useState('Code Reviews For All Slack Channels');
 
     const updateFilter = ({channel, limit, page, status}) => {
         setLoading(true);
@@ -146,7 +130,7 @@ const RenderReviewList = (props) => {
         logDebug('handlePageChange', page);
         setCurrentPage(page);
         updateFilter({
-            channel: selectedChannel,
+            channel,
             limit: pageSize,
             page,
             status,
@@ -157,26 +141,11 @@ const RenderReviewList = (props) => {
         logDebug('handlePerRowsChange', newPageSize, page);
         setPageSize(newPageSize);
         updateFilter({
-            channel: selectedChannel,
+            channel,
             limit: newPageSize,
             page,
             status,
         });
-    });
-
-    const handleChannelSelectionChange = useCallback((data) => {
-        console.log('handleChannelSelectionChange', data);
-        const { label } = channelOptions.find(({ value }) => value === data?.value) || {};
-        if (label !== selectPlaceHolder) {
-            setSelectedChannel(data.value);
-            setSelectPlaceHolder(label);
-            updateFilter({
-                channel: data.value,
-                limit: pageSize,
-                page: currentPage,
-                status,
-            });
-        }
     });
 
     const handleRowUpdate = useCallback(({data, action}) => {
@@ -188,7 +157,7 @@ const RenderReviewList = (props) => {
             setDataSet(newDataSet);
         } else {
             updateFilter({
-                channel: selectedChannel,
+                channel,
                 limit: pageSize,
                 page: currentPage,
                 status,
@@ -197,53 +166,16 @@ const RenderReviewList = (props) => {
     });
 
     useEffect(() => {
-        fetchChannel()
-            .then((result) => {
-                const options = [
-                    {
-                        label: 'Code Reviews For All Slack Channels',
-                        value: 'all',
-                    }
-                ];
-
-                result.forEach((item) => {
-                    const option = {
-                        label: `Code Reviews For Channel "#${item.name}"`,
-                        value: item.id,
-                    };
-
-                    options.push(option);
-                    if (selectedChannel !== 'all' && [item.id, item.name].includes(selectedChannel)) {
-                        setSelectPlaceHolder(option.label);
-                        if (selectedChannel !== item.id) {
-                            setSelectedChannel(selectedChannel);
-                        }
-                    }
-                });
-                setChannelOptions(options);
-            })
-            .finally(() => {
-                updateFilter({
-                    channel: selectedChannel,
-                    limit: pageSize,
-                    page: currentPage,
-                    status,
-                });
-            });
-    }, []);
+        updateFilter({
+            channel,
+            limit: pageSize,
+            page: currentPage,
+            status,
+        });
+    }, [channel, status]);
 
     return (
         <div id="reviews-list">
-            <HeaderDiv>
-                <Select id="channel-filter"
-                    placeholder={selectPlaceHolder}
-                    options={channelOptions}
-                    onChange={handleChannelSelectionChange}
-                    styles={{option: (base) => ({...base, color: '#303030'})}}
-                    defaultValue=""
-                    value={selectedChannel}
-                />
-            </HeaderDiv>
             <DataTable
                 customStyles={customStyles}
                 theme="custom"

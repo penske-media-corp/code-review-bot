@@ -38,15 +38,17 @@ export const fetchReviews = async ({channel, limit, page, status}) => {
  */
 export const fetchChannel = async () => {
     const key = `fetchChannel`;
-
+    logDebug('fetchChannel', states[key]);
     if (states[key]) {
-        return null;
+        return states[key];
     }
+
+    states[key] = [];
 
     return fetch(`/api/channels`)
         .then((res) => res.json())
         .then((result) => {
-            delete states[key];
+            states[key] = result;
             return result;
         });
 };

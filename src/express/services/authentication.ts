@@ -19,8 +19,6 @@ import User from '../../service/User';
 import {logDebug} from '../../lib/log';
 import passport from 'passport';
 import sessionCookie from 'cookie-session';
-import {getTeamId} from '../../bolt/utils';
-
 
 const DISCOVER_INFO_ENDPOINT = 'https://slack.com/.well-known/openid-configuration';
 const REDIRECT_URL = `${APP_BASE_URL}/auth/slack/callback`;
