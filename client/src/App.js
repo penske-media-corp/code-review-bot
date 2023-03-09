@@ -18,7 +18,7 @@ function App() {
 
     useEffect(() => {
         fetchAuthUser().then((result) => setUser(result));
-    });
+    }, []);
 
     return (
         <div className="App">
