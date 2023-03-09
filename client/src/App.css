@@ -67,3 +67,8 @@ button:hover {
     justify-content: right;
     z-index: 2;
 }
+
+.expandedNav {
+    display: flex;
+    justify-content: space-between;
+}

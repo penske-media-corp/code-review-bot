@@ -1,4 +1,5 @@
 import {logDebug} from '../services/log';
+import {format} from 'date-fns';
 
 export const useExpandedRowComponent = ({onUpdate, user}) => {
     const expandedRowComponent = ({data}) => {
@@ -37,16 +38,20 @@ export const useExpandedRowComponent = ({onUpdate, user}) => {
         const showApprove = !user || !data.approvers?.includes(user?.displayName);
         const showChange = !user || !data.requestChanges?.includes(user?.displayName);
 
+        console.log(data);
         return (
             <div style={{paddingLeft: '3em'}}>
-                <div>
-                    {showClaim && (<Button name="Claim" id={data.id}/>)}
-                    {showChange && (<Button name="Request Change" id={data.id}/>)}
-                    {showApprove && (<Button name="Approve" id={data.id}/>)}
-                    <Button name="Close" id={data.id}/>
-                    <Button name="Remove" id={data.id}/>
+                <div className="expandedNav">
+                    <div className="left">
+                        {showClaim && (<Button name="Claim" id={data.id}/>)}
+                        {showChange && (<Button name="Request Change" id={data.id}/>)}
+                        {showApprove && (<Button name="Approve" id={data.id}/>)}
+                        <Button name="Close" id={data.id}/>
+                        <Button name="Remove" id={data.id}/>
+                    </div>
+                    <div className="right">Last updated on {format(new Date(data.updatedAt), 'MMM dd, yyyy hh:mmaaaaa')}</div>
                 </div>
-                <pre>{data.note}</pre>
+                <div>{data.note}</div>
             </div>
         );
     };
