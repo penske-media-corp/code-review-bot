@@ -45,13 +45,32 @@ const reviewsController: RequestHandler = (req, res) => {
         limit = parseInt(req.query.limit || '1') || 1;
     }
 
-    const where: {status?: string; slackChannelId?: string} = {};
+    const where: {[index: string]: unknown} = {};
+    const {id: userId} = req.user as {id: number} || {};
 
     if (channel && channel !== 'all') {
-        where.slackChannelId = channelMaps[channel].id || channel;
+        where.slackChannelId = channelMaps.channel?.id ?? channel;
     }
     if (status && status !== 'all') {
-        where.status = status;
+        if (status === 'mine') {
+            where.status = {
+                in: ['pending', 'inprogress'],
+            };
+            where.OR = [
+                {
+                    userId,
+                },
+                {
+                    reviewers: {
+                        some: {
+                            userId,
+                        }
+                    }
+                }
+            ];
+        } else {
+            where.status = status;
+        }
     }
 
     const findParams = {

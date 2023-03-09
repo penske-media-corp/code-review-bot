@@ -72,7 +72,7 @@ export async function getChannels (): Promise<ChannelInfo[]> {
     }, []);
 }
 
-export const channelMaps: {[index: string]: ChannelInfo} = {};
+export const channelMaps: {[index: string]: ChannelInfo | null} = {};
 export let channelList: ChannelInfo[] = [];
 export function updateChannelInfo (): void {
     void getChannels().then((result) => {

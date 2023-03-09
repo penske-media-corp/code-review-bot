@@ -64,6 +64,40 @@ export async function findCodeReviewRecord ({id, pullRequestLink}: {id?: number;
     return result;
 }
 
+/**
+ * Archive an existing code review record.
+ * @param {number} id
+ */
+const archive = async (id: number): Promise<void> => {
+    const record = await findCodeReviewRecord({id});
+
+    if (!record) {
+        return;
+    }
+
+    await prisma.$transaction([
+        prisma.archive.create({
+            data: {
+                data: JSON.stringify(record),
+                jiraTicket: record.jiraTicket,
+                note: record.note,
+                pullRequestLink: record.pullRequestLink,
+            }
+        }),
+        prisma.codeReviewRelation.deleteMany({
+            where: {
+                codeReviewId: id,
+            }
+        }),
+        prisma.codeReview.delete({
+            where: {
+                id,
+            }
+        }),
+    ]);
+
+};
+
 async function findOrCreateUser (slackUserId: string): Promise<User> {
     let user = await prisma.user.findFirst({
         where: {
@@ -396,6 +430,8 @@ const close = async (codeReview: CodeReviewRecord, closeMessage?: string): Promi
             status: codeReview.status,
         }
     });
+
+    await archive(codeReview.id);
 
     return {
         codeReview,
