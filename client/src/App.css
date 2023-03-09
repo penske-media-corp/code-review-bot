@@ -51,12 +51,19 @@ table.CodeReviewList td, th {
     width: 98vw;
 }
 
-#reviews-list button:hover {
+button:hover {
     color: red;
     background-color: #c2c2d2;
     cursor: pointer;
 }
 
 #channel-filter {
+    z-index: 2;
+}
+
+#nav {
+    display: flex;
+    margin-left: auto;
+    justify-content: right;
     z-index: 2;
 }
