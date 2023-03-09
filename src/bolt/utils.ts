@@ -30,15 +30,33 @@ import pluralize from 'pluralize';
 import {prisma} from '../lib/config';
 import {registerSchedule} from '../lib/schedule';
 
-let slackBotUserId: string | null = null;
+interface SlackAppInfo {
+    botUserId?: string | null;
+    teamId?: string | null;
+}
+
+let slackAppInfo: SlackAppInfo | null = null;
 let slackBotApp: App;
 
-export async function getBotUserId (): Promise<string | null> {
-    if (!slackBotUserId) {
+export async function getSlackInfo (): Promise<SlackAppInfo> {
+    if (!slackAppInfo) {
         const result = await slackBotApp.client.auth.test();
-        slackBotUserId = result.user_id ?? null;
+        slackAppInfo = {
+            botUserId: result?.user_id ?? null,
+            teamId: result?.team_id ?? null,
+        };
     }
-    return slackBotUserId;
+    return slackAppInfo ?? {};
+}
+
+export async function getBotUserId (): Promise<string | null> {
+    const {botUserId} = await getSlackInfo();
+    return botUserId ?? null;
+}
+
+export async function getTeamId (): Promise<string | null> {
+    const {teamId} = await getSlackInfo();
+    return teamId ?? null;
 }
 
 // https://api.slack.com/methods/users.profile.get

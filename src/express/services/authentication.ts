@@ -19,6 +19,7 @@ import User from '../../service/User';
 import {logDebug} from '../../lib/log';
 import passport from 'passport';
 import sessionCookie from 'cookie-session';
+import {getTeamId} from '../../bolt/utils';
 
 
 const DISCOVER_INFO_ENDPOINT = 'https://slack.com/.well-known/openid-configuration';
@@ -63,7 +64,7 @@ const registerAuthentication = (app: Express): void => {
         (passport.authenticate(
             'oidc',
             {
-                scope: ['openid', 'email', 'profile']
+                scope: ['openid', 'email', 'profile'],
             }
         ) as RequestHandler)(req, res, next);
     });

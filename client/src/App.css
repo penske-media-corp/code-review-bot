@@ -51,10 +51,18 @@ table.CodeReviewList td, th {
     width: 98vw;
 }
 
+#nav button, .expandedNav button {
+    margin: 0 1px;
+}
+
 button:hover {
     color: red;
     background-color: #c2c2d2;
     cursor: pointer;
+}
+
+button.noClick:hover {
+    cursor: default;
 }
 
 #channel-filter {
