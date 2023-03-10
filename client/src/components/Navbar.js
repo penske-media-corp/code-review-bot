@@ -1,13 +1,10 @@
-const ButtonLink = ({name, linkUrl}) => {
-    const sanitizedName = name.toLowerCase().replace(' ', '-');
+const ButtonLink = ({label, linkUrl}) => {
     const handleClick = () => {
         window.location.href = linkUrl;
     };
 
     return (
-        <button
-            onClick={handleClick}
-        >{name}</button>
+        <button onClick={handleClick}>{label}</button>
     );
 };
 
@@ -23,9 +20,9 @@ const Navbar = (props) => {
                 <path d="M97 45.2c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9-5.8 12.9-12.9 12.9H97V45.2zm-6.5 0c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V12.9C64.7 5.8 70.5 0 77.6 0s12.9 5.8 12.9 12.9v32.3z" fill="#2eb67d" />
                 <path d="M77.6 97c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9-12.9-5.8-12.9-12.9V97h12.9zm0-6.5c-7.1 0-12.9-5.8-12.9-12.9s5.8-12.9 12.9-12.9h32.3c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H77.6z" fill="#ecb22e" />
                 </svg>
-                <ButtonLink name="Pending" linkUrl="/?status=pending" />
-                <ButtonLink name="In Progress" linkUrl="/?status=inprogress" />
-                <ButtonLink name={`My Reviews (${user?.displayName})`} linkUrl="/?status=mine" />
+                <ButtonLink label="Pending" linkUrl="/?status=pending" />
+                <ButtonLink label="In Progress" linkUrl="/?status=inprogress" />
+                <ButtonLink label={`My Reviews (${user?.displayName})`} linkUrl="/?status=mine" />
             </div>
         </div>
     );
