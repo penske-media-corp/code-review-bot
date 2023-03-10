@@ -1,3 +1,6 @@
+/**
+ * @ref: https://codeburst.io/how-to-implement-openid-authentication-with-openid-client-and-passport-in-node-js-43d020121e87
+ */
 import {
     APP_BASE_URL,
     SESSION_COOKIE_SECRET,
@@ -79,6 +82,7 @@ const registerAuthentication = (app: Express): void => {
         ) as RequestHandler
     );
 
+    // @see https://api.slack.com/authentication/sign-in-with-slack
     void Issuer.discover(DISCOVER_INFO_ENDPOINT)
         .then(slackIssuer => {
             const client = new slackIssuer.Client({
