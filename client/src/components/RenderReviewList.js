@@ -149,7 +149,7 @@ const RenderReviewList = (props) => {
                 status,
             });
         }
-    }, [channel, pageSize, currentPage, status]);
+    }, [channel, currentPage, pageSize, status]);
 
     useEffect(() => {
         updateFilter({
@@ -158,7 +158,7 @@ const RenderReviewList = (props) => {
             page: currentPage,
             status,
         });
-    }, [channel, status, pageSize, status, currentPage]);
+    }, [channel, currentPage, pageSize, status]);
 
     return (
         <div id="reviews-list">

@@ -84,8 +84,8 @@ const registerAuthentication = (app: Express): void => {
             const client = new slackIssuer.Client({
                 client_id: SLACK_CLIENT_ID,
                 client_secret: SLACK_CLIENT_SECRET,
-                redirect_uris: [ REDIRECT_URL ],
-                post_logout_redirect_uris: [ APP_BASE_URL ],
+                redirect_uris: [REDIRECT_URL],
+                post_logout_redirect_uris: [APP_BASE_URL],
             });
 
             passport.use(

@@ -330,14 +330,12 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         }
     };
 
-    const webLoginUrl = `${APP_BASE_URL}/auth/slack`;
-
     let blocks: (Block | KnownBlock)[] = [
         {
             type: 'section',
             text: {
                 type: 'mrkdwn',
-                text: `*Outstanding Code Review Queue:* <${webLoginUrl}>`
+                text: `*Outstanding Code Review Queue:* <${APP_BASE_URL}>`
             }
         },
         {
