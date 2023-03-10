@@ -244,7 +244,7 @@ const add = async ({jiraTicket, note, pullRequestLink, slackChannelId, slackMsgI
         });
         Object.assign(codeReview, {
             jiraTicket,
-            note: `${note?.length ? note : codeReview.note ?? ''}`.trim(),
+            note: `${note.length ? note : codeReview.note ?? ''}`.trim(),
             pullRequestLink,
             slackChannelId,
             slackMsgId,
