@@ -1,5 +1,6 @@
 export interface ReactionData {
     jiraTicket: string;
+    note: string;
     pullRequestLink: string;
     reaction: string;
     reactionUserId: string;

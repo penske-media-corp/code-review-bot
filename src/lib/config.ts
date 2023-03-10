@@ -120,7 +120,7 @@ export const getJiraTicketRegEx = async (): Promise<RegExp | null> => {
     if (!patterns) {
         patterns = await option.global.get(OPTION_NAME_JIRA_TICKET_PATTERNS) as string;
     }
-    return patterns ? new RegExp(`\b${patterns}\b`) : null;
+    return patterns ? new RegExp(`\\b${patterns}\\b`) : null;
 };
 
 export const setJiraTicketRegEx = async (patterns: string): Promise<void> => {

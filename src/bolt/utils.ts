@@ -119,13 +119,19 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
         let pullRequestLink = '';
         let jiraTicket = '';
         let slackMsgUserId = message.user;
+        let note = '';
 
         // Try to parse github pull request from text message if available.
         if (message.text) {
             pullRequestLink = extractPullRequestLink(message.text) || pullRequestLink;
             jiraTicket = await extractJiraTicket(message.text) || jiraTicket;
+            note = message.text
+                .replace(jiraTicket, '')
+                .replace(pullRequestLink, '')
+                .replace(/<.*>/, '')
+                .replace(/\s{2,}/g, ' ')
+                .trim();
         }
-
         // If there is no PR info, try to check the message attachments, message is coming from github event.
         if (!pullRequestLink.length && message.attachments?.length) {
             const title = message.attachments[0].title;
@@ -136,6 +142,7 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
 
         return {
             jiraTicket,
+            note,
             pullRequestLink,
             slackMsgText: message.text,
             slackMsgId: message.client_msg_id,

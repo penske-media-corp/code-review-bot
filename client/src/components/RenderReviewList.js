@@ -10,6 +10,9 @@ import {
 import {format} from 'date-fns';
 import {useExpandedRowComponent} from './ExpandedRowComponent';
 
+// @TODO: Need to setup .env & read from config.js
+const JIRA_TICKET_BASE_URL = 'https://penskemedia.atlassian.net/browse';
+
 // @see https://react-data-table-component.netlify.app/?path=/docs/api-columns--page
 const columns = [
     {
@@ -22,6 +25,12 @@ const columns = [
         name: 'Owner',
         selector: row => row.owner,
         maxWidth: '12em',
+        compact: true,
+    },
+    {
+        name: 'Jira Ticket',
+        selector: row => row.jiraTicket && <a href={`${JIRA_TICKET_BASE_URL}/${row.jiraTicket}`}>{row.jiraTicket}</a>,
+        maxWidth: '7em',
         compact: true,
     },
     {
@@ -74,7 +83,7 @@ const customStyles = {
         style: {
             backgroundColor: '#505050',
             color: 'white',
-            fontSize: '1.2em',
+            fontSize: '1.1em',
         },
     },
     expanderRow: {

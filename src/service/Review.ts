@@ -211,7 +211,7 @@ async function calculateReviewStats (codeReview: CodeReviewRecord): Promise<{app
     };
 }
 
-const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink, slackMsgUserId, slackThreadTs}: ReactionData): Promise<ReviewActionResult> => {
+const add = async ({jiraTicket, note, pullRequestLink, slackChannelId, slackMsgId, slackPermalink, slackMsgUserId, slackThreadTs}: ReactionData): Promise<ReviewActionResult> => {
     if (!pullRequestLink) {
         return {
             message: 'Cannot determine the github code review pull request link.',
@@ -225,6 +225,8 @@ const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink,
     if (!codeReview) {
         codeReview = await prisma.codeReview.create({
             data: {
+                jiraTicket,
+                note,
                 pullRequestLink,
                 slackChannelId,
                 slackMsgId,
@@ -240,13 +242,32 @@ const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink,
                 codeReviewId: codeReview.id,
             }
         });
-        codeReview.status = 'pending';
+        Object.assign(codeReview, {
+            jiraTicket,
+            note: `${note?.length ? note : codeReview.note ?? ''}`.trim(),
+            pullRequestLink,
+            slackChannelId,
+            slackMsgId,
+            slackPermalink,
+            slackThreadTs,
+            status: 'pending',
+            userId: user.id,
+        });
         await prisma.codeReview.update({
             where: {
                 id: codeReview.id,
             },
+            // The PR might be re-added, let start from the new thread instead.
             data: {
-                status: codeReview.status,
+                jiraTicket,
+                note: codeReview.note,
+                pullRequestLink,
+                slackChannelId,
+                slackMsgId,
+                slackPermalink,
+                slackThreadTs,
+                status: 'pending',
+                userId: user.id,
             }
         });
     }
