@@ -1,5 +1,6 @@
 import {
     APP_BASE_URL,
+    SESSION_COOKIE_SECRET,
     SLACK_CLIENT_ID,
     SLACK_CLIENT_SECRET
 } from '../../lib/env';
@@ -28,7 +29,7 @@ const registerAuthentication = (app: Express): void => {
     // @see http://expressjs.com/en/resources/middleware/cookie-session.html
     app.use(
         sessionCookie({
-            keys: ['keyboard cat'],
+            keys: [SESSION_COOKIE_SECRET],
         })
     );
 
