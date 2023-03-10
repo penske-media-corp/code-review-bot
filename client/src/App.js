@@ -28,7 +28,7 @@ function App() {
                             <ChannelFilter selectedChannel={selectedChannel} onSelected={setSelectedChannel}/>
                         </div>
                         <div className="right">
-                            <Navbar user={user}/>
+                            <Navbar status={status} user={user}/>
                         </div>
                     </div>
                     <RenderReviewList user={user} channel={selectedChannel} status={status}/>

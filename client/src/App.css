@@ -53,6 +53,17 @@ table.CodeReviewList td, th {
 
 #nav button, .expandedNav button {
     margin: 0 1px;
+    font-weight: bold;
+}
+
+#nav button.highlight {
+    color: blue;
+    background-color: #e0e0e0;
+    border-width: 1px;
+}
+#nav button.highlight:hover {
+    color: red;
+    background-color: #c2c2d2;
 }
 
 button:hover {
