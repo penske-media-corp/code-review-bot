@@ -1,7 +1,6 @@
 import Select from 'react-select';
 import styled from 'styled-components';
 import {useCallback, useEffect, useState} from 'react';
-import {fetchChannel} from '../services/data';
 
 const FilterDiv = styled.div`
       min-width: 350px;
@@ -14,16 +13,16 @@ const ChannelFilter = (props) => {
     const [channelOptions, setChannelOptions] = useState([]);
     const [selectPlaceHolder, setSelectPlaceHolder] = useState('Code Reviews For All Slack Channels');
     const handleChannelSelectionChange = useCallback((data) => {
-        console.log('handleChannelSelectionChange', data);
         const { label } = channelOptions.find(({ value }) => value === data?.value) || {};
         if (label !== selectPlaceHolder) {
             setSelectPlaceHolder(label);
             onSelected && onSelected(data.value);
         }
-    });
+    }, []);
 
     useEffect(() => {
-        fetchChannel()
+        fetch(`/api/channels`)
+            .then((res) => res.json())
             .then((result) => {
                 const options = [
                     {

@@ -2,7 +2,6 @@ import './App.css';
 import {useEffect, useState} from 'react';
 import RenderReviewList from './components/RenderReviewList';
 import SingInWithSlack from './components/SingInWithSlack';
-import {fetchAuthUser} from './services/user';
 import Navbar from './components/Navbar';
 import ChannelFilter from './components/ChannelFilter';
 
@@ -12,12 +11,11 @@ function App() {
     const [user, setUser] = useState(null);
     const [selectedChannel, setSelectedChannel] = useState(queryString.get('channel') ?? 'all');
 
-    const handleChannelSelectionChange = () => {
-
-    };
-
     useEffect(() => {
-        fetchAuthUser().then((result) => setUser(result));
+        fetch(`/api/user`, {
+            credentials: 'same-origin',
+        }).then((res) => res.json())
+            .then((data) => setUser(data));
     }, []);
 
     return (

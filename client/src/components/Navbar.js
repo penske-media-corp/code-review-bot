@@ -1,6 +1,3 @@
-import Select from 'react-select';
-import {logDebug} from '../services/log';
-
 const ButtonLink = ({name, linkUrl}) => {
     const sanitizedName = name.toLowerCase().replace(' ', '-');
     const handleClick = () => {

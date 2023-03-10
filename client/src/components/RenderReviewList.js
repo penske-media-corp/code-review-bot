@@ -7,9 +7,7 @@ import {
     useEffect,
     useState
 } from 'react';
-import {fetchReviews} from '../services/data';
 import {format} from 'date-fns';
-import {logDebug} from '../services/log';
 import {useExpandedRowComponent} from './ExpandedRowComponent';
 
 // @see https://react-data-table-component.netlify.app/?path=/docs/api-columns--page
@@ -113,9 +111,21 @@ const RenderReviewList = (props) => {
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
 
+    /**
+     * Fetch the list of code review.
+     *
+     * @param {string} channel
+     * @param {number} limit
+     * @param {number} page
+     * @param {string} status
+     * @returns void
+     */
     const updateFilter = ({channel, limit, page, status}) => {
         setLoading(true);
-        fetchReviews({channel, limit, page, status})
+        fetch(`/api/reviews/${channel}/${status}?limit=${limit}&page=${page}`, {
+            credentials: 'same-origin',
+        })
+            .then((res) => res.json())
             .then((result) => {
                 if (!result) {
                     return;
@@ -126,31 +136,7 @@ const RenderReviewList = (props) => {
             });
     };
 
-    const handlePageChange = useCallback((page) => {
-        logDebug('handlePageChange', page);
-        setCurrentPage(page);
-        updateFilter({
-            channel,
-            limit: pageSize,
-            page,
-            status,
-        });
-    });
-
-    const handlePageSizeChange = useCallback(async (newPageSize, page) => {
-        logDebug('handlePerRowsChange', newPageSize, page);
-        setPageSize(newPageSize);
-        updateFilter({
-            channel,
-            limit: newPageSize,
-            page,
-            status,
-        });
-    });
-
     const handleRowUpdate = useCallback(({data, action}) => {
-        logDebug('handleRowUpdate', data.id);
-
         if (data?.status === status) {
             // If row data status is the same, just need to trigger data refresh and render
             const newDataSet = dataSet.map((row) => row.id === data.id ? data : row);
@@ -163,7 +149,7 @@ const RenderReviewList = (props) => {
                 status,
             });
         }
-    });
+    }, [channel, pageSize, currentPage, status]);
 
     useEffect(() => {
         updateFilter({
@@ -172,7 +158,7 @@ const RenderReviewList = (props) => {
             page: currentPage,
             status,
         });
-    }, [channel, status]);
+    }, [channel, status, pageSize, status, currentPage]);
 
     return (
         <div id="reviews-list">
@@ -188,8 +174,8 @@ const RenderReviewList = (props) => {
                 paginationServer
                 paginationTotalRows={totalRows}
                 paginationComponentOptions={paginationComponentOptions}
-                onChangeRowsPerPage={handlePageSizeChange}
-                onChangePage={handlePageChange}
+                onChangeRowsPerPage={setPageSize}
+                onChangePage={setCurrentPage}
 
                 fixedHeader
                 striped
