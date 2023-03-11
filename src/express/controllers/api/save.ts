@@ -24,7 +24,8 @@ export const saveController: RequestHandler = (req, res) => {
                 id: codeReview.id,
             },
             data: {
-                note: note,
+                note,
+                jiraTicket,
             }
         }).then(() => {
             res.json({
