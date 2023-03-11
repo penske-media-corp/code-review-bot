@@ -1,4 +1,6 @@
-const ButtonLink = ({className, label, linkUrl}) => {
+import React from "react";
+
+const ButtonLink = ({className, label, linkUrl}: {className: string; label: string; linkUrl: string}) => {
     const handleClick = () => {
         window.location.href = linkUrl;
     };
@@ -8,7 +10,7 @@ const ButtonLink = ({className, label, linkUrl}) => {
     );
 };
 
-const Navbar = (props) => {
+const Navbar = (props: { status: any; user: any; }) => {
     const {status, user} = props;
 
     return (

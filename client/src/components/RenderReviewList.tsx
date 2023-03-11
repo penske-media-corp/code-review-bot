@@ -1,65 +1,67 @@
 import DataTable,
     {
+        TableColumn,
         createTheme
     } from 'react-data-table-component';
-import {
+import React, {
     useCallback,
     useEffect,
     useState
 } from 'react';
+import type {CodeReview} from '../lib/types';
 import {format} from 'date-fns';
 import {useExpandedRowComponent} from './ExpandedRowComponent';
 
-// @TODO: Need to setup .env & read from config.js
-const JIRA_TICKET_BASE_URL = 'https://penskemedia.atlassian.net/browse';
-
 // @see https://react-data-table-component.netlify.app/?path=/docs/api-columns--page
-const columns = [
+const columns: TableColumn<CodeReview>[] = [
     {
         name: 'Date',
-        selector: row => format(new Date(row.createdAt), 'MMM dd, yyyy'),
+        selector: (row: CodeReview) => format(new Date(row.createdAt), 'MMM dd, yyyy'),
         maxWidth: '7em',
         compact: true,
     },
     {
         name: 'Owner',
-        selector: row => row.owner,
+        selector: (row: CodeReview) => row.owner,
         maxWidth: '12em',
         compact: true,
     },
     {
         name: 'Jira Ticket',
-        selector: row => row.jiraTicket && <a href={`${JIRA_TICKET_BASE_URL}/${row.jiraTicket}`}>{row.jiraTicket}</a>,
+        format: (row: CodeReview) => row.jiraTicket && <a href={`${row.jiraTicketLinkUrl}`}>{row.jiraTicket}</a>,
+        selector: () => true,
         maxWidth: '7em',
         compact: true,
     },
     {
         name: 'Pull Request',
-        selector: row => <a href={row.pullRequestLink}>{row.pullRequestLink.replace(/.*\/(.*?\/pull\/\d+)/,'$1')}</a>,
+        format: (row: CodeReview) => <a href={row.pullRequestLink}>{row.pullRequestLink.replace(/.*\/(.*?\/pull\/\d+)/,'$1')}</a>,
+        selector: () => true,
         maxWidth: '20em',
         compact: true,
     },
     {
         name: 'Slack Link',
-        selector: row => <a href={row.slackPermalink}>{row.slackThreadTs}</a>,
+        format: (row: CodeReview) => row.slackThreadTs && row.slackPermalink && <a href={row.slackPermalink ?? '#'}>{row.slackThreadTs}</a>,
+        selector: () => true,
         maxWidth: '12em',
         compact: true,
     },
     {
         name: 'Reviewers',
-        selector: row => row.reviewers?.join(', '),
+        selector: (row: CodeReview) => row.reviewers?.join(', ') ?? '',
         wrap: true,
         compact: true,
     },
     {
         name: 'Approvers',
-        selector: row => row.approvers?.join(', '),
+        selector: (row: CodeReview) => row.approvers?.join(', ') ?? '',
         wrap: true,
         compact: true,
     },
     {
         name: 'Request Changes',
-        selector: row => row.requestChanges?.join(', '),
+        selector: (row: CodeReview) => row.requestChanges?.join(', ') ?? '',
         wrap: true,
         compact: true,
     },
@@ -112,9 +114,8 @@ createTheme('custom', {
     }
 }, 'dark');
 
-const RenderReviewList = (props) => {
-    const {channel, status, user} = props;
-    const [dataSet, setDataSet] = useState([]);
+const RenderReviewList = ({channel, status, user}: {channel: string; status: string; user: {displayName: string}}) => {
+    const [dataSet, setDataSet] = useState([] as CodeReview[]);
     const [loading, setLoading] = useState(true);
     const [totalRows, setTotalRows] = useState(0);
     const [pageSize, setPageSize] = useState(10);
@@ -129,7 +130,7 @@ const RenderReviewList = (props) => {
      * @param {string} status
      * @returns void
      */
-    const updateFilter = ({channel, limit, page, status}) => {
+    const updateFilter = ({channel, limit, page, status}: {channel: string; limit: number; page: number; status: string}) => {
         setLoading(true);
         fetch(`/api/reviews/${channel}/${status}?limit=${limit}&page=${page}`, {
             credentials: 'same-origin',
@@ -145,7 +146,7 @@ const RenderReviewList = (props) => {
             });
     };
 
-    const handleRowUpdate = useCallback(({data, action}) => {
+    const handleRowUpdate = useCallback(({data, action}: {data: CodeReview; action: string}) => {
         if (data?.status === status) {
             // If row data status is the same, just need to trigger data refresh and render
             const newDataSet = dataSet.map((row) => row.id === data.id ? data : row);

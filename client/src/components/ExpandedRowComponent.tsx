@@ -1,12 +1,14 @@
+import React, {MouseEvent} from 'react';
+import type {CodeReview} from '../lib/types';
 import {format} from 'date-fns';
 import {logError} from '../services/log';
 import {useState} from 'react';
 
-export const useExpandedRowComponent = ({onUpdate, user}) => {
-    const ExpandedRowComponent = ({data}) => {
-        const handleClick = ({target}) => {
-            const action = target.getAttribute('action');
-            const value = target.getAttribute('value');
+export const useExpandedRowComponent = ({onUpdate, user}: {onUpdate: CallableFunction; user?: {displayName: string}}) => {
+    const ExpandedRowComponent = ({data}: {data: CodeReview}) => {
+        const handleActionClick = ({currentTarget}: MouseEvent<HTMLButtonElement>) => {
+            const action = currentTarget.getAttribute('name');
+            const value = currentTarget.getAttribute('value');
 
             fetch(`/api/action/${action}/${value}`,{
                 credentials: 'same-origin',
@@ -23,15 +25,15 @@ export const useExpandedRowComponent = ({onUpdate, user}) => {
                     logError(`Error sending: /api/action/${action}/${value}`, e);
                 })
         };
-        const ActionButton = ({id, label}) => {
+        const ActionButton = ({label, reviewId}: {label: string; reviewId: number}) => {
             const sanitizedName = label.toLowerCase().replace(' ', '-');
 
             return (
                 <button
-                    id={`${sanitizedName}-${id}`}
-                    action={sanitizedName}
-                    value={id}
-                    onClick={handleClick}
+                    id={`${sanitizedName}-${reviewId}`}
+                    name={sanitizedName}
+                    value={reviewId}
+                    onClick={handleActionClick}
                 >{label}</button>
             );
         };
@@ -39,13 +41,15 @@ export const useExpandedRowComponent = ({onUpdate, user}) => {
         const showApprove = !user || !data.approvers?.includes(user?.displayName);
         const showChange = !user || !data.requestChanges?.includes(user?.displayName);
         const [editing, setEditing] = useState(false);
-        const [errorMessage, setErrorMessage] = useState(false);
+        const [errorMessage, setErrorMessage] = useState(null as null | string);
+        const [saveClicked, setSaveClicked] = useState(false);
         const dirtyData = {...data};
 
-        const handleSaveClicked = ({target}) => {
+        const handleSaveClicked = ({currentTarget}: MouseEvent<HTMLButtonElement>) => {
             if (JSON.stringify(dirtyData) !== JSON.stringify(data)) {
-                const value = target.getAttribute('value');
-                target.parentElement.childNodes.forEach((el) => el.setAttribute('disabled', true));
+                const value = currentTarget.getAttribute('value');
+
+                setSaveClicked(true);
                 fetch(`/api/action/save/${value}`, {
                     credentials: 'same-origin',
                     method: 'POST',
@@ -87,11 +91,11 @@ export const useExpandedRowComponent = ({onUpdate, user}) => {
                     <div>
                         <div className="expanded-nav">
                             <div className="left">
-                                {showClaim && (<ActionButton label="Claim" id={data.id}/>)}
-                                {showChange && (<ActionButton label="Request Change" id={data.id}/>)}
-                                {showApprove && (<ActionButton label="Approve" id={data.id}/>)}
-                                <ActionButton label="Close" id={data.id}/>
-                                <ActionButton label="Remove" id={data.id}/>
+                                {showClaim && (<ActionButton label="Claim" reviewId={data.id}/>)}
+                                {showChange && (<ActionButton label="Request Change" reviewId={data.id}/>)}
+                                {showApprove && (<ActionButton label="Approve" reviewId={data.id}/>)}
+                                <ActionButton label="Close" reviewId={data.id}/>
+                                <ActionButton label="Remove" reviewId={data.id}/>
                                 <button onClick={() => setEditing(true)}>Edit</button>
                                 {errorMessage && (<span className="error">{errorMessage}</span>)}
                             </div>
@@ -110,13 +114,13 @@ export const useExpandedRowComponent = ({onUpdate, user}) => {
                         />
                         <div><label htmlFor={`edit-note-${data.id}`}><strong>Notes</strong>:</label></div>
                         <textarea
-                            id="{`edit-note-${data.id}`}" row={3} cols={80}
+                            id="{`edit-note-${data.id}`}" rows={3} cols={80}
                             defaultValue={data.note}
                             onChange={({target}) => dirtyData.note = target.value}
                         ></textarea>
                         <div>
-                            <button type="button" onClick={() => setEditing(false)} id={`cancel-${data.id}`}>Cancel</button>
-                            <button type="button" onClick={handleSaveClicked} id={`save-${data.id}`} value={data.id}>Save</button>
+                            <button disabled={saveClicked} type="button" onClick={() => setEditing(false)} id={`cancel-${data.id}`}>Cancel</button>
+                            <button disabled={saveClicked} type="button" onClick={handleSaveClicked} id={`save-${data.id}`} value={data.id}>Save</button>
                         </div>
                     </form>
                 )}

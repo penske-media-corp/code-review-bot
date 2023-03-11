@@ -2,6 +2,7 @@ import type {
     CodeReviewRecord,
     ReviewerRecord
 } from '../../../service/Review';
+import {JIRA_TICKET_BASE_URL} from '../../../lib/env';
 import type {RequestHandler} from 'express';
 import {channelMaps} from '../../../bolt/utils';
 import {logError} from '../../../lib/log';
@@ -19,6 +20,7 @@ export const formatApiCodeReviewRecord = (codeReview: CodeReviewRecord): unknown
         createdAt: codeReview.createdAt,
         id: codeReview.id,
         jiraTicket: codeReview.jiraTicket,
+        jiraTicketLinkUrl: codeReview.jiraTicket ? `${JIRA_TICKET_BASE_URL}/${codeReview.jiraTicket}` : null,
         note: codeReview.note,
         owner: codeReview.user.displayName,
         pullRequestLink: codeReview.pullRequestLink,
