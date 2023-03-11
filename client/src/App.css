@@ -53,6 +53,9 @@ table.CodeReviewList td, th {
 
 #nav button, .expandedNav button {
     margin: 0 1px;
+}
+
+#nav button {
     font-weight: bold;
 }
 
@@ -90,4 +93,9 @@ button.noClick:hover {
 .expandedNav {
     display: flex;
     justify-content: space-between;
+}
+
+.error {
+    color: #d00000;
+    font-weight: normal;
 }
