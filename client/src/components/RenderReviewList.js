@@ -8,7 +8,7 @@ import {
     useState
 } from 'react';
 import {format} from 'date-fns';
-import {useExpandedRowComponent} from './ExpandedRowComponent';
+import {useExpandedRowsComponent} from './ExpandedRowsComponent';
 
 // @TODO: Need to setup .env & read from config.js
 const JIRA_TICKET_BASE_URL = 'https://penskemedia.atlassian.net/browse';
@@ -158,7 +158,9 @@ const RenderReviewList = (props) => {
                 status,
             });
         }
-    }, [channel, currentPage, pageSize, status]);
+    }, [channel, dataSet, currentPage, pageSize, status]);
+
+    const expandedRowsComponent = useCallback(useExpandedRowsComponent({onUpdate: handleRowUpdate, user}), [handleRowUpdate, user]);
 
     useEffect(() => {
         updateFilter({
@@ -193,7 +195,7 @@ const RenderReviewList = (props) => {
                 persistTableHead
 
                 expandableRows
-                expandableRowsComponent={useExpandedRowComponent({onUpdate: handleRowUpdate, user})}
+                expandableRowsComponent={expandedRowsComponent}
             />
         </div>
     );

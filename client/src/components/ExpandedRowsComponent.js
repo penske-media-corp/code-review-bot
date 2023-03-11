@@ -1,9 +1,9 @@
 import {format} from 'date-fns';
 import {logError} from '../services/log';
-import {useEffect, useRef, useState} from 'react';
+import {useState} from 'react';
 
-export const useExpandedRowComponent = ({onUpdate, user}) => {
-    const ExpandedRowComponent = ({data}) => {
+export const useExpandedRowsComponent = ({onUpdate, user}) => {
+    const ExpandedRowsComponent = ({data}) => {
         const handleClick = ({target}) => {
             const action = target.getAttribute('action');
             const value = target.getAttribute('value');
@@ -45,18 +45,26 @@ export const useExpandedRowComponent = ({onUpdate, user}) => {
         const handleSaveClicked = ({target}) => {
             if (JSON.stringify(dirtyData) !== JSON.stringify(data)) {
                 const value = target.getAttribute('value');
-                Object.assign(data, dirtyData);
                 target.parentElement.childNodes.forEach((el) => el.setAttribute('disabled', true));
                 fetch(`/api/action/save/${value}`, {
                     credentials: 'same-origin',
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({
-                        note: data.note,
+                        note: dirtyData.note,
                     })
                 })
                     .then((res) => res.json())
                     .then((result) => {
-                        result?.data && onUpdate && onUpdate({
+                        if (!result.data) {
+                            setErrorMessage('Error saving data, see console error log for details.');
+                            logError(`Error saving: /api/action/save/${value}`, result);
+                            return;
+                        }
+                        Object.assign(data, result.data);
+                        onUpdate && onUpdate({
                             data: result.data,
                             action: 'save',
                         });
@@ -109,5 +117,5 @@ export const useExpandedRowComponent = ({onUpdate, user}) => {
         );
     };
 
-    return ExpandedRowComponent;
+    return ExpandedRowsComponent;
 }

@@ -8,11 +8,6 @@ export const actionController: RequestHandler = (req, res) => {
     const action = req.params.action;
     const value = req.params.value;
 
-    if (!req.user) {
-        res.json({});
-        return;
-    }
-
     const {sid: slackUserId, fn: displayName} = req.user as {sid: string; fn: string};
 
     if (!slackUserId) {

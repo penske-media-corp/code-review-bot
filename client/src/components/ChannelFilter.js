@@ -21,7 +21,9 @@ const ChannelFilter = (props) => {
     }, []);
 
     useEffect(() => {
-        fetch(`/api/channels`)
+        fetch(`/api/channels`, {
+            credentials: 'same-origin',
+        })
             .then((res) => res.json())
             .then((result) => {
                 const options = [
