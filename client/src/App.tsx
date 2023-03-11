@@ -1,5 +1,5 @@
 import './App.css';
-import {useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import RenderReviewList from './components/RenderReviewList';
 import SignInWithSlack from './components/SignInWithSlack';
 import Navbar from './components/Navbar';
