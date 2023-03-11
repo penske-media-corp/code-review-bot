@@ -12,7 +12,7 @@ function App() {
     const [selectedChannel, setSelectedChannel] = useState(queryString.get('channel') ?? 'all');
 
     useEffect(() => {
-        fetch(`/api/user`, {
+        fetch('/api/user', {
             credentials: 'same-origin',
         }).then((res) => res.json())
             .then((data) => setUser(data));
