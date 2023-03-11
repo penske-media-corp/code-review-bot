@@ -108,13 +108,13 @@ export const useExpandedRowComponent = ({onUpdate, user}: {onUpdate: CallableFun
                     <form id={`edit-${data.id}`}>
                         <div><label htmlFor={`edit-jira-ticket-${data.id}`}><strong>Jira Ticket</strong>:</label></div>
                         <input
-                            id="{`edit-jira-ticket-${data.id}`}"
+                            id={`edit-jira-ticket-${data.id}`}
                             defaultValue={data.jiraTicket}
                             onChange={({target}) => dirtyData.jiraTicket = target.value}
                         />
                         <div><label htmlFor={`edit-note-${data.id}`}><strong>Notes</strong>:</label></div>
                         <textarea
-                            id="{`edit-note-${data.id}`}" rows={3} cols={80}
+                            id={`edit-note-${data.id}`} rows={3} cols={80}
                             defaultValue={data.note}
                             onChange={({target}) => dirtyData.note = target.value}
                         ></textarea>
