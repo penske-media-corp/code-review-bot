@@ -23,7 +23,7 @@ function App() {
             {!user && (<SignInWithSlack/>)}
             {user && (
                 <div>
-                    <div className="expandedNav">
+                    <div className="expanded-nav">
                         <div className="left">
                             <ChannelFilter selectedChannel={selectedChannel} onSelected={setSelectedChannel}/>
                         </div>
