@@ -26,13 +26,10 @@ global.fetch = (url) => {
     switch (url) {
         case '/api/user':
             return mockFetchData(mockedUser);
-            break;
         case '/api/channels':
             return mockFetchData(mockedChannels);
-            break;
         default:
             return mockFetchData(mockedReviews);
-            break;
     }
 };
 

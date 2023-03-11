@@ -6,7 +6,7 @@ import { faker } from '@faker-js/faker';
 
 const prisma = new PrismaClient()
 async function main() {
-    const usersCount = 10;
+    const usersCount = 50;
     const codeReviewsCount = 100;
 
     let users = await prisma.user.findMany();
@@ -18,7 +18,7 @@ async function main() {
             const data = {
                 createdAt: faker.date.past(),
                 updatedAt: faker.date.recent(),
-                slackUserId: faker.datatype.string(20),
+                slackUserId: faker.random.alphaNumeric(20),
                 displayName: `${firstName} ${lastName}`,
                 email: faker.internet.email(firstName, lastName),
                 session: '{}',

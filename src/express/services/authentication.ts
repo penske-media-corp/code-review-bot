@@ -40,8 +40,12 @@ const registerAuthentication = (app: Express): void => {
     app.use(passport.session());
 
     // handles serialization and deserialization of authenticated user
-    passport.serializeUser((authUser: Partial<{sub: string}>, done) => {
-        void User.load({slackUserId: authUser.sub}).then((user) => {
+    passport.serializeUser((authUser: Partial<{email: string; name: string; sub: string}>, done) => {
+        void User.sync({
+            displayName: authUser.name,
+            email: authUser.email,
+            slackUserId: authUser.sub,
+        }).then((user) => {
             done(null, {
                 id: user?.id,
                 sid: user?.slackUserId,

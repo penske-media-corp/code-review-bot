@@ -1,6 +1,12 @@
-import type {User} from '@prisma/client';
+import type {
+    Prisma,
+    User
+} from '@prisma/client';
+import {getUserInfo} from '../bolt/utils';
 import {logDebug} from '../lib/log';
 import {prisma} from '../lib/config';
+
+
 
 export const load = async ({slackUserId, userId, id}: {slackUserId?: string; userId?: string; id?: number}): Promise<User | null> => {
     let where;
@@ -32,6 +38,46 @@ export const load = async ({slackUserId, userId, id}: {slackUserId?: string; use
     return user;
 };
 
+export const sync = async ({displayName, email, slackUserId}: {displayName?: string; email?: string; slackUserId?: string}): Promise<User | null> => {
+
+    if (!slackUserId) {
+        return null;
+    }
+
+    let user = await prisma.user.findFirst({
+        where: {
+            slackUserId,
+        }
+    });
+
+    let data: Prisma.UserUncheckedCreateInput;
+
+    if (!displayName) {
+        data = await getUserInfo(slackUserId);
+    } else {
+        data = {
+            displayName,
+            email,
+            slackUserId,
+        };
+    }
+
+    if (!user) {
+        user = await prisma.user.create({
+            data
+        });
+    } else if (user.displayName !== displayName || user.email !== email) {
+        await prisma.user.update({
+            where: {
+                id: user.id,
+            },
+            data,
+        });
+    }
+
+    return user;
+};
+
 export const session = (user: User, name: string): unknown => {
     const value = user.session as Partial<{[index: string]: unknown} | null>;
 
@@ -45,4 +91,5 @@ export const session = (user: User, name: string): unknown => {
 export default {
     load,
     session,
+    sync,
 };

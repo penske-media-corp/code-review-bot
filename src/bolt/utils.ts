@@ -62,9 +62,11 @@ export async function getTeamId (): Promise<string | null> {
 // https://api.slack.com/methods/users.profile.get
 export async function getUserInfo (user: string): Promise<UserInfo> {
     const info = await slackBotApp.client.users.profile.get({user: user});
-    const {profile: {real_name, display_name} = {}} = info;
+
+    const {profile: {real_name, display_name, email} = {}} = info;
 
     return {
+        email,
         slackUserId: user,
         displayName: display_name?.length ? display_name : real_name as string,
     };

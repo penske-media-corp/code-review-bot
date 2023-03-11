@@ -110,8 +110,9 @@ async function findOrCreateUser (slackUserId: string): Promise<User> {
 
         user = await prisma.user.create({
             data: {
-                slackUserId,
+                email: userInfo.email,
                 displayName: userInfo.displayName,
+                slackUserId,
             }
         });
     }
@@ -244,7 +245,7 @@ const add = async ({jiraTicket, note, pullRequestLink, slackChannelId, slackMsgI
         });
         Object.assign(codeReview, {
             jiraTicket,
-            note: `${note.length ? note : codeReview.note ?? ''}`.trim(),
+            note: `${note && !codeReview.note?.includes(note) ? note : codeReview.note ?? ''}`.trim(),
             pullRequestLink,
             slackChannelId,
             slackMsgId,

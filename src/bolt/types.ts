@@ -14,8 +14,9 @@ export interface ReactionData {
 }
 
 export interface UserInfo {
-    slackUserId: string;
     displayName: string;
+    email?: string;
+    slackUserId: string;
 }
 
 export interface GithubBotEventData {
