@@ -12,9 +12,9 @@ export const saveController: RequestHandler = (req, res) => {
             return;
         }
 
-        const {note} = req.body as {note: string};
+        const {note, jiraTicket} = req.body as {note: string; jiraTicket: string};
 
-        if (typeof note !== 'string') {
+        if (typeof note !== 'string' || typeof jiraTicket !== 'string') {
             res.json({error: 'Invalid note data.'});
             return;
         }
@@ -28,7 +28,7 @@ export const saveController: RequestHandler = (req, res) => {
             }
         }).then(() => {
             res.json({
-                data: formatApiCodeReviewRecord({...codeReview, note}),
+                data: formatApiCodeReviewRecord({...codeReview, note, jiraTicket}),
             });
         });
     });

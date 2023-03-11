@@ -54,6 +54,7 @@ export const useExpandedRowComponent = ({onUpdate, user}) => {
                     },
                     body: JSON.stringify({
                         note: dirtyData.note,
+                        jiraTicket: dirtyData.jiraTicket,
                     })
                 })
                     .then((res) => res.json())
@@ -101,6 +102,12 @@ export const useExpandedRowComponent = ({onUpdate, user}) => {
                 )}
                 {editing && (
                     <form id={`edit-${data.id}`}>
+                        <div><label htmlFor={`edit-jira-ticket-${data.id}`}><strong>Jira Ticket</strong>:</label></div>
+                        <input
+                            id="{`edit-jira-ticket-${data.id}`}"
+                            defaultValue={data.jiraTicket}
+                            onChange={({target}) => dirtyData.jiraTicket = target.value}
+                        />
                         <div><label htmlFor={`edit-note-${data.id}`}><strong>Notes</strong>:</label></div>
                         <textarea
                             id="{`edit-note-${data.id}`}" row={3} cols={80}
