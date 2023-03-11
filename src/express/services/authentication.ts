@@ -86,6 +86,13 @@ const registerAuthentication = (app: Express): void => {
         ) as RequestHandler
     );
 
+    app.get('/auth/logout', (req, res) => {
+        req.logout(() => {
+            res.redirect('/');
+        });
+        res.redirect('/');
+    });
+
     // @see https://api.slack.com/authentication/sign-in-with-slack
     void Issuer.discover(DISCOVER_INFO_ENDPOINT)
         .then(slackIssuer => {
