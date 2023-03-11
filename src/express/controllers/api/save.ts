@@ -32,6 +32,5 @@ export const saveController: RequestHandler = (req, res) => {
             });
         });
     });
-
 };
 export default saveController;

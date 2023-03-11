@@ -18,7 +18,7 @@
     "build:watch": "tsc -w -p .",
     "lint": "eslint ./src",
     "start": "npm run build && node build/server.js",
-    "dev": "concurrently \"cd client && npm start\" \"nodemon --watch build build/server.js\" ",
+    "dev": "concurrently \"cd client && npm start\" \"nodemon --watch build build/server.js\" \"tsc -w -p .\" ",
     "dev-once": "npm ci && prisma migrate dev && prisma generate && prisma db seed && npm run build && cd client && npm ci && npm run build"
   },
   "nodemonConfig": {
