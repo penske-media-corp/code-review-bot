@@ -51,7 +51,7 @@ table.CodeReviewList td, th {
     width: 98vw;
 }
 
-#nav button, .expandedNav button {
+#nav button, .expanded-nav button {
     margin: 0 1px;
 }
 
@@ -75,7 +75,7 @@ button:hover {
     cursor: pointer;
 }
 
-button.noClick:hover {
+button.no-click:hover {
     cursor: default;
 }
 
