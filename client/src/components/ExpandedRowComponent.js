@@ -81,10 +81,10 @@ export const useExpandedRowComponent = ({onUpdate, user}) => {
         }
 
         return (
-            <div style={{paddingLeft: '3em'}} className="expandedRow">
+            <div style={{paddingLeft: '3em'}} className="expanded-row">
                 {!editing && (
                     <div>
-                        <div className="expandedNav">
+                        <div className="expanded-nav">
                             <div className="left">
                                 {showClaim && (<ActionButton label="Claim" id={data.id}/>)}
                                 {showChange && (<ActionButton label="Request Change" id={data.id}/>)}
@@ -94,7 +94,7 @@ export const useExpandedRowComponent = ({onUpdate, user}) => {
                                 <button onClick={() => setEditing(true)}>Edit</button>
                                 {errorMessage && (<span className="error">{errorMessage}</span>)}
                             </div>
-                            <div className="right">Last updated on {format(new Date(data.updatedAt), 'MMM dd, yyyy hh:mmaaaaa')}</div>
+                            <div className="right small-text">Last updated on {format(new Date(data.updatedAt), 'MMM dd, yyyy hh:mmaaaaa')}</div>
                         </div>
                         <div className="note">{data.note}</div>
                     </div>

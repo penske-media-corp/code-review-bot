@@ -90,13 +90,17 @@ button.noClick:hover {
     z-index: 2;
 }
 
-.expandedNav {
+.expanded-nav {
     display: flex;
     justify-content: space-between;
 }
 
-.expandedRow .note {
+.expanded-row .note {
     margin: 2px 0px;
+}
+
+.expanded-row .small-text {
+    font-size: 0.75em;
 }
 
 .error {
