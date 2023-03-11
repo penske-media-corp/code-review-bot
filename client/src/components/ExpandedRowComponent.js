@@ -2,8 +2,8 @@ import {format} from 'date-fns';
 import {logError} from '../services/log';
 import {useState} from 'react';
 
-export const useExpandedRowsComponent = ({onUpdate, user}) => {
-    const ExpandedRowsComponent = ({data}) => {
+export const useExpandedRowComponent = ({onUpdate, user}) => {
+    const ExpandedRowComponent = ({data}) => {
         const handleClick = ({target}) => {
             const action = target.getAttribute('action');
             const value = target.getAttribute('value');
@@ -81,7 +81,7 @@ export const useExpandedRowsComponent = ({onUpdate, user}) => {
         }
 
         return (
-            <div style={{paddingLeft: '3em'}}>
+            <div style={{paddingLeft: '3em'}} className="expandedRow">
                 {!editing && (
                     <div>
                         <div className="expandedNav">
@@ -96,7 +96,7 @@ export const useExpandedRowsComponent = ({onUpdate, user}) => {
                             </div>
                             <div className="right">Last updated on {format(new Date(data.updatedAt), 'MMM dd, yyyy hh:mmaaaaa')}</div>
                         </div>
-                        <div>{data.note}</div>
+                        <div className="note">{data.note}</div>
                     </div>
                 )}
                 {editing && (
@@ -117,5 +117,5 @@ export const useExpandedRowsComponent = ({onUpdate, user}) => {
         );
     };
 
-    return ExpandedRowsComponent;
+    return ExpandedRowComponent;
 }

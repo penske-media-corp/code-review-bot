@@ -95,6 +95,10 @@ button.noClick:hover {
     justify-content: space-between;
 }
 
+.expandedRow .note {
+    margin: 2px 0px;
+}
+
 .error {
     color: #d00000;
     font-weight: normal;
