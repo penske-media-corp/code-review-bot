@@ -62,7 +62,6 @@ async function main() {
                 pullRequestLink: `https://github.com/company/repo/pull/${faker.datatype.number({max: codeReviewsCount})}`,
                 status: 'pending',
                 slackThreadTs: faker.datatype.float().toString(),
-                slackChannelId: `channelid${faker.datatype.number({max:5})}`,
                 slackMsgId: faker.datatype.uuid(),
                 note: faker.lorem.sentence(20),
                 jiraTicket: `JIRA-${faker.datatype.number({max: 100})}`,
