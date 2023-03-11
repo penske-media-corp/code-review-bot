@@ -22,16 +22,18 @@ const mockFetchData = (mockedData: unknown) => {
     };
 };
 
-global.fetch = (url) => {
-    switch (url) {
-        case '/api/user':
-            return mockFetchData(mockedUser);
-        case '/api/channels':
-            return mockFetchData(mockedChannels);
-        default:
-            return mockFetchData(mockedReviews);
-    }
-};
+Object.assign(global, {
+    fetch: (url: string) => {
+        switch (url) {
+            case '/api/user':
+                return mockFetchData(mockedUser);
+            case '/api/channels':
+                return mockFetchData(mockedChannels);
+            default:
+                return mockFetchData(mockedReviews);
+        }
+    },
+});
 
 describe('App', () => {
     test('renders not authenticated', () => {
