@@ -39,9 +39,14 @@ export default function registerEventReactionAdd (app: App): void {
                 });
             } else {
                 const notify = await getGroupToMentionInChannel(data.slackChannelId);
+                let mention = '';
+
+                if (notify !== 'none') {
+                    mention = `<${notify}>, `;
+                }
 
                 await say({
-                    text: `<${notify}>, ${result.message}`,
+                    text: `${mention}${result.message}`,
                     thread_ts: slackThreadTs,
                 });
             }

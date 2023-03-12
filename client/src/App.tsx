@@ -9,9 +9,13 @@ import {fetchData} from './services/fetch';
 
 function App() {
     const queryString = new URLSearchParams(window.location.search);
-    const status = queryString.get('status') ?? 'pending';
+    const [status, setStatus] = useState(queryString.get('status') ?? 'pending');
     const [user, setUser] = useState(null);
     const [selectedChannel, setSelectedChannel] = useState(queryString.get('channel') ?? 'all');
+
+    const handleNavBarClick = (value: string) => {
+        setStatus(value);
+    };
 
     useEffect(() => {
         fetchData('/api/user')
@@ -29,7 +33,7 @@ function App() {
                             <ChannelFilter selectedChannel={selectedChannel} onSelected={setSelectedChannel}/>
                         </div>
                         <div className="right">
-                            <Navbar status={status} user={user}/>
+                            <Navbar status={status} user={user} onClick={handleNavBarClick}/>
                         </div>
                     </div>
                     <RenderReviewList user={user} channel={selectedChannel} status={status}/>
