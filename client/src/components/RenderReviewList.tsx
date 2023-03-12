@@ -11,6 +11,7 @@ import React, {
 import type {CodeReview} from '../lib/types';
 import {format} from 'date-fns';
 import {useExpandedRowComponent} from './ExpandedRowComponent';
+import {fetchData} from '../services/fetch';
 
 // @see https://react-data-table-component.netlify.app/?path=/docs/api-columns--page
 const columns: TableColumn<CodeReview>[] = [
@@ -132,10 +133,7 @@ const RenderReviewList = ({channel, status, user}: {channel: string; status: str
      */
     const updateFilter = ({channel, limit, page, status}: {channel: string; limit: number; page: number; status: string}) => {
         setLoading(true);
-        fetch(`/api/reviews/${channel}/${status}?limit=${limit}&page=${page}`, {
-            credentials: 'same-origin',
-        })
-            .then((res) => res.json())
+        fetchData(`/api/reviews/${channel}/${status}?limit=${limit}&page=${page}`)
             .then((result) => {
                 if (!result) {
                     return;

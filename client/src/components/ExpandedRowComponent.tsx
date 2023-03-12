@@ -3,6 +3,7 @@ import type {CodeReview} from '../lib/types';
 import {format} from 'date-fns';
 import {logError} from '../services/log';
 import {useState} from 'react';
+import {fetchData} from '../services/fetch';
 
 export const useExpandedRowComponent = ({onUpdate, user}: {onUpdate: CallableFunction; user?: {displayName: string}}) => {
     const ExpandedRowComponent = ({data}: {data: CodeReview}) => {
@@ -10,10 +11,7 @@ export const useExpandedRowComponent = ({onUpdate, user}: {onUpdate: CallableFun
             const action = currentTarget.getAttribute('name');
             const value = currentTarget.getAttribute('value');
 
-            fetch(`/api/action/${action}/${value}`,{
-                credentials: 'same-origin',
-            })
-                .then((res) => res.json())
+            fetchData(`/api/action/${action}/${value}`)
                 .then((result) => {
                     result?.data && onUpdate && onUpdate({
                         data: result.data,
@@ -50,8 +48,7 @@ export const useExpandedRowComponent = ({onUpdate, user}: {onUpdate: CallableFun
                 const value = currentTarget.getAttribute('value');
 
                 setSaveClicked(true);
-                fetch(`/api/action/save/${value}`, {
-                    credentials: 'same-origin',
+                fetchData(`/api/action/save/${value}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -61,7 +58,6 @@ export const useExpandedRowComponent = ({onUpdate, user}: {onUpdate: CallableFun
                         jiraTicket: dirtyData.jiraTicket,
                     })
                 })
-                    .then((res) => res.json())
                     .then((result) => {
                         if (!result.data) {
                             setErrorMessage('Error saving data, see console error log for details.');

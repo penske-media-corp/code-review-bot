@@ -2,6 +2,7 @@ import Select, {SingleValue} from 'react-select';
 import React from 'react';
 import styled from 'styled-components';
 import {useCallback, useEffect, useState} from 'react';
+import {fetchData} from '../services/fetch';
 
 const FilterDiv = styled.div`
       min-width: 350px;
@@ -21,10 +22,7 @@ const ChannelFilter = ({onSelected, selectedChannel}: { onSelected: CallableFunc
     }, []);
 
     useEffect(() => {
-        fetch(`/api/channels`, {
-            credentials: 'same-origin',
-        })
-            .then((res) => res.json())
+        fetchData('/api/channels')
             .then((result) => {
                 const options = [
                     {

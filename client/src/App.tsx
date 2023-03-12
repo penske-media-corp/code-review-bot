@@ -4,6 +4,8 @@ import RenderReviewList from './components/RenderReviewList';
 import SignInWithSlack from './components/SignInWithSlack';
 import Navbar from './components/Navbar';
 import ChannelFilter from './components/ChannelFilter';
+import {logError} from './services/log';
+import {fetchData} from './services/fetch';
 
 function App() {
     const queryString = new URLSearchParams(window.location.search);
@@ -12,10 +14,9 @@ function App() {
     const [selectedChannel, setSelectedChannel] = useState(queryString.get('channel') ?? 'all');
 
     useEffect(() => {
-        fetch('/api/user', {
-            credentials: 'same-origin',
-        }).then((res) => res.json())
-            .then((data) => setUser(data));
+        fetchData('/api/user')
+            .then((data) => setUser(data))
+            .catch(logError);
     }, []);
 
     return (

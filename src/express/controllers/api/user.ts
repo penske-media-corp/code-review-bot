@@ -1,19 +1,17 @@
 import type {RequestHandler} from 'express';
-import User from '../../../service/User';
 
 const userController: RequestHandler = (req, res) => {
-    const user =  req.user as Partial<{id: number}> | null;
-    if (!user?.id) {
-        res.json(null);
+    const {id, fn: displayName} = req.user as {id: string; fn: string};
+
+    if (!id) {
+        res.status(404) .json(null);
         return;
     }
 
-    User.load({id: user.id})
-        .then((result) => {
-            res.json(result);
-        }).catch(() => {
-            res.json(null);
-        });
+    res.json({
+        id,
+        displayName,
+    });
 };
 
 export default userController;

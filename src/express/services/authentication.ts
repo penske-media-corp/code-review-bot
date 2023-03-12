@@ -59,7 +59,6 @@ const registerAuthentication = (app: Express): void => {
 
     // start authentication request
     app.get('/auth/slack', (req, res, next) => {
-
         const user =  req.user as Partial<{sid: string}> | null;
 
         if (user?.sid) {
@@ -106,7 +105,6 @@ const registerAuthentication = (app: Express): void => {
             passport.use(
                 'oidc',
                 new Strategy({client}, (tokenSet: TokenSet, userinfo: UserinfoResponse, done: (err?: unknown, user?: Express.User) => void) => {
-                    logDebug('passport verify', userinfo);
                     done(null, tokenSet.claims());
                 })
             );
