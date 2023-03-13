@@ -50,7 +50,7 @@ const ChannelFilter = ({onSelected, selectedChannel}: { onSelected: CallableFunc
                 setChannelOptions(options);
 
                 // This code is to work around to display current selected channel as a placeholder
-                // @TODO: revisit to on how to pass in the default value to <Select> after the options are set.
+                // @TODO: revisit on how to pass in the default value to <Select> after the options are set.
                 const findChannel = result.find((channel: Channel) => [channel.id, channel.name].includes(selectedChannel))
                 if (selectedChannel !== 'all' && findChannel) {
                     setSelectPlaceHolder(`Code Reviews For Channel "#${findChannel.name}"`);
