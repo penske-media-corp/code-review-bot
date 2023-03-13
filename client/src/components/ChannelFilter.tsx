@@ -9,6 +9,11 @@ interface Channel {
     name: string;
 }
 
+interface Option {
+    label: string;
+    value: string;
+}
+
 const FilterDiv = styled.div`
       min-width: 350px;
       max-width: 50%;
@@ -16,20 +21,19 @@ const FilterDiv = styled.div`
     `;
 
 const ChannelFilter = ({onSelected, selectedChannel}: { onSelected: CallableFunction; selectedChannel: string; }) => {
-    const [channelOptions, setChannelOptions] = useState([] as { label: string; value: string; }[]);
+    const [channelOptions, setChannelOptions] = useState([] as Option[]);
     const [selectPlaceHolder, setSelectPlaceHolder] = useState('Code Reviews For All Slack Channels');
-    const handleChannelSelectionChange = useCallback((data: SingleValue<{ label: string; value: string; }>) => {
-        const { label } = channelOptions.find(({ value }) => value === data?.value) || {};
-        if (label !== selectPlaceHolder) {
-            setSelectPlaceHolder(label ?? '');
-            onSelected && onSelected(data?.value);
+    const handleChannelSelectionChange = useCallback((data: SingleValue<Option>) => {
+        if (data?.label && data?.value) {
+            setSelectPlaceHolder(data.label);
+            onSelected && onSelected(data.value);
         }
     }, []);
 
     useEffect(() => {
         fetchData('/api/channels')
             .then((result) => {
-                const options = [
+                const options: Option[] = [
                     {
                         label: 'Code Reviews For All Slack Channels',
                         value: 'all',
