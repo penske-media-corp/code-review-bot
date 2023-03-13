@@ -4,6 +4,11 @@ import styled from 'styled-components';
 import {useCallback, useEffect, useState} from 'react';
 import {fetchData} from '../services/fetch';
 
+interface Channel {
+    id: string;
+    name: string;
+}
+
 const FilterDiv = styled.div`
       min-width: 350px;
       max-width: 50%;
@@ -28,24 +33,27 @@ const ChannelFilter = ({onSelected, selectedChannel}: { onSelected: CallableFunc
                     {
                         label: 'Code Reviews For All Slack Channels',
                         value: 'all',
-                    }
+                    },
+                    ...result.map((channel: Channel) => {
+                        return {
+                            label: `Code Reviews For Channel "#${channel.name}"`,
+                            value: channel.id,
+                            selected: selectedChannel === channel.id,
+                        }
+                    }),
                 ];
 
-                result.forEach((item: {id: string; name: string}) => {
-                    const option = {
-                        label: `Code Reviews For Channel "#${item.name}"`,
-                        value: item.id,
-                    };
-
-                    options.push(option);
-                    if (selectedChannel !== 'all' && [item.id, item.name].includes(selectedChannel)) {
-                        setSelectPlaceHolder(option.label);
-                        if (selectedChannel !== item.id) {
-                            onSelected && onSelected(selectedChannel);
-                        }
-                    }
-                });
                 setChannelOptions(options);
+
+                // This code is to work around to display current selected channel as a placeholder
+                // @TODO: revisit to on how to pass in the default value to <Select> after the options are set.
+                const findChannel = result.find((channel: Channel) => [channel.id, channel.name].includes(selectedChannel))
+                if (selectedChannel !== 'all' && findChannel) {
+                    setSelectPlaceHolder(`Code Reviews For Channel "#${findChannel.name}"`);
+                    if (selectedChannel !== findChannel.id) {
+                        onSelected && onSelected(selectedChannel);
+                    }
+                }
             });
     }, []);
 

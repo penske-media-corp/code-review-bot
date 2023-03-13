@@ -9,9 +9,9 @@ import {fetchData} from './services/fetch';
 
 function App() {
     const queryString = new URLSearchParams(window.location.search);
-    const [status, setStatus] = useState(queryString.get('status') ?? 'pending');
+    const [status, setStatus] = useState(queryString.get('status') || 'pending');
     const [user, setUser] = useState(null);
-    const [selectedChannel, setSelectedChannel] = useState(queryString.get('channel') ?? 'all');
+    const [selectedChannel, setSelectedChannel] = useState(queryString.get('channel') || 'all');
 
     const handleNavBarClick = (value: string) => {
         setStatus(value);
