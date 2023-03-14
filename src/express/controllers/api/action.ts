@@ -17,7 +17,7 @@ export const actionController: RequestHandler = (req, res) => {
         return;
     }
 
-    if (['approve', 'claim', 'close', 'request-change', 'remove'].includes(action)) {
+    if (['approve', 'claim', 'close', 'request-change', 'delete-record'].includes(action)) {
         void findCodeReviewRecord({id: parseInt(value)}).then((codeReview) => {
             if (!codeReview) {
                 res.json({error: 'Cannot find code review.'});
@@ -80,8 +80,8 @@ export const actionController: RequestHandler = (req, res) => {
                         }
                     });
                     break;
-                case 'remove':
-                    void Review.remove(codeReview, slackUserId).then((result) => {
+                case 'delete-record':
+                    void Review.deleteRecord(codeReview, slackUserId).then((result) => {
                         if (!result.codeReview) {
                             res.json({error: result.message});
                             return;

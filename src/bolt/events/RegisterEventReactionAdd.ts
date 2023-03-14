@@ -72,7 +72,7 @@ export default function registerEventReactionAdd (app: App): void {
                 await say(result.slackNotifyMessage as SayArguments);
             }
         } else if (slackActions.remove.includes(data.reaction)) {
-            const result = await Review.remove(codeReview, reactionUserId);
+            const result = await Review.deleteRecord(codeReview, reactionUserId);
 
             await say(result.slackNotifyMessage as SayArguments);
         } else if (slackActions.change.includes(data.reaction)) {

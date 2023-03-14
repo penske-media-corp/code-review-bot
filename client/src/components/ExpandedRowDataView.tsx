@@ -17,6 +17,10 @@ const ExpandedRowDataView = ({data, onError, onUpdate, user}: DataViewProps) => 
 
         fetchData(`/api/action/${action}/${value}`)
             .then((result) => {
+                if (result?.error) {
+                    onError && onError(result.error);
+                    return;
+                }
                 result?.data && onUpdate({
                     data: result.data,
                     action,
@@ -50,7 +54,7 @@ const ExpandedRowDataView = ({data, onError, onUpdate, user}: DataViewProps) => 
                     {showChange && (<ActionButton label="Request Change" reviewId={data.id}/>)}
                     {showApprove && (<ActionButton label="Approve" reviewId={data.id}/>)}
                     <ActionButton label="Close" reviewId={data.id}/>
-                    <ActionButton label="Remove" reviewId={data.id}/>
+                    <ActionButton label="Delete Record" reviewId={data.id}/>
                     <button name={`edit-review-${data.id}`}
                             onClick={() => onUpdate({data, action: 'edit'})}
                     >Edit</button>

@@ -30,7 +30,7 @@ export default function registerActionHomePage (app: App): void {
                         result = await Review.close(codeReview);
                         break;
                     case 'remove':
-                        result = await Review.remove(codeReview, actionUserId);
+                        result = await Review.deleteRecord(codeReview, actionUserId);
                         break;
                 }
                 if (result) {

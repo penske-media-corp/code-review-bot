@@ -364,7 +364,7 @@ const finish = async (codeReview: CodeReviewRecord, slackUserId: string): Promis
     };
 };
 
-const remove = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
+const deleteRecord = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
     const user = await findOrCreateUser(slackUserId);
     const userDisplayName = user.displayName;
     const requestSlackUserId = codeReview.user.slackUserId;
@@ -473,7 +473,7 @@ export default {
     claim,
     close,
     finish,
-    remove,
+    deleteRecord,
     requestChanges,
     withdraw,
 };
