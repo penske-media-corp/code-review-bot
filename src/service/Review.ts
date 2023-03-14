@@ -1,6 +1,7 @@
 import type {
     CodeReview,
     CodeReviewRelation,
+    Prisma,
     User,
 } from '@prisma/client';
 import {
@@ -33,7 +34,7 @@ export interface ReviewActionResult {
 }
 
 export async function findCodeReviewRecord ({id, pullRequestLink}: {id?: number; pullRequestLink?: string}): Promise<CodeReviewRecord | null> {
-    let where;
+    let where: Prisma.CodeReviewWhereInput | null = null;
 
     if (id) {
         where = {id};

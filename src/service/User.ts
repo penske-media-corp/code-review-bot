@@ -9,7 +9,7 @@ import {prisma} from '../lib/config';
 
 
 export const load = async ({slackUserId, userId, id}: {slackUserId?: string; userId?: string; id?: number}): Promise<User | null> => {
-    let where;
+    let where: Prisma.UserWhereInput | null = null;
     let user: User | null = null;
 
     if (id) {

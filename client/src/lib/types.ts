@@ -14,3 +14,29 @@ export interface CodeReview {
     status: string;
     updatedAt: string;
 }
+
+export interface User {
+    displayName: string;
+}
+
+export interface ExpandedRowProps {
+    onUpdate: CallableFunction;
+    user: User;
+}
+
+export interface DataViewProps extends ExpandedRowProps {
+    data: CodeReview;
+    onError?: CallableFunction;
+}
+
+export type DataEditProps = DataViewProps;
+
+export interface UpdateEventProps {
+    data: CodeReview;
+    action: string;
+}
+
+export interface ChannelFilterProps {
+    onSelected: CallableFunction;
+    selectedChannel: string;
+}

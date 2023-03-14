@@ -1,4 +1,5 @@
 import Select, {SingleValue} from 'react-select';
+import {ChannelFilterProps} from '../lib/types';
 import React from 'react';
 import styled from 'styled-components';
 import {useCallback, useEffect, useState} from 'react';
@@ -20,7 +21,7 @@ const FilterDiv = styled.div`
       flex-grow: 1;
     `;
 
-const ChannelFilter = ({onSelected, selectedChannel}: { onSelected: CallableFunction; selectedChannel: string; }) => {
+const ChannelFilter = ({onSelected, selectedChannel}: ChannelFilterProps) => {
     const allValue = {
         label: 'Code Reviews For All Slack Channels',
         value: 'all',
@@ -30,9 +31,9 @@ const ChannelFilter = ({onSelected, selectedChannel}: { onSelected: CallableFunc
     const handleChannelSelectionChange = useCallback((data: SingleValue<Option>) => {
         if (data?.label && data?.value) {
             setSelectPlaceHolder(data.label);
-            onSelected && onSelected(data.value);
+            onSelected(data.value);
         }
-    }, []);
+    }, [onSelected]);
 
     useEffect(() => {
         fetchData('/api/channels')

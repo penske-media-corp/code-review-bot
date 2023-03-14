@@ -159,7 +159,10 @@ const RenderReviewList = ({channel, status, user}: {channel: string; status: str
         }
     }, [channel, dataSet, currentPage, pageSize, status]);
 
-    const expandedRowComponent = useCallback(useExpandedRowComponent({onUpdate: handleRowUpdate, user}), [handleRowUpdate, user]);
+    const expandedRowComponent = useExpandedRowComponent({
+        onUpdate: handleRowUpdate,
+        user
+    });
 
     useEffect(() => {
         updateFilter({
