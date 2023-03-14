@@ -50,3 +50,60 @@ table.CodeReviewList td, th {
     height: 95vh;
     width: 98vw;
 }
+
+#nav button, .expanded-nav button {
+    margin: 0 1px;
+}
+
+#nav button {
+    font-weight: bold;
+}
+
+#nav button.highlight {
+    color: blue;
+    background-color: #e0e0e0;
+    border-width: 1px;
+}
+#nav button.highlight:hover {
+    color: red;
+    background-color: #c2c2d2;
+}
+
+button:hover {
+    color: red;
+    background-color: #c2c2d2;
+    cursor: pointer;
+}
+
+button.no-click:hover {
+    cursor: default;
+}
+
+#channel-filter {
+    z-index: 2;
+}
+
+#nav {
+    display: flex;
+    margin-left: auto;
+    justify-content: right;
+    z-index: 2;
+}
+
+.expanded-nav {
+    display: flex;
+    justify-content: space-between;
+}
+
+.expanded-row .note {
+    margin: 2px 0px;
+}
+
+.expanded-row .small-text {
+    font-size: 0.75em;
+}
+
+.error {
+    color: #e05000;
+    font-weight: normal;
+}

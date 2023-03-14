@@ -16,9 +16,9 @@
     "build:client": "cd client && rm -rf build && npm run build",
     "build:all": "npm run build && npm run build:client",
     "build:watch": "tsc -w -p .",
-    "lint": "eslint ./src",
+    "lint": "eslint ./src ./client/src",
     "start": "npm run build && node build/server.js",
-    "dev": "concurrently \"cd client && npm start\" \"nodemon --watch build build/server.js\" ",
+    "dev": "concurrently \"cd client && npm start\" \"nodemon --watch build build/server.js\" \"tsc -w -p .\" ",
     "dev-once": "npm ci && prisma migrate dev && prisma generate && prisma db seed && npm run build && cd client && npm ci && npm run build"
   },
   "nodemonConfig": {
@@ -28,12 +28,16 @@
     "delay": 2500
   },
   "dependencies": {
-    "@prisma/client": "^4.10.1",
+    "@prisma/client": "^4.11.0",
     "@slack/bolt": "^3.12.2",
     "cookie-parser": "^1.4.6",
+    "cookie-session": "^2.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.18.2",
     "node-schedule": "^2.1.1",
+    "openid-client": "^5.4.0",
+    "passport": "^0.5.3",
     "pluralize": "^8.0.0",
     "reflect-metadata": "^0.1.13",
     "tslib": "^2.5.0"
@@ -41,16 +45,19 @@
   "devDependencies": {
     "@faker-js/faker": "^7.6.0",
     "@types/cookie-parser": "^1.4.3",
+    "@types/cookie-session": "^2.0.44",
+    "@types/cors": "^2.8.13",
     "@types/express": "^4.17.16",
     "@types/node": "^14.14.35",
     "@types/node-schedule": "^2.1.0",
+    "@types/passport": "^1.0.12",
     "@types/pluralize": "^0.0.29",
     "@typescript-eslint/eslint-plugin": "^5.53.0",
     "@typescript-eslint/parser": "^5.53.0",
     "concurrently": "^7.6.0",
     "eslint": "^8.33.0",
     "nodemon": "^2.0.20",
-    "prisma": "^4.10.1",
+    "prisma": "^4.11.0",
     "ts-node": "^10.9.1",
     "typescript": "^4.9.5"
   }

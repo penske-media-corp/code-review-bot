@@ -162,7 +162,7 @@ const getCodeReviewList = async ({codeReviewStatus, slackChannelId, userId}: {co
                     reviewer: true,
                 }
             },
-        }
+        },
     });
 
     let blocks: (Block | KnownBlock)[] = [];

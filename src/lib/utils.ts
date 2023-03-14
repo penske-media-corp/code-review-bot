@@ -9,7 +9,7 @@ interface PullRequest {
 }
 
 export function extractPullRequest (data: string): PullRequest {
-    const match = GITHUB_PR_REGEX.exec(data ?? '');
+    const match = GITHUB_PR_REGEX.exec(data);
 
     return {
         url: match ? match[0] : '',

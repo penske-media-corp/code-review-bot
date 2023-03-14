@@ -1,7 +1,7 @@
 import {
     channelList,
     channelMaps
-} from '../../bolt/utils';
+} from '../../../bolt/utils';
 import type {RequestHandler} from 'express';
 
 export const channelController: RequestHandler = (req, res) => {
