@@ -21,8 +21,12 @@ const FilterDiv = styled.div`
     `;
 
 const ChannelFilter = ({onSelected, selectedChannel}: { onSelected: CallableFunction; selectedChannel: string; }) => {
+    const allValue = {
+        label: 'Code Reviews For All Slack Channels',
+        value: 'all',
+    };
     const [channelOptions, setChannelOptions] = useState([] as Option[]);
-    const [selectPlaceHolder, setSelectPlaceHolder] = useState('Code Reviews For All Slack Channels');
+    const [selectPlaceHolder, setSelectPlaceHolder] = useState(allValue.label);
     const handleChannelSelectionChange = useCallback((data: SingleValue<Option>) => {
         if (data?.label && data?.value) {
             setSelectPlaceHolder(data.label);
@@ -34,10 +38,7 @@ const ChannelFilter = ({onSelected, selectedChannel}: { onSelected: CallableFunc
         fetchData('/api/channels')
             .then((result) => {
                 const options: Option[] = [
-                    {
-                        label: 'Code Reviews For All Slack Channels',
-                        value: 'all',
-                    },
+                    allValue,
                     ...result.map((channel: Channel) => {
                         return {
                             label: `Code Reviews For Channel "#${channel.name}"`,
@@ -55,7 +56,7 @@ const ChannelFilter = ({onSelected, selectedChannel}: { onSelected: CallableFunc
                 if (selectedChannel !== 'all' && findChannel) {
                     setSelectPlaceHolder(`Code Reviews For Channel "#${findChannel.name}"`);
                     if (selectedChannel !== findChannel.id) {
-                        onSelected && onSelected(selectedChannel);
+                        onSelected && onSelected(findChannel.id);
                     }
                 }
             });
