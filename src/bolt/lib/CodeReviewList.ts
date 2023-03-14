@@ -56,7 +56,7 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
         type: 'button',
         text: {
             type: 'plain_text',
-            text: ':trash: Remove',
+            text: ':trash: Delete',
             emoji: true
         },
         value: 'remove',
@@ -68,7 +68,7 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
             },
             text: {
                 type: 'plain_text',
-                text: 'This will remove all related historical data for this request.',
+                text: 'This will delete all related historical data for this request.',
             },
             confirm: {
                 type: 'plain_text',
