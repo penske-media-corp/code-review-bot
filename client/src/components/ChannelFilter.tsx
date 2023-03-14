@@ -43,7 +43,6 @@ const ChannelFilter = ({onSelected, selectedChannel}: { onSelected: CallableFunc
                         return {
                             label: `Code Reviews For Channel "#${channel.name}"`,
                             value: channel.id,
-                            selected: selectedChannel === channel.id,
                         }
                     }),
                 ];
