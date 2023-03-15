@@ -416,11 +416,41 @@ const requestChanges = async (codeReview: CodeReviewRecord, slackUserId: string)
     };
 };
 
+const requestReview = async (codeReview: CodeReviewRecord): Promise<ReviewActionResult> => {
+    codeReview.status = 'pending';
+    await prisma.codeReview.update({
+        where: {
+            id: codeReview.id,
+        },
+        data: {
+            status: codeReview.status,
+        }
+    });
+
+    const userDisplayName = codeReview.user.displayName;
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
+    const stats = await calculateReviewStats(codeReview);
+    const count = stats.reviewerCount + stats.approvalCount;
+    const message = `*${userDisplayName}* has request a code review! ${getNumberReviewMessage(count, numberReviewRequired)}`;
+
+    // @TODO: Add notify exiting reviewers
+
+    return {
+        codeReview,
+        message,
+        slackNotifyMessage: {
+            channel: codeReview.slackChannelId,
+            text: message,
+            thread_ts: codeReview.slackThreadTs,
+        },
+    };
+};
+
 const withdraw = async (codeReview: CodeReviewRecord): Promise<ReviewActionResult> => {
     const userDisplayName = codeReview.user.displayName;
     const message = `*${userDisplayName}* withdrew the code review request`;
 
-    codeReview.status = 'withdraw';
+    codeReview.status = 'withdrew';
     await prisma.codeReview.update({
         where: {
             id: codeReview.id,
@@ -475,5 +505,6 @@ export default {
     finish,
     deleteRecord,
     requestChanges,
+    requestReview,
     withdraw,
 };

@@ -7,9 +7,11 @@ import {logError} from '../services/log';
 import {format} from 'date-fns';
 
 const ExpandedRowDataView = ({data, onError, onUpdate, user}: DataViewProps) => {
-    const showClaim = !user || !data.reviewers?.includes(user?.displayName);
-    const showApprove = !user || !data.approvers?.includes(user?.displayName);
-    const showChange = !user || !data.requestChanges?.includes(user?.displayName);
+    const showClaim = !user || !data.reviewers?.includes(user?.displayName) && data.owner !== user?.displayName;
+    const showApprove = !user || !data.approvers?.includes(user?.displayName) && data.owner !== user?.displayName;
+    const showChange = !user || (!data.requestChanges?.includes(user?.displayName) && data.owner !== user?.displayName);
+    const showRequestReview = data.status === 'withdrew' && user?.displayName === data.owner;
+    const showWithdraw = data.status !== 'withdrew' && user?.displayName === data.owner;
 
     const handleActionClick = ({currentTarget}: MouseEvent<HTMLButtonElement>) => {
         const action = currentTarget.getAttribute('data-action');
@@ -33,7 +35,7 @@ const ExpandedRowDataView = ({data, onError, onUpdate, user}: DataViewProps) => 
     };
 
     const ActionButton = ({label, reviewId}: {label: string; reviewId: number}) => {
-        const sanitizedName = label.toLowerCase().replace(' ', '-');
+        const sanitizedName = label.toLowerCase().replace(/ /g, '-');
 
         return (
             <button
@@ -52,8 +54,10 @@ const ExpandedRowDataView = ({data, onError, onUpdate, user}: DataViewProps) => 
                 <div className="left">
                     {showClaim && (<ActionButton label="Claim" reviewId={data.id}/>)}
                     {showChange && (<ActionButton label="Request Change" reviewId={data.id}/>)}
+                    {showRequestReview && (<ActionButton label="Request Review" reviewId={data.id}/>)}
                     {showApprove && (<ActionButton label="Approve" reviewId={data.id}/>)}
                     <ActionButton label="Close" reviewId={data.id}/>
+                    {showWithdraw && (<ActionButton label="Withdraw" reviewId={data.id}/>)}
                     <ActionButton label="Delete Record" reviewId={data.id}/>
                     <button name={`edit-review-${data.id}`}
                             onClick={() => onUpdate({data, action: 'edit'})}

@@ -17,7 +17,7 @@ export const actionController: RequestHandler = (req, res) => {
         return;
     }
 
-    if (['approve', 'claim', 'close', 'request-change', 'delete-record'].includes(action)) {
+    if (['approve', 'claim', 'close', 'delete-record', 'request-change', 'request-review', 'withdraw'].includes(action)) {
         void findCodeReviewRecord({id: parseInt(value)}).then((codeReview) => {
             if (!codeReview) {
                 res.json({error: 'Cannot find code review.'});
@@ -76,6 +76,34 @@ export const actionController: RequestHandler = (req, res) => {
                             data: formatApiCodeReviewRecord(result.codeReview),
                         });
                         if (['inprogress', 'pending', 'ready'].includes(codeReview.status)) {
+                            void postSlackMessage(result.slackNotifyMessage as ChatPostMessageArguments);
+                        }
+                    });
+                    break;
+                case 'request-review':
+                    void Review.requestReview(codeReview).then((result) => {
+                        if (!result.codeReview) {
+                            res.json({error: result.message});
+                            return;
+                        }
+                        res.json({
+                            data: formatApiCodeReviewRecord(result.codeReview),
+                        });
+                        if (['pending', 'inprogress'].includes(codeReview.status)) {
+                            void postSlackMessage(result.slackNotifyMessage as ChatPostMessageArguments);
+                        }
+                    });
+                    break;
+                case 'withdraw':
+                    void Review.withdraw(codeReview).then((result) => {
+                        if (!result.codeReview) {
+                            res.json({error: result.message});
+                            return;
+                        }
+                        res.json({
+                            data: formatApiCodeReviewRecord(result.codeReview),
+                        });
+                        if (['withdraw'].includes(codeReview.status)) {
                             void postSlackMessage(result.slackNotifyMessage as ChatPostMessageArguments);
                         }
                     });
