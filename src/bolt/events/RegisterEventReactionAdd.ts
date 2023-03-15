@@ -71,7 +71,7 @@ export default function registerEventReactionAdd (app: App): void {
             if (['inprogress', 'pending', 'ready'].includes(codeReview.status)) {
                 await say(result.slackNotifyMessage as SayArguments);
             }
-        } else if (slackActions.remove.includes(data.reaction)) {
+        } else if (slackActions.delete.includes(data.reaction)) {
             const result = await Review.deleteRecord(codeReview, reactionUserId);
 
             await say(result.slackNotifyMessage as SayArguments);

@@ -14,7 +14,7 @@ export default function registerActionHomePage (app: App): void {
 
         const {action_id: actionId, value: actionValue, selected_channel: slackChannelId} = (action as unknown) as {action_id: string; value?: string; selected_channel?: string};
 
-        if (actionValue && ['approve', 'claim', 'close', 'remove'].includes(actionValue)) {
+        if (actionValue && ['approve', 'claim', 'close', 'delete'].includes(actionValue)) {
             const codeReview = await findCodeReviewRecord({id: parseInt(actionId.split('-')[1])});
 
             if (codeReview) {
@@ -29,7 +29,7 @@ export default function registerActionHomePage (app: App): void {
                     case 'close':
                         result = await Review.close(codeReview);
                         break;
-                    case 'remove':
+                    case 'delete':
                         result = await Review.deleteRecord(codeReview, actionUserId);
                         break;
                 }

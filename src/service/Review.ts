@@ -123,8 +123,8 @@ async function findOrCreateUser (slackUserId: string): Promise<User> {
 async function setCodeReviewerStatus (codeReview: CodeReviewRecord, slackUserId: string, status: string): Promise<User> {
     const user = await findOrCreateUser(slackUserId);
 
-    if (status === 'removed') {
-        codeReview.status = 'removed';
+    if (status === 'deleted') {
+        codeReview.status = 'deleted';
         await prisma.codeReview.update({
             where: {
                 id: codeReview.id,
@@ -368,9 +368,9 @@ const deleteRecord = async (codeReview: CodeReviewRecord, slackUserId: string): 
     const user = await findOrCreateUser(slackUserId);
     const userDisplayName = user.displayName;
     const requestSlackUserId = codeReview.user.slackUserId;
-    const message = `*${userDisplayName}* removed the code review.`;
+    const message = `*${userDisplayName}* deleted the code review.`;
 
-    codeReview.status = 'removed';
+    codeReview.status = 'deleted';
 
     await prisma.codeReviewRelation.deleteMany({
         where: {

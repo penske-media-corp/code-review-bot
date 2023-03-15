@@ -89,7 +89,7 @@ export const actionController: RequestHandler = (req, res) => {
                         res.json({
                             data: formatApiCodeReviewRecord(result.codeReview),
                         });
-                        if (['removed'].includes(codeReview.status)) {
+                        if (['deleted'].includes(codeReview.status)) {
                             void postSlackMessage(result.slackNotifyMessage as ChatPostMessageArguments);
                         }
                     });

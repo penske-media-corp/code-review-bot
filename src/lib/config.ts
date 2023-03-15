@@ -15,7 +15,7 @@ export const slackActions = {
     change: ['memo', 'request-changes'],
     claim: ['eyes'],
     close: ['done'],
-    remove: ['trash'],
+    delete: ['trash'],
     request: ['review'],
 };
 
