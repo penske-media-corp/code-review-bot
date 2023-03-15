@@ -36,7 +36,10 @@ const columns: TableColumn<CodeReview>[] = [
     },
     {
         name: 'Pull Request',
-        format: (row: CodeReview) => <a href={row.pullRequestLink}>{row.pullRequestLink.replace(/.*\/(.*?\/pull\/\d+)/,'$1')}</a>,
+        format: (row: CodeReview) => (<div>
+                <a href={row.pullRequestLink}>{row.pullRequestLink.replace(/.*\/(.*?\/pull\/\d+)/,'$1')}</a>
+            {row.status === 'withdrew' && ' (withdrew)'}
+            </div>),
         selector: () => true,
         maxWidth: '20em',
         compact: true,

@@ -441,7 +441,7 @@ const requestReview = async (codeReview: CodeReviewRecord): Promise<ReviewAction
     const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const stats = await calculateReviewStats(codeReview);
     const count = stats.reviewerCount + stats.approvalCount;
-    const message = `*${userDisplayName}* has request a code review! ${getNumberReviewMessage(count, numberReviewRequired)}`;
+    const message = `*${userDisplayName}* has request another code review! ${getNumberReviewMessage(count, numberReviewRequired)}`;
     const notifyMessage: string[] = codeReview.reviewers.filter((r) => r.status === 'pending').map((r) => `<@${r.reviewer.slackUserId}>`);
     notifyMessage.push(message);
 

@@ -7,12 +7,16 @@ import {logError} from '../services/log';
 import {format} from 'date-fns';
 
 const ExpandedRowDataView = ({data, onError, onUpdate, user}: DataViewProps) => {
-    const showClaim = !user || !data.reviewers?.includes(user?.displayName) && data.owner !== user?.displayName;
-    const showApprove = !user || !data.approvers?.includes(user?.displayName) && data.owner !== user?.displayName;
-    const showChange = !user || (!data.requestChanges?.includes(user?.displayName) && data.owner !== user?.displayName);
-    const showRequestReview = data.status === 'withdrew' && user?.displayName === data.owner;
+    const showClaim = !data.reviewers?.includes(user.displayName) && data.owner !== user.displayName;
+    const showApprove = !data.approvers?.includes(user.displayName) && data.owner !== user.displayName;
+    const showChange = !data.requestChanges?.includes(user.displayName) && data.owner !== user.displayName;
+    const showRequestReview = user.displayName === data.owner &&
+        (
+            data.status === 'withdrew' ||
+            (data.status !== 'pending' && (data.requestChanges || data.reviewers || data.approvers))
+        );
     const showWithdraw = data.status !== 'withdrew' && user?.displayName === data.owner;
-
+console.log(data);
     const handleActionClick = ({currentTarget}: MouseEvent<HTMLButtonElement>) => {
         const action = currentTarget.getAttribute('data-action');
         const value = currentTarget.getAttribute('data-value');
