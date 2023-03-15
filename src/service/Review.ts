@@ -427,20 +427,30 @@ const requestReview = async (codeReview: CodeReviewRecord): Promise<ReviewAction
         }
     });
 
+    // Reset all existing reviewer's status to pending.
+    await prisma.codeReviewRelation.updateMany({
+        where: {
+            codeReviewId: codeReview.id,
+        },
+        data: {
+            status: 'pending',
+        }
+    });
+
     const userDisplayName = codeReview.user.displayName;
     const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const stats = await calculateReviewStats(codeReview);
     const count = stats.reviewerCount + stats.approvalCount;
     const message = `*${userDisplayName}* has request a code review! ${getNumberReviewMessage(count, numberReviewRequired)}`;
-
-    // @TODO: Add notify exiting reviewers
+    const notifyMessage: string[] = codeReview.reviewers.filter((r) => r.status === 'pending').map((r) => `<@${r.reviewer.slackUserId}>`);
+    notifyMessage.push(message);
 
     return {
         codeReview,
         message,
         slackNotifyMessage: {
             channel: codeReview.slackChannelId,
-            text: message,
+            text: notifyMessage.join(', '),
             thread_ts: codeReview.slackThreadTs,
         },
     };
