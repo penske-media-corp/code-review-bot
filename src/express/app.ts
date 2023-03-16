@@ -9,6 +9,7 @@ import {enforceAuthentication} from './middlewares/auth';
 import express from 'express';
 import path from 'path';
 import registerAuthenticationService from './services/authentication';
+import webhooks from './middlewares/webhooks';
 
 const app: Express = express();
 
@@ -21,6 +22,7 @@ app.use(cors(corsOptions));
 app.use(express.static(APP_CLIENT_BUILD));
 app.use(cookieParser());
 app.use(express.json());
+app.use(webhooks());
 
 app.get( '/health-check', (req, res) => {
     res.json({

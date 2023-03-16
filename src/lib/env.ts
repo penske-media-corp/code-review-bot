@@ -11,6 +11,7 @@ export const DB_USER = process.env.DB_USER ?? 'root';
 
 export const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID ?? '';
 export const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET ?? '';
+export const GITHUB_WEBHOOKS_SECRET = process.env.GITHUB_WEBHOOKS_SECRET ?? '';
 
 export const DNS_NAME = process.env.DNS_NAME ?? 'localhost';
 export const PORT = parseInt(process.env.PORT ?? '80' );
