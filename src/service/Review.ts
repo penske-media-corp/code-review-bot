@@ -418,14 +418,6 @@ const requestChanges = async (codeReview: CodeReviewRecord, slackUserId: string)
 
 const requestReview = async (codeReview: CodeReviewRecord): Promise<ReviewActionResult> => {
     codeReview.status = 'pending';
-    await prisma.codeReview.update({
-        where: {
-            id: codeReview.id,
-        },
-        data: {
-            status: codeReview.status,
-        }
-    });
 
     // Reset all existing reviewer's status to pending.
     await prisma.codeReviewRelation.updateMany({
@@ -437,12 +429,23 @@ const requestReview = async (codeReview: CodeReviewRecord): Promise<ReviewAction
         }
     });
 
+    await prisma.codeReview.update({
+        where: {
+            id: codeReview.id,
+        },
+        data: {
+            status: codeReview.status,
+        }
+    });
+
     const userDisplayName = codeReview.user.displayName;
     const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const stats = await calculateReviewStats(codeReview);
     const count = stats.reviewerCount + stats.approvalCount;
     const message = `*${userDisplayName}* has request another code review! ${getNumberReviewMessage(count, numberReviewRequired)}`;
-    const notifyMessage: string[] = codeReview.reviewers.filter((r) => r.status === 'pending').map((r) => `<@${r.reviewer.slackUserId}>`);
+    const notifyMessage: string[] = codeReview.reviewers
+        .filter((r) => r.status !== 'pending')
+        .map((r) => `<@${r.reviewer.slackUserId}>`);
     notifyMessage.push(message);
 
     return {

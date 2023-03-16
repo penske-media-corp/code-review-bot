@@ -66,6 +66,7 @@ const reviewsController: RequestHandler = (req, res) => {
                     reviewers: {
                         some: {
                             userId,
+                            status: 'pending',
                         }
                     }
                 }
