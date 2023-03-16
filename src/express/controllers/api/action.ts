@@ -103,7 +103,7 @@ export const actionController: RequestHandler = (req, res) => {
                         res.json({
                             data: formatApiCodeReviewRecord(result.codeReview),
                         });
-                        if (['withdraw'].includes(codeReview.status)) {
+                        if (['withdrew'].includes(codeReview.status)) {
                             void postSlackMessage(result.slackNotifyMessage as ChatPostMessageArguments);
                         }
                     });
