@@ -9,8 +9,8 @@ import React, {
     useState
 } from 'react';
 import type {CodeReview} from '../lib/types';
+import ExpandedRow from './ExpandedRow';
 import {format} from 'date-fns';
-import {useExpandedRowComponent} from './ExpandedRowComponent';
 import {fetchData} from '../services/fetch';
 
 // @see https://react-data-table-component.netlify.app/?path=/docs/api-columns--page
@@ -159,10 +159,13 @@ const RenderReviewList = ({channel, status, user}: {channel: string; status: str
         }
     }, [channel, dataSet, currentPage, pageSize, status]);
 
-    const expandedRowComponent = useExpandedRowComponent({
-        onUpdate: handleRowUpdate,
-        user
-    });
+    const expandedRowComponent = useCallback(({data}: {data: CodeReview}) => (
+        <ExpandedRow
+            data={data}
+            onUpdate={handleRowUpdate}
+            user={user}
+        />
+    ), [handleRowUpdate, user]);
 
     useEffect(() => {
         updateFilter({

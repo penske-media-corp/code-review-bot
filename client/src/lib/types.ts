@@ -20,12 +20,12 @@ export interface User {
 }
 
 export interface ExpandedRowProps {
+    data: CodeReview;
     onUpdate: CallableFunction;
     user: User;
 }
 
 export interface DataViewProps extends ExpandedRowProps {
-    data: CodeReview;
     onError?: CallableFunction;
 }
 
