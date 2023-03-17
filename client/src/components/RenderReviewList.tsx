@@ -8,7 +8,10 @@ import React, {
     useEffect,
     useState
 } from 'react';
-import type {CodeReview} from '../lib/types';
+import type {
+    CodeReview,
+    User,
+} from '../lib/types';
 import ExpandedRow from './ExpandedRow';
 import {format} from 'date-fns';
 import {fetchData} from '../services/fetch';
@@ -115,7 +118,26 @@ createTheme('custom', {
     }
 }, 'dark');
 
-const RenderReviewList = ({channel, status, user}: {channel: string; status: string; user: {displayName: string}}) => {
+interface RenderReviewListProps {
+    channel: string;
+    status: string;
+    user: User;
+}
+interface UpdateFilterProps {
+    channel: string;
+    limit: number;
+    page: number;
+    status: string;
+}
+
+/**
+ *
+ * @param {string} channel
+ * @param {string} status
+ * @param {User} user
+ * @constructor
+ */
+const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
     const [dataSet, setDataSet] = useState([] as CodeReview[]);
     const [loading, setLoading] = useState(true);
     const [totalRows, setTotalRows] = useState(0);
@@ -131,17 +153,23 @@ const RenderReviewList = ({channel, status, user}: {channel: string; status: str
      * @param {string} status
      * @returns void
      */
-    const updateFilter = ({channel, limit, page, status}: {channel: string; limit: number; page: number; status: string}) => {
+    const updateFilter = ({channel, limit, page, status}: UpdateFilterProps) => {
+        let hasBeenDestroyed = false;
+
         setLoading(true);
         fetchData(`/api/reviews/${channel}/${status}?limit=${limit}&page=${page}`)
             .then((result) => {
                 setLoading(false);
-                if (!result) {
+                if (!result || hasBeenDestroyed) {
                     return;
                 }
                 setDataSet(result.dataset);
                 setTotalRows(result.total);
             });
+
+        return () => {
+            hasBeenDestroyed = true;
+        };
     };
 
     const handleRowUpdate = useCallback(({data, action}: {data: CodeReview; action: string}) => {
@@ -168,7 +196,7 @@ const RenderReviewList = ({channel, status, user}: {channel: string; status: str
     ), [handleRowUpdate, user]);
 
     useEffect(() => {
-        updateFilter({
+        return updateFilter({
             channel,
             limit: pageSize,
             page: currentPage,

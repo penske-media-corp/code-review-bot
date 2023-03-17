@@ -16,12 +16,11 @@ const ExpandedRowDataEdit = ({data, onError, onUpdate}: DataEditProps) => {
 
     const handleSaveClicked = ({currentTarget}: MouseEvent<HTMLButtonElement>) => {
         if (JSON.stringify(collectedData.current) !== JSON.stringify(data)) {
-            const value = currentTarget.getAttribute('value');
             const {note, jiraTicket} = collectedData.current;
 
             setIsSaving(true);
 
-            fetchData(`/api/action/save/${value}`, {
+            fetchData(`/api/action/save/${data.id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -34,7 +33,7 @@ const ExpandedRowDataEdit = ({data, onError, onUpdate}: DataEditProps) => {
                 .then((result) => {
                     if (!result.data) {
                         onError('Error saving data, see console error log for details.');
-                        logError(`Error saving: /api/action/save/${value}`, result);
+                        logError(`Error saving: /api/action/save/${data.id}`, result);
                         return;
                     }
                     onUpdate({
@@ -44,14 +43,14 @@ const ExpandedRowDataEdit = ({data, onError, onUpdate}: DataEditProps) => {
                 })
                 .catch((e) => {
                     onError('Error saving data, see console error log for details.');
-                    logError(`Error sending: /api/action/save/${value}`, e);
+                    logError(`Error sending: /api/action/save/${data.id}`, e);
                 })
                 .finally(() => {
                     setIsSaving(false);
                 })
 
         } else {
-            onUpdate({data, acton: 'save'});
+            onUpdate({data, acton: 'cancel'});
         }
     }
 

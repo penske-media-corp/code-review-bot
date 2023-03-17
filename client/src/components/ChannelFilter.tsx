@@ -36,8 +36,13 @@ const ChannelFilter = ({onSelected, selectedChannel}: ChannelFilterProps) => {
     }, [onSelected]);
 
     useEffect(() => {
+        let hasBeenDestroyed = false;
+
         fetchData('/api/channels')
             .then((result) => {
+                if (hasBeenDestroyed) {
+                    return;
+                }
                 const options: Option[] = [
                     allValue,
                     ...result.map((channel: Channel) => {
@@ -64,6 +69,10 @@ const ChannelFilter = ({onSelected, selectedChannel}: ChannelFilterProps) => {
                     }
                 }
             });
+
+        return () => {
+            hasBeenDestroyed = true;
+        };
     }, []);
 
     return (
