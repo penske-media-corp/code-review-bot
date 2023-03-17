@@ -1,18 +1,34 @@
-import type {
-    ExpandedRowProps,
-    UpdateEventProps,
-} from '../lib/types';
+
 import React from 'react';
 import {useState} from 'react';
 import ExpandedRowDataView from './ExpandedRowDataView';
 import ExpandedRowDataEdit from './ExpandedRowDataEdit';
+import {CodeReview, User} from '../lib/types';
+
+export interface ExpandedRowProps {
+    data: CodeReview;
+    onUpdate: CallableFunction;
+    user: User;
+}
+
+export interface DataViewProps extends ExpandedRowProps {
+    onError: CallableFunction;
+}
+
+export type DataEditProps = DataViewProps;
+
+interface UpdateEventProps {
+    data: CodeReview;
+    action: string;
+}
 
 const ExpandedRow = ({data, onUpdate, user}: ExpandedRowProps) => {
     const [errorMessage, setErrorMessage] = useState('');
     const [editing, setEditing] = useState(false);
 
     const handleUpdate = (props: UpdateEventProps) => {
-        const {data, action} = props;
+        const {action} = props;
+
         setErrorMessage('');
         switch (action) {
             case 'save':

@@ -1,9 +1,13 @@
 import Select, {SingleValue} from 'react-select';
-import {ChannelFilterProps} from '../lib/types';
 import React from 'react';
 import styled from 'styled-components';
 import {useCallback, useEffect, useState} from 'react';
 import {fetchData} from '../services/fetch';
+
+export interface ChannelFilterProps {
+    onSelected: CallableFunction;
+    selectedChannel: string;
+}
 
 interface Channel {
     id: string;

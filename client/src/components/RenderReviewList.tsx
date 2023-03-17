@@ -17,6 +17,19 @@ import {format} from 'date-fns';
 import {fetchData} from '../services/fetch';
 import {useStateWithDeps} from 'use-state-with-deps';
 
+export interface RenderReviewListProps {
+    channel: string;
+    status: string;
+    user: User;
+}
+
+interface UpdateFilterProps {
+    channel: string;
+    limit: number;
+    page: number;
+    status: string;
+}
+
 // @see https://react-data-table-component.netlify.app/?path=/docs/api-columns--page
 const columns: TableColumn<CodeReview>[] = [
     {
@@ -118,18 +131,6 @@ createTheme('custom', {
         default: '#404040',
     }
 }, 'dark');
-
-interface RenderReviewListProps {
-    channel: string;
-    status: string;
-    user: User;
-}
-interface UpdateFilterProps {
-    channel: string;
-    limit: number;
-    page: number;
-    status: string;
-}
 
 /**
  *

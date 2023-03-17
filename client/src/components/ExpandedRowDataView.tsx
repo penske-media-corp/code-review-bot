@@ -1,7 +1,7 @@
 import React, {
     MouseEvent
 } from 'react';
-import {DataViewProps} from '../lib/types';
+import type {DataViewProps} from './ExpandedRow';
 import {fetchData} from '../services/fetch';
 import {logError} from '../services/log';
 import {format} from 'date-fns';

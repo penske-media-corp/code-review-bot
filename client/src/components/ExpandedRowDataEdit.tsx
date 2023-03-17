@@ -3,7 +3,7 @@ import React, {
     useRef,
     useState
 } from 'react';
-import {DataEditProps} from '../lib/types';
+import type {DataEditProps} from './ExpandedRow';
 import {fetchData} from '../services/fetch';
 import {logError} from '../services/log';
 
