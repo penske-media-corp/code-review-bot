@@ -15,6 +15,12 @@ const ExpandedRowDataView = ({data, onError, onUpdate, user}: DataViewProps) => 
         const action = currentTarget.getAttribute('data-action');
         const value = currentTarget.getAttribute('data-value');
 
+        if (action === 'delete-record') {
+            if (!window.confirm('Do you want to delete all related data for this request?')) {
+                return;
+            }
+        }
+
         fetchData(`/api/action/${action}/${value}`)
             .then((result) => {
                 if (result?.error) {
