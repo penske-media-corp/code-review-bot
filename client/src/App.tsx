@@ -25,8 +25,8 @@ function App() {
 
     return (
         <div className="App">
-            {!user && (<SignInWithSlack/>)}
-            {user && (
+            {user === null && (<SignInWithSlack/>)}
+            {user !== null && (
                 <div>
                     <div className="expanded-nav">
                         <div className="left">
