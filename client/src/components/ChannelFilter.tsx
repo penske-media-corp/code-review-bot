@@ -60,7 +60,7 @@ const ChannelFilter = ({onSelected, selectedChannel}: ChannelFilterProps) => {
                 if (findChannel) {
                     setSelectPlaceHolder(`Code Reviews For Channel "#${findChannel.name}"`);
                     if (selectedChannel !== findChannel.id) {
-                        onSelected && onSelected(findChannel.id);
+                        onSelected(findChannel.id);
                     }
                 }
             });

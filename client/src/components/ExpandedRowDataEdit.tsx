@@ -6,21 +6,20 @@ import React, {
 import {DataEditProps} from '../lib/types';
 import {fetchData} from '../services/fetch';
 import {logError} from '../services/log';
-import ExpandedRowDataView from './ExpandedRowDataView';
 
 const ExpandedRowDataEdit = ({data, onError, onUpdate}: DataEditProps) => {
     // This reference object is use to collect updated data by individual form input control.
     const collectedData = useRef({...data});
 
     // Use this state to track and temporarily disabled all buttons when Save button is clicked.
-    const [saveClicked, setSaveClicked] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const handleSaveClicked = ({currentTarget}: MouseEvent<HTMLButtonElement>) => {
         if (JSON.stringify(collectedData.current) !== JSON.stringify(data)) {
             const value = currentTarget.getAttribute('value');
             const {note, jiraTicket} = collectedData.current;
 
-            setSaveClicked(true);
+            setIsSaving(true);
 
             fetchData(`/api/action/save/${value}`, {
                 method: 'POST',
@@ -48,7 +47,7 @@ const ExpandedRowDataEdit = ({data, onError, onUpdate}: DataEditProps) => {
                     logError(`Error sending: /api/action/save/${value}`, e);
                 })
                 .finally(() => {
-                    setSaveClicked(false);
+                    setIsSaving(false);
                 })
 
         } else {
@@ -76,14 +75,14 @@ const ExpandedRowDataEdit = ({data, onError, onUpdate}: DataEditProps) => {
                 <button
                     id={`cancel-${data.id}`}
                     name={`cancel-${data.id}`}
-                    disabled={saveClicked}
+                    disabled={isSaving}
                     onClick={() => onUpdate({data, action: 'cancel'})}
                     type="button"
                 >Cancel</button>
                 <button
                     id={`save-${data.id}`}
                     name={`save-${data.id}`}
-                    disabled={saveClicked}
+                    disabled={isSaving}
                     onClick={handleSaveClicked}
                     type="button"
                 >Save</button>

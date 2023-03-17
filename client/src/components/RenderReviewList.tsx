@@ -135,12 +135,12 @@ const RenderReviewList = ({channel, status, user}: {channel: string; status: str
         setLoading(true);
         fetchData(`/api/reviews/${channel}/${status}?limit=${limit}&page=${page}`)
             .then((result) => {
+                setLoading(false);
                 if (!result) {
                     return;
                 }
                 setDataSet(result.dataset);
                 setTotalRows(result.total);
-                setLoading(false);
             });
     };
 
