@@ -26,7 +26,7 @@ export interface ExpandedRowProps {
 }
 
 export interface DataViewProps extends ExpandedRowProps {
-    onError?: CallableFunction;
+    onError: CallableFunction;
 }
 
 export type DataEditProps = DataViewProps;

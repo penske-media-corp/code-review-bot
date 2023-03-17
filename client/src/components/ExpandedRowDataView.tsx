@@ -18,7 +18,7 @@ const ExpandedRowDataView = ({data, onError, onUpdate, user}: DataViewProps) => 
         fetchData(`/api/action/${action}/${value}`)
             .then((result) => {
                 if (result?.error) {
-                    onError && onError(result.error);
+                    onError(result.error);
                     return;
                 }
                 result?.data && onUpdate({
@@ -27,7 +27,7 @@ const ExpandedRowDataView = ({data, onError, onUpdate, user}: DataViewProps) => 
                 });
             })
             .catch((e) => {
-                onError && onError('Error saving data, see console error log for details.');
+                onError('Error saving data, see console error log for details.');
                 logError(`Error sending: /api/action/${action}/${value}`, e);
             })
     };
@@ -64,6 +64,10 @@ const ExpandedRowDataView = ({data, onError, onUpdate, user}: DataViewProps) => 
             <div className="note">{data.note}</div>
         </div>
     );
+};
+
+ExpandedRowDataView.defaultProps = {
+    onError: () => {},
 };
 
 export default ExpandedRowDataView;

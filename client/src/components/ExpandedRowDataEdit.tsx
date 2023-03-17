@@ -6,6 +6,7 @@ import React, {
 import {DataEditProps} from '../lib/types';
 import {fetchData} from '../services/fetch';
 import {logError} from '../services/log';
+import ExpandedRowDataView from './ExpandedRowDataView';
 
 const ExpandedRowDataEdit = ({data, onError, onUpdate}: DataEditProps) => {
     // This reference object is use to collect updated data by individual form input control.
@@ -33,7 +34,7 @@ const ExpandedRowDataEdit = ({data, onError, onUpdate}: DataEditProps) => {
             })
                 .then((result) => {
                     if (!result.data) {
-                        onError && onError('Error saving data, see console error log for details.');
+                        onError('Error saving data, see console error log for details.');
                         logError(`Error saving: /api/action/save/${value}`, result);
                         return;
                     }
@@ -43,7 +44,7 @@ const ExpandedRowDataEdit = ({data, onError, onUpdate}: DataEditProps) => {
                     });
                 })
                 .catch((e) => {
-                    onError && onError('Error saving data, see console error log for details.');
+                    onError('Error saving data, see console error log for details.');
                     logError(`Error sending: /api/action/save/${value}`, e);
                 })
                 .finally(() => {
@@ -90,5 +91,10 @@ const ExpandedRowDataEdit = ({data, onError, onUpdate}: DataEditProps) => {
         </form>
     );
 }
+
+ExpandedRowDataEdit.defaultProps = {
+    onError: () => {},
+};
+
 
 export default ExpandedRowDataEdit;
