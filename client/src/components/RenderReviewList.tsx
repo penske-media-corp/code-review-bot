@@ -6,7 +6,7 @@ import DataTable,
 import React, {
     useCallback,
     useEffect,
-    useState
+    useState,
 } from 'react';
 import type {
     CodeReview,
@@ -15,6 +15,7 @@ import type {
 import ExpandedRow from './ExpandedRow';
 import {format} from 'date-fns';
 import {fetchData} from '../services/fetch';
+import {useStateWithDeps} from 'use-state-with-deps';
 
 // @see https://react-data-table-component.netlify.app/?path=/docs/api-columns--page
 const columns: TableColumn<CodeReview>[] = [
@@ -142,7 +143,7 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
     const [loading, setLoading] = useState(true);
     const [totalRows, setTotalRows] = useState(0);
     const [pageSize, setPageSize] = useState(10);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useStateWithDeps(1, [channel, status]);
 
     /**
      * Fetch the list of code review.
@@ -220,6 +221,7 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
                 paginationComponentOptions={paginationComponentOptions}
                 onChangeRowsPerPage={setPageSize}
                 onChangePage={setCurrentPage}
+                paginationDefaultPage={currentPage}
 
                 fixedHeader
                 striped
