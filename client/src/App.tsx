@@ -25,20 +25,22 @@ function App() {
 
     return (
         <div className="App">
-            {!user && (<SignInWithSlack/>)}
-            {user && (
-                <div>
-                    <div className="expanded-nav">
-                        <div className="left">
-                            <ChannelFilter selectedChannel={selectedChannel} onSelected={setSelectedChannel}/>
+            {!user
+                ? (<SignInWithSlack/>)
+                : (
+                    <div>
+                        <div className="expanded-nav">
+                            <div className="left">
+                                <ChannelFilter selectedChannel={selectedChannel} onSelected={setSelectedChannel}/>
+                            </div>
+                            <div className="right">
+                                <Navbar status={status} user={user} onClick={handleNavBarClick}/>
+                            </div>
                         </div>
-                        <div className="right">
-                            <Navbar status={status} user={user} onClick={handleNavBarClick}/>
-                        </div>
+                        <RenderReviewList user={user} channel={selectedChannel} status={status}/>
                     </div>
-                    <RenderReviewList user={user} channel={selectedChannel} status={status}/>
-                </div>
-            )}
+                )
+            }
         </div>
     );
 }

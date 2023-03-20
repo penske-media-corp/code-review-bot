@@ -6,13 +6,30 @@ import DataTable,
 import React, {
     useCallback,
     useEffect,
-    useState
+    useState,
 } from 'react';
-import type {CodeReview} from '../lib/types';
-import {format} from 'date-fns';
-import {useExpandedRowComponent} from './ExpandedRowComponent';
-import {fetchData} from '../services/fetch';
+import type {
+    CodeReview,
+    User,
+} from '../lib/types';
+import ExpandedRow from './ExpandedRow';
 import FancyProgress from './FancyProgress';
+import {format} from 'date-fns';
+import {fetchData} from '../services/fetch';
+import {useStateWithDeps} from 'use-state-with-deps';
+
+export interface RenderReviewListProps {
+    channel: string;
+    status: string;
+    user: User;
+}
+
+interface UpdateFilterProps {
+    channel: string;
+    limit: number;
+    page: number;
+    status: string;
+}
 
 // @see https://react-data-table-component.netlify.app/?path=/docs/api-columns--page
 const columns: TableColumn<CodeReview>[] = [
@@ -119,12 +136,19 @@ createTheme('custom', {
     }
 }, 'dark');
 
-const RenderReviewList = ({channel, status, user}: {channel: string; status: string; user: {displayName: string}}) => {
+/**
+ *
+ * @param {string} channel
+ * @param {string} status
+ * @param {User} user
+ * @constructor
+ */
+const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
     const [dataSet, setDataSet] = useState([] as CodeReview[]);
     const [loading, setLoading] = useState(true);
     const [totalRows, setTotalRows] = useState(0);
     const [pageSize, setPageSize] = useState(10);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useStateWithDeps(1, [channel, status]);
 
     /**
      * Fetch the list of code review.
@@ -135,17 +159,23 @@ const RenderReviewList = ({channel, status, user}: {channel: string; status: str
      * @param {string} status
      * @returns void
      */
-    const updateFilter = ({channel, limit, page, status}: {channel: string; limit: number; page: number; status: string}) => {
+    const updateFilter = ({channel, limit, page, status}: UpdateFilterProps) => {
+        let hasBeenDestroyed = false;
+
         setLoading(true);
         fetchData(`/api/reviews/${channel}/${status}?limit=${limit}&page=${page}`)
             .then((result) => {
-                if (!result) {
+                setLoading(false);
+                if (!result || hasBeenDestroyed) {
                     return;
                 }
                 setDataSet(result.dataset);
                 setTotalRows(result.total);
-                setLoading(false);
             });
+
+        return () => {
+            hasBeenDestroyed = true;
+        };
     };
 
     const handleRowUpdate = useCallback(({data, action}: {data: CodeReview; action: string}) => {
@@ -163,13 +193,16 @@ const RenderReviewList = ({channel, status, user}: {channel: string; status: str
         }
     }, [channel, dataSet, currentPage, pageSize, status]);
 
-    const expandedRowComponent = useExpandedRowComponent({
-        onUpdate: handleRowUpdate,
-        user
-    });
+    const expandedRowComponent = useCallback(({data}: {data: CodeReview}) => (
+        <ExpandedRow
+            data={data}
+            onUpdate={handleRowUpdate}
+            user={user}
+        />
+    ), [handleRowUpdate, user]);
 
     useEffect(() => {
-        updateFilter({
+        return updateFilter({
             channel,
             limit: pageSize,
             page: currentPage,
@@ -194,6 +227,7 @@ const RenderReviewList = ({channel, status, user}: {channel: string; status: str
                 progressComponent={<FancyProgress/>}
                 onChangeRowsPerPage={setPageSize}
                 onChangePage={setCurrentPage}
+                paginationDefaultPage={currentPage}
 
                 fixedHeader
                 striped
