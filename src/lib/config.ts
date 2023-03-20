@@ -36,7 +36,7 @@ export const prisma = new PrismaClient(prismaClientOptions);
 
 const channelGroupMentionMappings: {[key: string]: string} = {
     // @see https://api.slack.com/reference/surfaces/formatting#mentioning-groups
-    default: '!here',
+    default: 'none',
 };
 
 /**
