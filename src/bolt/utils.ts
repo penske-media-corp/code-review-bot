@@ -18,32 +18,55 @@ import {
     extractJiraTicket,
     extractPullRequestLink
 } from '../lib/utils';
+import {
+    logDebug,
+    logError
+} from '../lib/log';
 import {APP_BASE_URL} from '../lib/env';
 import type {ChannelInfo} from './types';
 import type {GithubBotEventData} from './types';
 import getCodeReviewList from './lib/CodeReviewList';
-import {logDebug} from '../lib/log';
 import pluralize from 'pluralize';
 import {prisma} from '../lib/config';
 import {registerSchedule} from '../lib/schedule';
 
-let slackBotUserId: string | null = null;
+interface SlackAppInfo {
+    botUserId?: string | null;
+    teamId?: string | null;
+}
+
+let slackAppInfo: SlackAppInfo | null = null;
 let slackBotApp: App;
 
-export async function getBotUserId (): Promise<string | null> {
-    if (!slackBotUserId) {
+export async function getSlackInfo (): Promise<SlackAppInfo> {
+    if (!slackAppInfo) {
         const result = await slackBotApp.client.auth.test();
-        slackBotUserId = result.user_id ?? null;
+        slackAppInfo = {
+            botUserId: result.user_id ?? null,
+            teamId: result.team_id ?? null,
+        };
     }
-    return slackBotUserId;
+    return slackAppInfo;
+}
+
+export async function getBotUserId (): Promise<string | null> {
+    const {botUserId} = await getSlackInfo();
+    return botUserId ?? null;
+}
+
+export async function getTeamId (): Promise<string | null> {
+    const {teamId} = await getSlackInfo();
+    return teamId ?? null;
 }
 
 // https://api.slack.com/methods/users.profile.get
 export async function getUserInfo (user: string): Promise<UserInfo> {
     const info = await slackBotApp.client.users.profile.get({user: user});
-    const {profile: {real_name, display_name} = {}} = info;
+
+    const {profile: {real_name, display_name, email} = {}} = info;
 
     return {
+        email,
         slackUserId: user,
         displayName: display_name?.length ? display_name : real_name as string,
     };
@@ -60,16 +83,16 @@ export async function getChannels (): Promise<ChannelInfo[]> {
         return [];
     }
 
-    return result.channels.reduce((acc, val) => {
+    return result.channels.reduce<ChannelInfo[]>((acc, val) => {
         acc.push({
             id: val.id,
             name: val.name,
         } as ChannelInfo);
         return acc;
-    }, [] as ChannelInfo[]);
+    }, []);
 }
 
-export const channelMaps: {[index: string]: ChannelInfo} = {};
+export const channelMaps: {[index: string]: ChannelInfo | null} = {};
 export let channelList: ChannelInfo[] = [];
 export function updateChannelInfo (): void {
     void getChannels().then((result) => {
@@ -98,13 +121,19 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
         let pullRequestLink = '';
         let jiraTicket = '';
         let slackMsgUserId = message.user;
+        let note = '';
 
         // Try to parse github pull request from text message if available.
         if (message.text) {
             pullRequestLink = extractPullRequestLink(message.text) || pullRequestLink;
             jiraTicket = await extractJiraTicket(message.text) || jiraTicket;
+            note = message.text
+                .replace(jiraTicket, '')
+                .replace(pullRequestLink, '')
+                .replace(/<.*>/, '')
+                .replace(/\s{2,}/g, ' ')
+                .trim();
         }
-
         // If there is no PR info, try to check the message attachments, message is coming from github event.
         if (!pullRequestLink.length && message.attachments?.length) {
             const title = message.attachments[0].title;
@@ -115,6 +144,7 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
 
         return {
             jiraTicket,
+            note,
             pullRequestLink,
             slackMsgText: message.text,
             slackMsgId: message.client_msg_id,
@@ -172,7 +202,8 @@ export function getGithubBotEventData (event: GenericMessageEvent): GithubBotEve
         return null;
     }
 
-    if (!pretext.includes('Pull request closed by')) {
+    if (!['Pull request merged by', 'Pull request closed by']
+        .some((search) => pretext.includes('Pull request closed by'))) {
         return null;
     }
 
@@ -184,7 +215,11 @@ export function getGithubBotEventData (event: GenericMessageEvent): GithubBotEve
 }
 
 export async function postSlackMessage (slackMessage: ChatPostMessageArguments): Promise<void> {
-    await slackBotApp.client.chat.postMessage(slackMessage);
+    logDebug('postSlackMessage', slackMessage);
+    if (!slackMessage.channel) {
+        return;
+    }
+    await slackBotApp.client.chat.postMessage(slackMessage).catch(logError);
 }
 
 export async function sendCodeReviewSummary (channel: string): Promise<void> {
@@ -304,10 +339,10 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         action_id: 'channel',
         ...filterChannel?.length && {
             initial_channel: filterChannel,
-        } || {}
+        }
     };
 
-    const blocks: (Block | KnownBlock)[] = [
+    let blocks: (Block | KnownBlock)[] = [
         {
             type: 'section',
             text: {
@@ -326,6 +361,24 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         },
         ...await getCodeReviewList({codeReviewStatus: filterStatus, slackChannelId: filterChannel, userId: user?.id})
     ];
+
+    logDebug('sentHomePageCodeReviewList blocks.length', blocks.length);
+    if (blocks.length > 100) {
+        logError(`Blocks limit reach, maximum blocks size allow in slack api is 100.  Current size is ${blocks.length}`);
+        blocks.splice(98);
+        blocks = blocks.concat([
+            {
+                'type': 'divider'
+            },
+            {
+                type: 'section',
+                text: {
+                    type: 'mrkdwn',
+                    text: '...additional items cannot be displayed.',
+                }
+            }
+        ]);
+    }
 
     switch (filterStatus) {
         case 'mine':
@@ -347,7 +400,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
 
             blocks,
         }
-    });
+    }).catch(logError);
 }
 
 export function registerSlackBotApp (app: App): void {

@@ -50,17 +50,16 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
         },
         value: 'close',
         action_id: `close-${codeReview.id}`,
-        url: codeReview.pullRequestLink,
     };
-    const buttonRemove = {
+    const buttonDelete = {
         type: 'button',
         text: {
             type: 'plain_text',
-            text: ':trash: Remove',
+            text: ':trash: Delete',
             emoji: true
         },
-        value: 'remove',
-        action_id: `remove-${codeReview.id}`,
+        value: 'delete',
+        action_id: `delete-${codeReview.id}`,
         confirm: {
             title: {
                 type: 'plain_text',
@@ -68,7 +67,7 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
             },
             text: {
                 type: 'plain_text',
-                text: 'This will remove all related historical data for this request.',
+                text: 'This will delete all related historical data for this request.',
             },
             confirm: {
                 type: 'plain_text',
@@ -120,7 +119,7 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
         },
         {
             type: 'actions',
-            elements: [buttonClaim, buttonApprove, buttonClose, buttonRemove],
+            elements: [buttonClaim, buttonApprove, buttonClose, buttonDelete],
         }
     ] as (Block | KnownBlock)[];
 };
@@ -162,7 +161,7 @@ const getCodeReviewList = async ({codeReviewStatus, slackChannelId, userId}: {co
                     reviewer: true,
                 }
             },
-        }
+        },
     });
 
     let blocks: (Block | KnownBlock)[] = [];

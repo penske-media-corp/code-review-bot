@@ -72,3 +72,14 @@ model Option {
   @@id([slackChannelId, name])
   @@map("options")
 }
+
+model Archive {
+  id              Int      @id @default(autoincrement())
+  createdAt       DateTime @default(now()) @map("created_at")
+  pullRequestLink String   @map("pull_request_link") @db.VarChar(128)
+  jiraTicket      String?  @map("jira_ticket") @db.VarChar(128)
+  note            String?  @db.TinyText()
+  data            Json
+
+  @@map("archive")
+}

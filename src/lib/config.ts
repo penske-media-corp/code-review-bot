@@ -3,7 +3,6 @@ import {PrismaClient} from '@prisma/client';
 import cache from './cache';
 import option from './option';
 
-const GLOBAL_OPTION_CHANNEL_ID         = 'global';
 const OPTION_NAME_REPO_NUMBER_REVIEW   = 'repository-number-review';
 const OPTION_NAME_REPO_NUMBER_APPROVAL = 'repository-number-approval';
 const OPTION_NAME_JIRA_TICKET_PATTERNS = 'jira-ticket-regex';
@@ -16,7 +15,7 @@ export const slackActions = {
     change: ['memo', 'request-changes'],
     claim: ['eyes'],
     close: ['done'],
-    remove: ['trash'],
+    delete: ['trash'],
     request: ['review'],
 };
 
@@ -49,11 +48,11 @@ export const getGroupToMentionInChannel = async (slackChannelId: string): Promis
     let group: string | null = channelGroupMentionMappings[slackChannelId];
 
     if (!group) {
-        group = await option.get(slackChannelId, 'group-to-alert') as string | null;
-        channelGroupMentionMappings[slackChannelId] = group ?? channelGroupMentionMappings.default;
+        group = await option.get(slackChannelId, 'group-to-alert') as string | null ?? channelGroupMentionMappings.default;
+        channelGroupMentionMappings[slackChannelId] = group;
     }
-    group = group === 'default' ? channelGroupMentionMappings.default : group;
-    return group as string;
+    group = !group || group === 'default' ? channelGroupMentionMappings.default : group;
+    return group;
 };
 
 export const setGroupToMentionInChannel = async (slackChannelId: string, notify: string): Promise<void> => {
@@ -69,7 +68,7 @@ export const getRepositoryNumberOfReviews = async (repositoryName: string): Prom
     const value = await cache.get(cacheKey) as number;
 
     if (!value) {
-        const options = (await option.get(GLOBAL_OPTION_CHANNEL_ID, OPTION_NAME_REPO_NUMBER_REVIEW) ?? {}) as {[index: string]: number};
+        const options = (await option.global.get(OPTION_NAME_REPO_NUMBER_REVIEW) ?? {}) as {[index: string]: number};
 
         return options[repositoryName] || DEFAULT_NUMBER_REVIEW;
     }
@@ -82,7 +81,7 @@ export const getRepositoryNumberOfApprovals = async (repositoryName: string): Pr
     const value = await cache.get(cacheKey) as number;
 
     if (!value) {
-        const options = (await option.get(GLOBAL_OPTION_CHANNEL_ID, OPTION_NAME_REPO_NUMBER_APPROVAL) ?? {}) as {[index: string]: number};
+        const options = (await option.global.get(OPTION_NAME_REPO_NUMBER_APPROVAL) ?? {}) as {[index: string]: number};
 
         return options[repositoryName] || DEFAULT_NUMBER_APPROVAL;
     }
@@ -96,10 +95,10 @@ export const setRepositoryNumberOfReviews = async (repositoryName: string, numbe
     }
 
     await cache.set(`repo-review-${repositoryName}`, numberReviewRequired);
-    const options = await option.get(GLOBAL_OPTION_CHANNEL_ID, OPTION_NAME_REPO_NUMBER_REVIEW) ?? {};
+    const options = await option.global.get(OPTION_NAME_REPO_NUMBER_REVIEW) ?? {};
 
     Object.assign(options, {[repositoryName]: numberReviewRequired});
-    await option.set(GLOBAL_OPTION_CHANNEL_ID, OPTION_NAME_REPO_NUMBER_REVIEW, options);
+    await option.global.set(OPTION_NAME_REPO_NUMBER_REVIEW, options);
 };
 
 export const setRepositoryNumberOfApprovals = async (repositoryName: string, numberReviewRequired: number): Promise<void> => {
@@ -108,10 +107,10 @@ export const setRepositoryNumberOfApprovals = async (repositoryName: string, num
     }
 
     await cache.set(`repo-approval-${repositoryName}`, numberReviewRequired);
-    const options = await option.get(GLOBAL_OPTION_CHANNEL_ID, OPTION_NAME_REPO_NUMBER_APPROVAL) ?? {};
+    const options = await option.global.get(OPTION_NAME_REPO_NUMBER_APPROVAL) ?? {};
 
     Object.assign(options, {[repositoryName]: numberReviewRequired});
-    await option.set(GLOBAL_OPTION_CHANNEL_ID, OPTION_NAME_REPO_NUMBER_APPROVAL, options);
+    await option.global.set(OPTION_NAME_REPO_NUMBER_APPROVAL, options);
 };
 
 export const getJiraTicketRegEx = async (): Promise<RegExp | null> => {
@@ -119,12 +118,12 @@ export const getJiraTicketRegEx = async (): Promise<RegExp | null> => {
     let patterns = await cache.get(OPTION_NAME_JIRA_TICKET_PATTERNS);
 
     if (!patterns) {
-        patterns = await option.get(GLOBAL_OPTION_CHANNEL_ID, OPTION_NAME_JIRA_TICKET_PATTERNS) as string;
+        patterns = await option.global.get(OPTION_NAME_JIRA_TICKET_PATTERNS) as string;
     }
-    return patterns ? new RegExp(`\b${patterns}\b`) : null;
+    return patterns ? new RegExp(`\\b${patterns}\\b`) : null;
 };
 
 export const setJiraTicketRegEx = async (patterns: string): Promise<void> => {
     await cache.set(OPTION_NAME_JIRA_TICKET_PATTERNS, patterns);
-    await option.set(GLOBAL_OPTION_CHANNEL_ID, OPTION_NAME_JIRA_TICKET_PATTERNS, patterns);
+    await option.global.set(OPTION_NAME_JIRA_TICKET_PATTERNS, patterns);
 };

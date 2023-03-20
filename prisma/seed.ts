@@ -6,7 +6,7 @@ import { faker } from '@faker-js/faker';
 
 const prisma = new PrismaClient()
 async function main() {
-    const usersCount = 10;
+    const usersCount = 50;
     const codeReviewsCount = 100;
 
     let users = await prisma.user.findMany();
@@ -18,7 +18,7 @@ async function main() {
             const data = {
                 createdAt: faker.date.past(),
                 updatedAt: faker.date.recent(),
-                slackUserId: faker.datatype.string(20),
+                slackUserId: faker.random.alphaNumeric(20),
                 displayName: `${firstName} ${lastName}`,
                 email: faker.internet.email(firstName, lastName),
                 session: '{}',
@@ -62,7 +62,6 @@ async function main() {
                 pullRequestLink: `https://github.com/company/repo/pull/${faker.datatype.number({max: codeReviewsCount})}`,
                 status: 'pending',
                 slackThreadTs: faker.datatype.float().toString(),
-                slackChannelId: `channelid${faker.datatype.number({max:5})}`,
                 slackMsgId: faker.datatype.uuid(),
                 note: faker.lorem.sentence(20),
                 jiraTicket: `JIRA-${faker.datatype.number({max: 100})}`,

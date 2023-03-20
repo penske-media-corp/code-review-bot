@@ -1,6 +1,7 @@
 import type {
     CodeReview,
     CodeReviewRelation,
+    Prisma,
     User,
 } from '@prisma/client';
 import {
@@ -13,8 +14,17 @@ import {extractRepository} from '../lib/utils';
 import {getUserInfo} from '../bolt/utils';
 import pluralize from 'pluralize';
 
+export interface ReviewerRecord extends CodeReviewRelation {
+    reviewer: User;
+}
+
+export interface CodeReviewRecord extends CodeReview {
+    user: User;
+    reviewers: ReviewerRecord[];
+}
+
 export interface ReviewActionResult {
-    codeReview?: CodeReview;
+    codeReview?: CodeReviewRecord;
     message: string;
     slackNotifyMessage?: {
         channel?: string | null;
@@ -22,6 +32,72 @@ export interface ReviewActionResult {
         thread_ts?: string | null;
     };
 }
+
+export async function findCodeReviewRecord ({id, pullRequestLink}: {id?: number; pullRequestLink?: string}): Promise<CodeReviewRecord | null> {
+    let where: Prisma.CodeReviewWhereInput | null = null;
+
+    if (id) {
+        where = {id};
+    } else if (pullRequestLink) {
+        where = {pullRequestLink};
+    }
+
+    if (!where) {
+        return null;
+    }
+
+    const result = await prisma.codeReview.findFirst({
+        where,
+        include: {
+            user: true,
+            reviewers: {
+                include: {
+                    reviewer: true,
+                },
+            },
+        },
+    });
+
+    if (!result) {
+        return null;
+    }
+
+    return result;
+}
+
+/**
+ * Archive an existing code review record.
+ * @param {number} id
+ */
+const archive = async (id: number): Promise<void> => {
+    const record = await findCodeReviewRecord({id});
+
+    if (!record) {
+        return;
+    }
+
+    await prisma.$transaction([
+        prisma.archive.create({
+            data: {
+                data: JSON.stringify(record),
+                jiraTicket: record.jiraTicket,
+                note: record.note,
+                pullRequestLink: record.pullRequestLink,
+            }
+        }),
+        prisma.codeReviewRelation.deleteMany({
+            where: {
+                codeReviewId: id,
+            }
+        }),
+        prisma.codeReview.delete({
+            where: {
+                id,
+            }
+        }),
+    ]);
+
+};
 
 async function findOrCreateUser (slackUserId: string): Promise<User> {
     let user = await prisma.user.findFirst({
@@ -35,19 +111,20 @@ async function findOrCreateUser (slackUserId: string): Promise<User> {
 
         user = await prisma.user.create({
             data: {
-                slackUserId,
+                email: userInfo.email,
                 displayName: userInfo.displayName,
+                slackUserId,
             }
         });
     }
     return user;
 }
 
-async function setCodeReviewerStatus (codeReview: CodeReview & {reviewers: CodeReviewRelation[]}, slackUserId: string, status: string): Promise<User> {
+async function setCodeReviewerStatus (codeReview: CodeReviewRecord, slackUserId: string, status: string): Promise<User> {
     const user = await findOrCreateUser(slackUserId);
 
-    if (status === 'removed') {
-        codeReview.status = 'removed';
+    if (status === 'deleted') {
+        codeReview.status = 'deleted';
         await prisma.codeReview.update({
             where: {
                 id: codeReview.id,
@@ -74,7 +151,7 @@ async function setCodeReviewerStatus (codeReview: CodeReview & {reviewers: CodeR
                 userId: user.id,
             }
         });
-        codeReview.reviewers.push(relation);
+        codeReview.reviewers.push(Object.assign(relation, {reviewer: user}) as ReviewerRecord);
     } else {
         await prisma.codeReviewRelation.update({
             where: {
@@ -101,7 +178,7 @@ async function setCodeReviewerStatus (codeReview: CodeReview & {reviewers: CodeR
     return user;
 }
 
-async function calculateReviewStats (codeReview: CodeReview & {reviewers: CodeReviewRelation[]}): Promise<{approvalCount: number; reviewerCount: number}> {
+async function calculateReviewStats (codeReview: CodeReviewRecord): Promise<{approvalCount: number; reviewerCount: number}> {
     const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     let approvalCount = 0;
     let reviewerCount = 0;
@@ -136,24 +213,22 @@ async function calculateReviewStats (codeReview: CodeReview & {reviewers: CodeRe
     };
 }
 
-const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink, slackMsgUserId, slackThreadTs}: ReactionData): Promise<ReviewActionResult> => {
+const add = async ({jiraTicket, note, pullRequestLink, slackChannelId, slackMsgId, slackPermalink, slackMsgUserId, slackThreadTs}: ReactionData): Promise<ReviewActionResult> => {
     if (!pullRequestLink) {
         return {
             message: 'Cannot determine the github code review pull request link.',
         };
     }
 
-    let codeReview = await prisma.codeReview.findFirst({
-        where: {
-            pullRequestLink,
-        }
-    });
+    let codeReview = await findCodeReviewRecord({pullRequestLink});
 
     const user = await findOrCreateUser(slackMsgUserId);
 
     if (!codeReview) {
         codeReview = await prisma.codeReview.create({
             data: {
+                jiraTicket,
+                note,
                 pullRequestLink,
                 slackChannelId,
                 slackMsgId,
@@ -162,20 +237,39 @@ const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink,
                 status: 'pending',
                 userId: user.id,
             }
-        });
+        }) as CodeReviewRecord;
     } else {
         await prisma.codeReviewRelation.deleteMany({
             where: {
                 codeReviewId: codeReview.id,
             }
         });
-        codeReview.status = 'pending';
+        Object.assign(codeReview, {
+            jiraTicket,
+            note: `${note && !codeReview.note?.includes(note) ? note : codeReview.note ?? ''}`.trim(),
+            pullRequestLink,
+            slackChannelId,
+            slackMsgId,
+            slackPermalink,
+            slackThreadTs,
+            status: 'pending',
+            userId: user.id,
+        });
         await prisma.codeReview.update({
             where: {
                 id: codeReview.id,
             },
+            // The PR might be re-added, let start from the new thread instead.
             data: {
-                status: codeReview.status,
+                jiraTicket,
+                note: codeReview.note,
+                pullRequestLink,
+                slackChannelId,
+                slackMsgId,
+                slackPermalink,
+                slackThreadTs,
+                status: 'pending',
+                userId: user.id,
             }
         });
     }
@@ -189,7 +283,7 @@ const add = async ({pullRequestLink, slackChannelId, slackMsgId, slackPermalink,
     };
 };
 
-const approve = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
+const approve = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
     const numberApprovalRequired = await getRepositoryNumberOfApprovals(extractRepository(codeReview.pullRequestLink));
     const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'approved');
@@ -226,7 +320,7 @@ const getNumberReviewMessage = (count: number, required: number): string => {
     return `${numberNeeded} more ${pluralize('reviewer', numberNeeded)} :eyes: ${pluralize('is', numberNeeded)} needed.`;
 };
 
-const claim = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
+const claim = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
     const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'pending');
@@ -248,7 +342,7 @@ const claim = async (codeReview: CodeReview & {user: User; reviewers: CodeReview
     };
 };
 
-const finish = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
+const finish = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
     const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'finish');
@@ -270,13 +364,13 @@ const finish = async (codeReview: CodeReview & {user: User; reviewers: CodeRevie
     };
 };
 
-const remove = async (codeReview: CodeReview & {user: User}, slackUserId: string): Promise<ReviewActionResult> => {
+const deleteRecord = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
     const user = await findOrCreateUser(slackUserId);
     const userDisplayName = user.displayName;
     const requestSlackUserId = codeReview.user.slackUserId;
-    const message = `*${userDisplayName}* removed the code review.`;
+    const message = `*${userDisplayName}* deleted the code review.`;
 
-    codeReview.status = 'removed';
+    codeReview.status = 'deleted';
 
     await prisma.codeReviewRelation.deleteMany({
         where: {
@@ -300,7 +394,7 @@ const remove = async (codeReview: CodeReview & {user: User}, slackUserId: string
     };
 };
 
-const requestChanges = async (codeReview: CodeReview & {user: User; reviewers: CodeReviewRelation[]}, slackUserId: string): Promise<ReviewActionResult> => {
+const requestChanges = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
     const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'change');
     const userDisplayName = user.displayName;
@@ -322,7 +416,7 @@ const requestChanges = async (codeReview: CodeReview & {user: User; reviewers: C
     };
 };
 
-const withdraw = async (codeReview: CodeReview & {user: User}): Promise<ReviewActionResult> => {
+const withdraw = async (codeReview: CodeReviewRecord): Promise<ReviewActionResult> => {
     const userDisplayName = codeReview.user.displayName;
     const message = `*${userDisplayName}* withdrew the code review request`;
 
@@ -347,7 +441,7 @@ const withdraw = async (codeReview: CodeReview & {user: User}): Promise<ReviewAc
     };
 };
 
-const close = async (codeReview: CodeReview & {user: User}, closeMessage?: string): Promise<ReviewActionResult> => {
+const close = async (codeReview: CodeReviewRecord, closeMessage?: string): Promise<ReviewActionResult> => {
     const message = closeMessage ?? 'Pull request has been closed.';
 
     codeReview.status = 'closed';
@@ -359,6 +453,8 @@ const close = async (codeReview: CodeReview & {user: User}, closeMessage?: strin
             status: codeReview.status,
         }
     });
+
+    await archive(codeReview.id);
 
     return {
         codeReview,
@@ -377,7 +473,7 @@ export default {
     claim,
     close,
     finish,
-    remove,
+    deleteRecord,
     requestChanges,
     withdraw,
 };
