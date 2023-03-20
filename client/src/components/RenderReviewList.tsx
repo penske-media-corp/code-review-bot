@@ -12,6 +12,7 @@ import type {CodeReview} from '../lib/types';
 import {format} from 'date-fns';
 import {useExpandedRowComponent} from './ExpandedRowComponent';
 import {fetchData} from '../services/fetch';
+import FancyProgress from './FancyProgress';
 
 // @see https://react-data-table-component.netlify.app/?path=/docs/api-columns--page
 const columns: TableColumn<CodeReview>[] = [
@@ -190,6 +191,7 @@ const RenderReviewList = ({channel, status, user}: {channel: string; status: str
                 paginationServer
                 paginationTotalRows={totalRows}
                 paginationComponentOptions={paginationComponentOptions}
+                progressComponent={<FancyProgress/>}
                 onChangeRowsPerPage={setPageSize}
                 onChangePage={setCurrentPage}
 
