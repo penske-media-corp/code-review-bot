@@ -13,6 +13,7 @@ import type {
     User,
 } from '../lib/types';
 import ExpandedRow from './ExpandedRow';
+import FancyProgress from './FancyProgress';
 import {format} from 'date-fns';
 import {fetchData} from '../services/fetch';
 import {useStateWithDeps} from 'use-state-with-deps';
@@ -53,7 +54,10 @@ const columns: TableColumn<CodeReview>[] = [
     },
     {
         name: 'Pull Request',
-        format: (row: CodeReview) => <a href={row.pullRequestLink}>{row.pullRequestLink.replace(/.*\/(.*?\/pull\/\d+)/,'$1')}</a>,
+        format: (row: CodeReview) => (<div>
+                <a href={row.pullRequestLink}>{row.pullRequestLink.replace(/.*\/(.*?\/pull\/\d+)/,'$1')}</a>
+            {row.status === 'withdrew' && ' (withdrew)'}
+            </div>),
         selector: () => true,
         maxWidth: '20em',
         compact: true,
@@ -220,6 +224,7 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
                 paginationServer
                 paginationTotalRows={totalRows}
                 paginationComponentOptions={paginationComponentOptions}
+                progressComponent={<FancyProgress/>}
                 onChangeRowsPerPage={setPageSize}
                 onChangePage={setCurrentPage}
                 paginationDefaultPage={currentPage}

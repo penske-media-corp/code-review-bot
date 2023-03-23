@@ -28,7 +28,7 @@ export const SLACK_CLIENT_SECRET = process.env.SLACK_CLIENT_SECRET ?? '';
 
 export const LOG_DEBUG = ['true', 'yes'].includes(process.env.LOG_DEBUG ?? '');
 export const LOG_ERROR = ['true', 'yes'].includes(process.env.LOG_ERROR ?? 'true');
-export const PRISMA_DEBUG = ['true', 'yes'].includes(process.env.PRISMA_DEBUG ?? 'true');
+export const PRISMA_DEBUG = ['true', 'yes'].includes(process.env.PRISMA_DEBUG ?? '');
 
 // prisma use this info
 if (!process.env.DATABASE_URL) {

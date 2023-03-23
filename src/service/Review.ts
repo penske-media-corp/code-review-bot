@@ -416,11 +416,54 @@ const requestChanges = async (codeReview: CodeReviewRecord, slackUserId: string)
     };
 };
 
+const requestReview = async (codeReview: CodeReviewRecord): Promise<ReviewActionResult> => {
+    codeReview.status = 'pending';
+
+    // Reset all existing reviewer's status to pending.
+    await prisma.codeReviewRelation.updateMany({
+        where: {
+            codeReviewId: codeReview.id,
+        },
+        data: {
+            status: 'pending',
+        }
+    });
+
+    await prisma.codeReview.update({
+        where: {
+            id: codeReview.id,
+        },
+        data: {
+            status: codeReview.status,
+        }
+    });
+
+    const userDisplayName = codeReview.user.displayName;
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
+    const stats = await calculateReviewStats(codeReview);
+    const count = stats.reviewerCount + stats.approvalCount;
+    const message = `*${userDisplayName}* has request another code review! ${getNumberReviewMessage(count, numberReviewRequired)}`;
+    const notifyMessage: string[] = codeReview.reviewers
+        .filter((r) => r.status !== 'pending')
+        .map((r) => `<@${r.reviewer.slackUserId}>`);
+    notifyMessage.push(message);
+
+    return {
+        codeReview,
+        message,
+        slackNotifyMessage: {
+            channel: codeReview.slackChannelId,
+            text: notifyMessage.join(', '),
+            thread_ts: codeReview.slackThreadTs,
+        },
+    };
+};
+
 const withdraw = async (codeReview: CodeReviewRecord): Promise<ReviewActionResult> => {
     const userDisplayName = codeReview.user.displayName;
     const message = `*${userDisplayName}* withdrew the code review request`;
 
-    codeReview.status = 'withdraw';
+    codeReview.status = 'withdrew';
     await prisma.codeReview.update({
         where: {
             id: codeReview.id,
@@ -475,5 +518,6 @@ export default {
     finish,
     deleteRecord,
     requestChanges,
+    requestReview,
     withdraw,
 };

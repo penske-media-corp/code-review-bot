@@ -56,7 +56,7 @@ const reviewsController: RequestHandler = (req, res) => {
     if (status && status !== 'all') {
         if (status === 'mine') {
             where.status = {
-                in: ['pending', 'inprogress'],
+                in: ['pending', 'inprogress', 'withdrew'],
             };
             where.OR = [
                 {
@@ -66,6 +66,7 @@ const reviewsController: RequestHandler = (req, res) => {
                     reviewers: {
                         some: {
                             userId,
+                            status: 'pending',
                         }
                     }
                 }
