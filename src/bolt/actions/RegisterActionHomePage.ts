@@ -11,8 +11,8 @@ export default function registerActionHomePage (app: App): void {
     app.action({callback_id: 'home_page'}, async ({action, body}) => {
         logDebug('action', action);
         const actionUserId = body.user.id;
-
-        const {action_id: actionId, value: actionValue, selected_channel: slackChannelId} = (action as unknown) as {action_id: string; value?: string; selected_channel?: string};
+        const {action_id: actionId, value: actionValue, selected_option: selectedOption} = (action as unknown) as {action_id: string; value?: string; selected_option?: {value: string}};
+        const slackChannelId = selectedOption?.value;
 
         if (actionValue && ['approve', 'claim', 'close', 'delete'].includes(actionValue)) {
             const codeReview = await findCodeReviewRecord({id: parseInt(actionId.split('-')[1])});
@@ -42,6 +42,8 @@ export default function registerActionHomePage (app: App): void {
             await sentHomePageCodeReviewList({slackUserId: actionUserId, codeReviewStatus: actionValue});
         } else if (actionId === 'channel') {
             await sentHomePageCodeReviewList({slackUserId: actionUserId, slackChannelId});
+        } else if (actionId === 'weblogin') {
+            await sentHomePageCodeReviewList({slackUserId: actionUserId});
         }
     });
 }
