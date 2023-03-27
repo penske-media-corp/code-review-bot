@@ -1,16 +1,24 @@
 import './App.css';
 import React, {useEffect, useState} from 'react';
 import RenderReviewList from './components/RenderReviewList';
-import SignInWithSlack from './components/SignInWithSlack';
+import SignInWithSlackOAuth from './components/SignInWithSlackOAuth';
+import SignInWithSlackApp from './components/SignInWithSlackApp';
 import Navbar from './components/Navbar';
 import ChannelFilter from './components/ChannelFilter';
 import {logError} from './services/log';
 import {fetchData} from './services/fetch';
 
+interface Session {
+    appId: string;
+    botChannelId: string;
+    teamId: string;
+    user?: any;
+}
+
 function App() {
     const queryString = new URLSearchParams(window.location.search);
     const [status, setStatus] = useState(queryString.get('status') || 'pending');
-    const [user, setUser] = useState(null);
+    const [session, setSession] = useState({} as Session);
     const [selectedChannel, setSelectedChannel] = useState(queryString.get('channel') || 'all');
 
     const handleNavBarClick = (value: string) => {
@@ -18,15 +26,15 @@ function App() {
     };
 
     useEffect(() => {
-        fetchData('/api/user')
-            .then((data) => setUser(data))
+        fetchData('/api/session')
+            .then((data) => setSession(data))
             .catch(logError);
     }, []);
 
     return (
         <div className="App">
-            {!user
-                ? (<SignInWithSlack/>)
+            {!session?.user
+                ? (<div><SignInWithSlackOAuth/> <SignInWithSlackApp botChannelId={session.botChannelId} teamId={session.teamId}/></div>)
                 : (
                     <div>
                         <div className="expanded-nav">
@@ -34,10 +42,10 @@ function App() {
                                 <ChannelFilter selectedChannel={selectedChannel} onSelected={setSelectedChannel}/>
                             </div>
                             <div className="right">
-                                <Navbar status={status} user={user} onClick={handleNavBarClick}/>
+                                <Navbar status={status} user={session.user} onClick={handleNavBarClick}/>
                             </div>
                         </div>
-                        <RenderReviewList user={user} channel={selectedChannel} status={status}/>
+                        <RenderReviewList user={session.user} channel={selectedChannel} status={status}/>
                     </div>
                 )
             }

@@ -20,12 +20,12 @@ import type {
     UserinfoResponse
 } from 'openid-client';
 import User from '../../service/User';
-import {logDebug} from '../../lib/log';
 import passport from 'passport';
 import sessionCookie from 'cookie-session';
 
 const DISCOVER_INFO_ENDPOINT = 'https://slack.com/.well-known/openid-configuration';
 const REDIRECT_URL = `${APP_BASE_URL}/auth/slack/callback`;
+const SESSION_MAX_AGE = 30 * 24 * 60 * 60 * 1000; // 30 days.
 
 const registerAuthentication = (app: Express): void => {
 
@@ -33,6 +33,7 @@ const registerAuthentication = (app: Express): void => {
     app.use(
         sessionCookie({
             keys: [SESSION_COOKIE_SECRET],
+            maxAge: SESSION_MAX_AGE,
         })
     );
 
@@ -55,6 +56,32 @@ const registerAuthentication = (app: Express): void => {
     });
     passport.deserializeUser((authUser: Express.User, done) => {
         done(null, authUser);
+    });
+
+    app.get('/auth/slack/token/:id/:token', (req, res, next) => {
+        const id = parseInt(req.params.id);
+        const token = req.params.token;
+
+        void User.validateAuthToken({id, token}).then((user) => {
+            if (user) {
+                req.login(
+                    {
+                        name: user?.displayName,
+                        email: user?.email,
+                        sub: user?.slackUserId,
+                    },
+                    (err) => {
+                        if (err) {
+                            next(err);
+                        }
+                        res.redirect('/');
+                    }
+                );
+            } else {
+                res.status(404).send('Error validating token.');
+                return;
+            }
+        });
     });
 
     // start authentication request

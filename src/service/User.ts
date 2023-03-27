@@ -2,13 +2,19 @@ import type {
     Prisma,
     User
 } from '@prisma/client';
+import crypto from 'crypto';
 import {getUserInfo} from '../bolt/utils';
 import {logDebug} from '../lib/log';
 import {prisma} from '../lib/config';
 
+interface LoadParams {
+    slackUserId?: string;
+    userId?: string;
+    id?: number;
+    select?: Prisma.UserSelect;
+}
 
-
-export const load = async ({slackUserId, userId, id}: {slackUserId?: string; userId?: string; id?: number}): Promise<User | null> => {
+export const load = async ({slackUserId, userId, id, select}: LoadParams): Promise<User | null> => {
     let where: Prisma.UserWhereInput | null = null;
     let user: User | null = null;
 
@@ -24,17 +30,42 @@ export const load = async ({slackUserId, userId, id}: {slackUserId?: string; use
 
     if (where) {
         user = await prisma.user.findFirst({
-            select: {
-                displayName: true,
-                email: true,
-                id: true,
-                slackUserId: true,
-            },
+            select: Object.assign(
+                {
+                    displayName: true,
+                    email: true,
+                    id: true,
+                    slackUserId: true,
+                },
+                select
+            ),
             where
         }) as User;
     }
 
     logDebug('User.load', {slackUserId, userId, id, where, user});
+    return user;
+};
+
+export const findOrCreate = async (slackUserId: string): Promise<User> => {
+    let user = await load({
+        slackUserId,
+        select: {
+            session: true,
+        }
+    });
+
+    if (!user) {
+        const userInfo = await getUserInfo(slackUserId);
+
+        user = await prisma.user.create({
+            data: {
+                email: userInfo.email,
+                displayName: userInfo.displayName,
+                slackUserId,
+            }
+        });
+    }
     return user;
 };
 
@@ -78,18 +109,69 @@ export const sync = async ({displayName, email, slackUserId}: {displayName?: str
     return user;
 };
 
-export const session = (user: User, name: string): unknown => {
-    const value = user.session as Partial<{[index: string]: unknown} | null>;
+export const getSessionValueByKey = (user: User, name: string): unknown => {
+    const session = user.session as Partial<{[index: string]: unknown} | null>;
 
-    if (!value || typeof value !== 'object') {
+    if (!session || typeof session !== 'object') {
         return null;
     }
 
-    return value[name];
+    return session[name];
+};
+
+export const generateAuthToken = async ({id, slackUserId}: {id?: number; slackUserId?: string}): Promise<string> => {
+    const token = crypto.randomUUID();
+    let user;
+
+    if (id) {
+        user = await load({id, select: {session: true}});
+    } else if (slackUserId) {
+        user = await findOrCreate(slackUserId);
+    }
+
+    if (user) {
+        const session = user.session ?? {};
+
+        Object.assign(session, {token});
+        await prisma.user.update({
+            where: {id: user.id},
+            data: {session},
+        });
+    }
+
+    return token;
+};
+
+export const validateAuthToken = async ({id, token}: {id: number; token: string}): Promise<User | null> => {
+    const user = await load({id, select: {session: true}});
+
+    if (!user?.session) {
+        return null;
+    }
+
+    if (token !== getSessionValueByKey(user, 'token')) {
+        return null;
+    }
+
+    const session = user.session as Record<string, any>;
+
+    delete session.token;
+
+    await prisma.user.update({
+        where: {id},
+        data: {session},
+    });
+
+    user.session = {};
+
+    return user;
 };
 
 export default {
+    generateAuthToken,
+    getSessionValueByKey,
+    findOrCreate,
     load,
-    session,
     sync,
+    validateAuthToken,
 };

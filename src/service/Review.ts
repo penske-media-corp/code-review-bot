@@ -11,7 +11,7 @@ import {
 } from '../lib/config';
 import type {ReactionData} from '../bolt/types';
 import {extractRepository} from '../lib/utils';
-import {getUserInfo} from '../bolt/utils';
+import {findOrCreate as findOrCreateUser} from './User';
 import pluralize from 'pluralize';
 
 export interface ReviewerRecord extends CodeReviewRelation {
@@ -98,27 +98,6 @@ const archive = async (id: number): Promise<void> => {
     ]);
 
 };
-
-async function findOrCreateUser (slackUserId: string): Promise<User> {
-    let user = await prisma.user.findFirst({
-        where: {
-            slackUserId,
-        }
-    });
-
-    if (!user) {
-        const userInfo = await getUserInfo(slackUserId);
-
-        user = await prisma.user.create({
-            data: {
-                email: userInfo.email,
-                displayName: userInfo.displayName,
-                slackUserId,
-            }
-        });
-    }
-    return user;
-}
 
 async function setCodeReviewerStatus (codeReview: CodeReviewRecord, slackUserId: string, status: string): Promise<User> {
     const user = await findOrCreateUser(slackUserId);

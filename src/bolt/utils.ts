@@ -35,6 +35,13 @@ interface SlackAppInfo {
     teamId?: string | null;
 }
 
+interface SentHomePageCodeReviewListParams {
+    slackUserId: string;
+    codeReviewStatus?: string;
+    slackChannelId?: string;
+    authToken?: string;
+}
+
 let slackAppInfo: SlackAppInfo | null = null;
 let slackBotApp: App;
 
@@ -255,8 +262,10 @@ export async function sendCodeReviewSummary (channel: string): Promise<void> {
         return;
     }
 
+    const webLink = `${APP_BASE_URL}?channel=${channel}`;
+
     if (pendingCount > 0) {
-        text = `${text}\nThere ${pluralize('is', pendingCount)} <${APP_BASE_URL}|*${pendingCount}* outstanding ${pluralize('request', pendingCount)}> waiting for code review.`;
+        text = `${text}\nThere ${pluralize('is', pendingCount)} <${webLink}|*${pendingCount}* outstanding ${pluralize('request', pendingCount)}> waiting for code review.`;
     }
     if (inProgressCount > 0) {
         text = `${text}\n*${inProgressCount}* in progress ${pluralize('request', inProgressCount)} ${pluralize('is', inProgressCount)} waiting for approval.`;
@@ -270,7 +279,7 @@ export async function sendCodeReviewSummary (channel: string): Promise<void> {
     });
 }
 
-export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus, slackChannelId}: {slackUserId: string; codeReviewStatus?: string; slackChannelId?: string}): Promise<void> {
+export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus, slackChannelId, authToken}: SentHomePageCodeReviewListParams): Promise<void> {
     const buttonPendingReviews = {
         type: 'button',
         text: {
@@ -301,6 +310,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         value: 'mine',
         action_id: 'mine',
     };
+    let buttonWebLogin;
 
     // Retrieve the user session info from user record in db.
     const user = await prisma.user.findFirst({
@@ -310,7 +320,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
     });
 
     const session = (user?.session ?? {filterChannel: '', filterStatus: ''}) as {filterChannel?: string; filterStatus?: string};
-    const filterChannel = slackChannelId ?? session.filterChannel;
+    const filterChannel = slackChannelId || session.filterChannel || 'all';
     const filterStatus = codeReviewStatus ?? session.filterStatus;
 
     if (user) {
@@ -326,21 +336,62 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
                 }
             });
         }
+
+        if (authToken && user) {
+            buttonWebLogin = {
+                type: 'button',
+                text: {
+                    type: 'plain_text',
+                    text: ':slack: Sign In To Web Version',
+                    emoji: true
+                },
+                value: authToken,
+                action_id: 'weblogin',
+                url: `${APP_BASE_URL}/auth/slack/token/${user.id}/${authToken}`,
+            };
+        }
     }
 
+    const channels = await getChannels();
+    const options = [
+        {
+            text: {
+                type: 'plain_text',
+                text: 'all channels',
+            },
+            value: 'all',
+        },
+        ...channels.map((channel) => ({
+            text: {
+                type: 'plain_text',
+                text: `#${channel.name}`,
+            },
+            value: channel.id
+        })),
+    ];
+
     const filterByChannel = {
-        type: 'channels_select',
+        action_id: 'channel',
+        type: 'static_select',
         placeholder: {
             type: 'plain_text',
             text: 'Filter by channel',
             emoji: true
         },
-        // initial_channel: '',
-        action_id: 'channel',
-        ...filterChannel?.length && {
-            initial_channel: filterChannel,
-        }
+        initial_option: options.find((item) => item.value === filterChannel),
+        options,
     };
+
+    const buttons: any[] = [
+        filterByChannel,
+        buttonPendingReviews,
+        buttonInProgressReviews,
+        buttonMyReviews,
+    ];
+
+    if (buttonWebLogin) {
+        buttons.push(buttonWebLogin);
+    }
 
     let blocks: (Block | KnownBlock)[] = [
         {
@@ -352,12 +403,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         },
         {
             type: 'actions',
-            elements: [
-                filterByChannel,
-                buttonPendingReviews,
-                buttonInProgressReviews,
-                buttonMyReviews,
-            ],
+            elements: buttons,
         },
         ...await getCodeReviewList({codeReviewStatus: filterStatus, slackChannelId: filterChannel, userId: user?.id})
     ];
