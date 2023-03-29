@@ -19,6 +19,10 @@ import {
     extractPullRequestLink
 } from '../lib/utils';
 import {
+    generateAuthToken,
+    getSessionValueByKey
+} from '../service/User';
+import {
     logDebug,
     logError
 } from '../lib/log';
@@ -39,7 +43,6 @@ interface SentHomePageCodeReviewListParams {
     slackUserId: string;
     codeReviewStatus?: string;
     slackChannelId?: string;
-    authToken?: string;
 }
 
 let slackAppInfo: SlackAppInfo | null = null;
@@ -279,7 +282,7 @@ export async function sendCodeReviewSummary (channel: string): Promise<void> {
     });
 }
 
-export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus, slackChannelId, authToken}: SentHomePageCodeReviewListParams): Promise<void> {
+export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus, slackChannelId}: SentHomePageCodeReviewListParams): Promise<void> {
     const buttonPendingReviews = {
         type: 'button',
         text: {
@@ -335,9 +338,13 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
                     session,
                 }
             });
-        }
 
-        if (authToken && user) {
+            let authToken = getSessionValueByKey(user, 'token') as string | undefined;
+
+            if (!authToken) {
+                authToken = await generateAuthToken({id: user.id});
+            }
+
             buttonWebLogin = {
                 type: 'button',
                 text: {
@@ -349,6 +356,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
                 action_id: 'weblogin',
                 url: `${APP_BASE_URL}/auth/slack/token/${user.id}/${authToken}`,
             };
+
         }
     }
 
