@@ -109,8 +109,8 @@ export const sync = async ({displayName, email, slackUserId}: {displayName?: str
     return user;
 };
 
-export const getSessionValueByKey = (user: User, name: string): unknown => {
-    const session = user.session as Partial<{[index: string]: unknown} | null>;
+export const getSessionValueByKey = (user: User, name: string): any => {
+    const session = user.session as Partial<{[index: string]: any} | null>;
 
     if (!session || typeof session !== 'object') {
         return null;
