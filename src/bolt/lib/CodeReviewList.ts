@@ -50,7 +50,6 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
         },
         value: 'close',
         action_id: `close-${codeReview.id}`,
-        url: codeReview.pullRequestLink,
     };
     const buttonDelete = {
         type: 'button',
@@ -128,7 +127,7 @@ const formatCodeReview = (codeReview: CodeReview & {user: User; reviewers: (Code
 const getCodeReviewList = async ({codeReviewStatus, slackChannelId, userId}: {codeReviewStatus?: string; slackChannelId?: string; userId?: number}): Promise<(Block | KnownBlock)[]> => {
     const where: {[index: string]: unknown} = {};
 
-    if (slackChannelId) {
+    if (slackChannelId && 'all' !== slackChannelId) {
         where.slackChannelId = slackChannelId;
     }
     if (codeReviewStatus && codeReviewStatus !== 'all') {

@@ -1,9 +1,13 @@
 import Select, {SingleValue} from 'react-select';
-import {ChannelFilterProps} from '../lib/types';
 import React from 'react';
 import styled from 'styled-components';
 import {useCallback, useEffect, useState} from 'react';
 import {fetchData} from '../services/fetch';
+
+export interface ChannelFilterProps {
+    onSelected: CallableFunction;
+    selectedChannel: string;
+}
 
 interface Channel {
     id: string;
@@ -36,8 +40,13 @@ const ChannelFilter = ({onSelected, selectedChannel}: ChannelFilterProps) => {
     }, [onSelected]);
 
     useEffect(() => {
+        let hasBeenDestroyed = false;
+
         fetchData('/api/channels')
             .then((result) => {
+                if (hasBeenDestroyed) {
+                    return;
+                }
                 const options: Option[] = [
                     allValue,
                     ...result.map((channel: Channel) => {
@@ -60,10 +69,14 @@ const ChannelFilter = ({onSelected, selectedChannel}: ChannelFilterProps) => {
                 if (findChannel) {
                     setSelectPlaceHolder(`Code Reviews For Channel "#${findChannel.name}"`);
                     if (selectedChannel !== findChannel.id) {
-                        onSelected && onSelected(findChannel.id);
+                        onSelected(findChannel.id);
                     }
                 }
             });
+
+        return () => {
+            hasBeenDestroyed = true;
+        };
     }, []);
 
     return (

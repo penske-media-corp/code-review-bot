@@ -11,13 +11,12 @@ export const DB_USER = process.env.DB_USER ?? 'root';
 
 export const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID ?? '';
 export const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET ?? '';
-export const GITHUB_WEBHOOKS_SECRET = process.env.GITHUB_WEBHOOKS_SECRET ?? '';
 
 export const DNS_NAME = process.env.DNS_NAME ?? 'localhost';
 export const PORT = parseInt(process.env.PORT ?? '80' );
 export const APP_BASE_URL = process.env.APP_BASE_URL ?? `${DNS_NAME === 'localhost' ? 'http' : 'https'}://${DNS_NAME}${PORT === 80 || DNS_NAME !== 'localhost' ? '' : ':' + PORT.toString() }`;
 export const APP_ROOT_DIR = resolve(__dirname, '../..');
-export const APP_CLIENT_BUILD = resolve(APP_ROOT_DIR, 'client', 'build');
+export const APP_CLIENT_BUILD_PATH = resolve(APP_ROOT_DIR, 'client', 'build');
 
 export const JIRA_TICKET_BASE_URL = process.env.JIRA_TICKET_BASE_URL ?? 'https://jira.atlassian.net/browse';
 export const SESSION_COOKIE_SECRET = process.env.SESSION_COOKIE_SECRET ?? 'session-cookie-secret';
@@ -26,10 +25,13 @@ export const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET ?? '';
 export const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN ?? '';
 export const SLACK_CLIENT_ID = process.env.SLACK_CLIENT_ID ?? '';
 export const SLACK_CLIENT_SECRET = process.env.SLACK_CLIENT_SECRET ?? '';
+export const SLACK_APP_ID = process.env.SLACK_APP_ID ?? '';
+export const SLACK_TEAM_ID = process.env.SLACK_TEAM_ID ?? '';
+export const SLACK_BOT_CHANNEL_ID = process.env.SLACK_BOT_CHANNEL_ID ?? '';
 
 export const LOG_DEBUG = ['true', 'yes'].includes(process.env.LOG_DEBUG ?? '');
 export const LOG_ERROR = ['true', 'yes'].includes(process.env.LOG_ERROR ?? 'true');
-export const PRISMA_DEBUG = ['true', 'yes'].includes(process.env.PRISMA_DEBUG ?? 'true');
+export const PRISMA_DEBUG = ['true', 'yes'].includes(process.env.PRISMA_DEBUG ?? '');
 
 // prisma use this info
 if (!process.env.DATABASE_URL) {

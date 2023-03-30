@@ -3,7 +3,7 @@ import React, {
     useRef,
     useState
 } from 'react';
-import {DataEditProps} from '../lib/types';
+import type {DataEditProps} from './ExpandedRow';
 import {fetchData} from '../services/fetch';
 import {logError} from '../services/log';
 
@@ -12,16 +12,15 @@ const ExpandedRowDataEdit = ({data, onError, onUpdate}: DataEditProps) => {
     const collectedData = useRef({...data});
 
     // Use this state to track and temporarily disabled all buttons when Save button is clicked.
-    const [saveClicked, setSaveClicked] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const handleSaveClicked = ({currentTarget}: MouseEvent<HTMLButtonElement>) => {
         if (JSON.stringify(collectedData.current) !== JSON.stringify(data)) {
-            const value = currentTarget.getAttribute('value');
             const {note, jiraTicket} = collectedData.current;
 
-            setSaveClicked(true);
+            setIsSaving(true);
 
-            fetchData(`/api/action/save/${value}`, {
+            fetchData(`/api/action/save/${data.id}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -33,8 +32,8 @@ const ExpandedRowDataEdit = ({data, onError, onUpdate}: DataEditProps) => {
             })
                 .then((result) => {
                     if (!result.data) {
-                        onError && onError('Error saving data, see console error log for details.');
-                        logError(`Error saving: /api/action/save/${value}`, result);
+                        onError('Error saving data, see console error log for details.');
+                        logError(`Error saving: /api/action/save/${data.id}`, result);
                         return;
                     }
                     onUpdate({
@@ -43,15 +42,15 @@ const ExpandedRowDataEdit = ({data, onError, onUpdate}: DataEditProps) => {
                     });
                 })
                 .catch((e) => {
-                    onError && onError('Error saving data, see console error log for details.');
-                    logError(`Error sending: /api/action/save/${value}`, e);
+                    onError('Error saving data, see console error log for details.');
+                    logError(`Error sending: /api/action/save/${data.id}`, e);
                 })
                 .finally(() => {
-                    setSaveClicked(false);
+                    setIsSaving(false);
                 })
 
         } else {
-            onUpdate({data, acton: 'save'});
+            onUpdate({data, acton: 'cancel'});
         }
     }
 
@@ -75,14 +74,14 @@ const ExpandedRowDataEdit = ({data, onError, onUpdate}: DataEditProps) => {
                 <button
                     id={`cancel-${data.id}`}
                     name={`cancel-${data.id}`}
-                    disabled={saveClicked}
+                    disabled={isSaving}
                     onClick={() => onUpdate({data, action: 'cancel'})}
                     type="button"
                 >Cancel</button>
                 <button
                     id={`save-${data.id}`}
                     name={`save-${data.id}`}
-                    disabled={saveClicked}
+                    disabled={isSaving}
                     onClick={handleSaveClicked}
                     type="button"
                 >Save</button>
@@ -90,5 +89,10 @@ const ExpandedRowDataEdit = ({data, onError, onUpdate}: DataEditProps) => {
         </form>
     );
 }
+
+ExpandedRowDataEdit.defaultProps = {
+    onError: () => {},
+};
+
 
 export default ExpandedRowDataEdit;
