@@ -107,3 +107,7 @@ button.no-click:hover {
     color: #e05000;
     font-weight: normal;
 }
+
+.withdrew {
+    text-decoration: line-through;
+}
