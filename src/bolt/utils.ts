@@ -338,26 +338,26 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
                     session,
                 }
             });
-
-            let authToken = getSessionValueByKey(user, 'token') as string | undefined;
-
-            if (!authToken) {
-                authToken = await generateAuthToken({id: user.id});
-            }
-
-            buttonWebLogin = {
-                type: 'button',
-                text: {
-                    type: 'plain_text',
-                    text: ':slack: Sign In To Web Version',
-                    emoji: true
-                },
-                value: authToken,
-                action_id: 'weblogin',
-                url: `${APP_BASE_URL}/auth/slack/token/${user.id}/${authToken}`,
-            };
-
         }
+
+        let authToken = getSessionValueByKey(user, 'token') as string | undefined;
+
+        if (!authToken) {
+            authToken = await generateAuthToken({id: user.id});
+        }
+
+        buttonWebLogin = {
+            type: 'button',
+            text: {
+                type: 'plain_text',
+                text: ':slack: Sign In To Web Version',
+                emoji: true
+            },
+            value: authToken,
+            action_id: 'weblogin',
+            url: `${APP_BASE_URL}/auth/slack/token/${user.id}/${authToken}`,
+        };
+
     }
 
     const channels = await getChannels();

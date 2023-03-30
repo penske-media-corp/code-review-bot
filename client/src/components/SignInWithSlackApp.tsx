@@ -2,7 +2,7 @@ import React from "react";
 
 const SignInWithSlackApp = ({appId, teamId}: Record<string, string>) => {
     return (
-        <a href={`https://slack.com/app_redirect?app=${appId}team=${teamId}`}
+        <a href={`https://slack.com/app_redirect?app=${appId}&team=${teamId}`}
            style={
                 {
                     alignItems: 'center',
