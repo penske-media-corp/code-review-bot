@@ -27,6 +27,7 @@ model CodeReview {
   userId Int  @map("user_id")
 
   reviewers CodeReviewRelation[]
+  channels CodeReviewChannel[]
 
   @@map("code_reviews")
 }
@@ -60,6 +61,17 @@ model User {
   session Json?
 
   @@map("users")
+}
+
+model CodeReviewChannel {
+  codeReview   CodeReview @relation(fields: [codeReviewId], references: [id])
+  codeReviewId Int        @map("code_review_id")
+
+  slackChannelId String   @map("slack_channel_id") @db.VarChar(20)
+  slackThreadTs  String?  @map("slack_thread_ts") @db.VarChar(30)
+
+  @@id([slackChannelId, codeReviewId])
+  @@map("channel")
 }
 
 model Option {
