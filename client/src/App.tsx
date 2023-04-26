@@ -34,7 +34,7 @@ function App() {
     return (
         <div className="App">
             {!session?.user
-                ? (<div><SignInWithSlackOAuth/> <SignInWithSlackApp botChannelId={session.botChannelId} teamId={session.teamId}/></div>)
+                ? (<div><SignInWithSlackOAuth/> <SignInWithSlackApp appId={session.appId} teamId={session.teamId}/></div>)
                 : (
                     <div>
                         <div className="expanded-nav">
