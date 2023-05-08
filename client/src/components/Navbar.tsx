@@ -16,6 +16,9 @@ const Navbar = ({status, user, onClick}: {status: any; user: any; onClick: Calla
                 <button onClick={() => onClick('inprogress')} className={status === 'inprogress' ? 'highlight' : ''}>
                     In Progress
                 </button>
+                <button onClick={() => onClick('ready')} className={status === 'ready' ? 'highlight' : ''}>
+                    Ready
+                </button>
                 <button onClick={() => onClick('mine')} className={status === 'mine' ? 'highlight' : ''}>
                     {`My Reviews (${user?.displayName})`}
                 </button>
