@@ -55,8 +55,8 @@ const columns: TableColumn<CodeReview>[] = [
     {
         name: 'Pull Request',
         format: (row: CodeReview) => (<div>
+                {row.status === 'withdrew' && '(withdrew) '}
                 <a href={row.pullRequestLink}>{row.pullRequestLink.replace(/.*\/(.*?\/pull\/\d+)/,'$1')}</a>
-            {row.status === 'withdrew' && ' (withdrew)'}
             </div>),
         selector: () => true,
         maxWidth: '20em',
@@ -234,6 +234,13 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
                 highlightOnHover
                 dense
                 persistTableHead
+
+                conditionalRowStyles={[
+                    {
+                        when: row => row.status === 'withdrew',
+                        classNames: ['withdrew'],
+                    }
+                ]}
 
                 expandableRows
                 expandableRowsComponent={expandedRowComponent}
