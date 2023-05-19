@@ -37,6 +37,21 @@ const registerAuthentication = (app: Express): void => {
         })
     );
 
+    // ref: https://stackoverflow.com/a/75195471
+    app.use(function (request, response, next) {
+        if (request.session && !request.session.regenerate) {
+            request.session.regenerate = (cb: CallableFunction): void => {
+                cb();
+            };
+        }
+        if (request.session && !request.session.save) {
+            request.session.save = (cb: CallableFunction): void => {
+                cb();
+            };
+        }
+        next();
+    });
+
     app.use(passport.initialize());
     app.use(passport.session());
 
