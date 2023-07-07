@@ -1,15 +1,52 @@
+import Review, {findCodeReviewRecord} from './Review';
+import type {ChatPostMessageArguments} from '@slack/web-api';
 import {GITHUB_WEBHOOKS_SECRET} from '../lib/env';
-import {
-    Webhooks,
-} from '@octokit/webhooks';
+import type {PullRequestClosedEvent} from '@octokit/webhooks-types';
+import {Webhooks} from '@octokit/webhooks';
+import {postSlackMessage} from '../bolt/utils';
 
-const webhooks = new Webhooks({
-    secret: GITHUB_WEBHOOKS_SECRET,
-});
+let webhooks: Webhooks | null;
+
+/**
+ * Handle git hub webhook PR merged/close event.
+ *
+ * @param {PullRequestClosedEvent} payload
+ */
+const handleClosed = (payload: PullRequestClosedEvent): void => {
+    const pullRequestLink = payload.pull_request.html_url;
+
+    void findCodeReviewRecord({pullRequestLink})
+        .then((codeReview) => {
+            if (!codeReview) {
+                return;
+            }
+            void Review.close(codeReview)
+                .then((result) => {
+                    if (!result.codeReview) {
+                        return;
+                    }
+                    if (['closed'].includes(codeReview.status)) {
+                        void postSlackMessage(
+                            result.slackNotifyMessage as ChatPostMessageArguments
+                        );
+                    }
+                });
+        });
+};
 
 const register = (): Webhooks => {
-    webhooks.on('pull_request', function (data) {
+    if (webhooks) {
+        return webhooks;
+    }
+
+    webhooks = new Webhooks({
+        secret: GITHUB_WEBHOOKS_SECRET,
     });
+
+    webhooks.on('pull_request.closed', (data) => {
+        handleClosed(data.payload);
+    });
+
     return webhooks;
 };
 
