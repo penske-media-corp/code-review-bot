@@ -12,7 +12,7 @@ let webhooks: Webhooks | null;
  *
  * @param {PullRequestClosedEvent} payload
  */
-const handleClosed = (payload: PullRequestClosedEvent): void => {
+const handlePullRequestClosed = (payload: PullRequestClosedEvent): void => {
     const pullRequestLink = payload.pull_request.html_url;
 
     void findCodeReviewRecord({pullRequestLink})
@@ -46,8 +46,8 @@ const register = (): Webhooks => {
         secret: GITHUB_WEBHOOKS_SECRET,
     });
 
-    webhooks.on('pull_request.closed', (data) => {
-        handleClosed(data.payload);
+    webhooks.on('pull_request.closed', ({payload}) => {
+        handlePullRequestClosed(payload);
     });
 
     return webhooks;
