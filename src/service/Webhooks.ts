@@ -34,6 +34,9 @@ const handleClosed = (payload: PullRequestClosedEvent): void => {
         });
 };
 
+/**
+ * Register the webhook events.
+ */
 const register = (): Webhooks => {
     if (webhooks) {
         return webhooks;
