@@ -33,6 +33,8 @@ export const LOG_DEBUG = ['true', 'yes'].includes(process.env.LOG_DEBUG ?? '');
 export const LOG_ERROR = ['true', 'yes'].includes(process.env.LOG_ERROR ?? 'true');
 export const PRISMA_DEBUG = ['true', 'yes'].includes(process.env.PRISMA_DEBUG ?? '');
 
+export const GITHUB_WEBHOOKS_SECRET = process.env.GITHUB_WEBHOOKS_SECRET ?? '';
+
 // prisma use this info
 if (!process.env.DATABASE_URL) {
     process.env.DATABASE_URL = `mysql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:3306/${DB_NAME}`;
