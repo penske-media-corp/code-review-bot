@@ -1,6 +1,6 @@
 {
   "name": "code-review-slack-bot",
-  "version": "1.5",
+  "version": "1.5.0",
   "description": "Slack Bolt app for tracking code reviews",
   "license": "GPLv2",
   "engines": {
