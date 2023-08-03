@@ -1,3 +1,4 @@
+import {channelList, updateChannelInfo} from '../utils';
 import {
     getGroupToMentionInChannel,
     getRepositoryNumberOfApprovals,
@@ -24,15 +25,23 @@ export default function registerEventAppMention (app: App): void {
                 thread_ts: thread_ts ?? ts,
             });
         } else {
-            const regExCmd = /\s+set\s+([^\s]+)\s+([^\s]+)(?:\s+)?(\d+)?/i;
+            const regExCmd = /\s+(set|update)\s+([^\s]+)(?:\s+([^\s]+)(?:\s+)?(\d+)?)?/i;
             const result = regExCmd.exec(text);
 
             if (!result) {
                 return;
             }
 
-            logDebug('set command', result);
+            result.shift();
+            logDebug('set|update command', result);
             switch (result[1]) {
+                case 'channels':
+                    await updateChannelInfo();
+                    await say({
+                        text: `Channel list updated: ${JSON.stringify(channelList)}`,
+                        thread_ts: thread_ts ?? ts,
+                    });
+                    break;
                 case 'review':
                     await setRepositoryNumberOfReviews(result[2], parseInt(result[3]));
                     await say({
