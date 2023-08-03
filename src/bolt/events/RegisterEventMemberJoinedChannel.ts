@@ -12,6 +12,6 @@ export default function registerEventMemberJoinedChannel (app: App): void {
         if (await getBotUserId() !== event.user) {
             return;
         }
-        updateChannelInfo();
+        await updateChannelInfo();
     });
 }

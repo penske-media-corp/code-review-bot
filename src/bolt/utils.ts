@@ -104,13 +104,14 @@ export async function getChannels (): Promise<ChannelInfo[]> {
 
 export const channelMaps: {[index: string]: ChannelInfo | null} = {};
 export let channelList: ChannelInfo[] = [];
-export function updateChannelInfo (): void {
-    void getChannels().then((result) => {
+export async function updateChannelInfo (): Promise<ChannelInfo[]> {
+    await getChannels().then((result) => {
         channelList = result;
         result.forEach((channelInfo) => {
             channelMaps[channelInfo.id] = channelMaps[channelInfo.name] = channelInfo;
         });
     });
+    return channelList;
 }
 
 export async function getReactionData (event: ReactionAddedEvent | ReactionRemovedEvent): Promise<ReactionData | null> {
@@ -460,5 +461,5 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
 export function registerSlackBotApp (app: App): void {
     slackBotApp = app;
     registerSchedule();
-    updateChannelInfo();
+    void updateChannelInfo();
 }
