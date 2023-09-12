@@ -10,11 +10,7 @@ const ExpandedRowDataView = ({data, onError, onUpdate, user}: DataViewProps) => 
     const showClaim = !data.reviewers?.includes(user.displayName) && data.owner !== user.displayName;
     const showApprove = !data.approvers?.includes(user.displayName) && data.owner !== user.displayName;
     const showChange = !data.requestChanges?.includes(user.displayName) && data.owner !== user.displayName;
-    const showRequestReview = user.displayName === data.owner &&
-        (
-            data.status === 'withdrew' ||
-            (data.status !== 'pending' && (data.requestChanges || data.reviewers || data.approvers))
-        );
+    const showRequestReview = data.status === 'withdrew' || data.requestChanges || data.reviewers || data.approvers;
     const showWithdraw = data.status !== 'withdrew' && user?.displayName === data.owner;
 
     const handleActionClick = ({currentTarget}: MouseEvent<HTMLButtonElement>) => {
@@ -64,9 +60,9 @@ const ExpandedRowDataView = ({data, onError, onUpdate, user}: DataViewProps) => 
                 <div className="left">
                     {showClaim && (<ActionButton label="Claim" reviewId={data.id}/>)}
                     {showChange && (<ActionButton label="Request Change" reviewId={data.id}/>)}
-                    {showRequestReview && (<ActionButton label="Request Review" reviewId={data.id}/>)}
                     {showApprove && (<ActionButton label="Approve" reviewId={data.id}/>)}
                     <ActionButton label="Close" reviewId={data.id}/>
+                    {showRequestReview && (<ActionButton label="Resubmit for review" reviewId={data.id}/>)}
                     {showWithdraw && (<ActionButton label="Withdraw" reviewId={data.id}/>)}
                     <ActionButton label="Delete Record" reviewId={data.id}/>
                     <button name={`edit-review-${data.id}`}
