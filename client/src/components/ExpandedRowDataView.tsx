@@ -40,8 +40,8 @@ const ExpandedRowDataView = ({data, onError, onUpdate, user}: DataViewProps) => 
             })
     };
 
-    const ActionButton = ({label, reviewId}: {label: string; reviewId: number}) => {
-        const sanitizedName = label.toLowerCase().replace(/ /g, '-');
+    const ActionButton = ({action, label, reviewId}: {action?: string; label: string; reviewId: number}) => {
+        const sanitizedName = action ?? label.toLowerCase().replace(/ /g, '-');
 
         return (
             <button
@@ -62,7 +62,7 @@ const ExpandedRowDataView = ({data, onError, onUpdate, user}: DataViewProps) => 
                     {showChange && (<ActionButton label="Request Change" reviewId={data.id}/>)}
                     {showApprove && (<ActionButton label="Approve" reviewId={data.id}/>)}
                     <ActionButton label="Close" reviewId={data.id}/>
-                    {showRequestReview && (<ActionButton label="Resubmit for review" reviewId={data.id}/>)}
+                    {showRequestReview && (<ActionButton action="request-review" label="Resubmit for review" reviewId={data.id}/>)}
                     {showWithdraw && (<ActionButton label="Withdraw" reviewId={data.id}/>)}
                     <ActionButton label="Delete Record" reviewId={data.id}/>
                     <button name={`edit-review-${data.id}`}
