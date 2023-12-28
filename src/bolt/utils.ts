@@ -8,6 +8,7 @@ import type {
 } from '@slack/bolt';
 import type {
     ChatPostMessageArguments,
+    ChatPostMessageResponse,
     ConversationsRepliesResponse
 } from '@slack/web-api';
 import type {
@@ -114,6 +115,15 @@ export async function updateChannelInfo (): Promise<ChannelInfo[]> {
     return channelList;
 }
 
+export async function getSlackPermalink (channel: string, message_ts: string): Promise<string | null> {
+    const result = await slackBotApp.client.chat.getPermalink({
+        channel,
+        message_ts,
+    }).catch(() => null);
+
+    return result?.permalink ?? null;
+}
+
 export async function getReactionData (event: ReactionAddedEvent | ReactionRemovedEvent): Promise<ReactionData | null> {
     if (event.item.type !== 'message') {
         return null;
@@ -214,7 +224,7 @@ export function getGithubBotEventData (event: GenericMessageEvent): GithubBotEve
     }
 
     if (!['Pull request merged by', 'Pull request closed by']
-        .some((search) => pretext.includes('Pull request closed by'))) {
+        .some(() => pretext.includes('Pull request closed by'))) {
         return null;
     }
 
@@ -225,12 +235,15 @@ export function getGithubBotEventData (event: GenericMessageEvent): GithubBotEve
     };
 }
 
-export async function postSlackMessage (slackMessage: ChatPostMessageArguments): Promise<void> {
+export async function postSlackMessage (slackMessage: ChatPostMessageArguments): Promise<ChatPostMessageResponse | null> {
     logDebug('postSlackMessage', slackMessage);
     if (!slackMessage.channel) {
-        return;
+        return null;
     }
-    await slackBotApp.client.chat.postMessage(slackMessage).catch(logError);
+    return slackBotApp.client.chat.postMessage(slackMessage).catch((error) => {
+        logError(error);
+        return null;
+    });
 }
 
 export async function sendCodeReviewSummary (channel: string): Promise<void> {
@@ -324,7 +337,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
     });
 
     const session = (user?.session ?? {filterChannel: '', filterStatus: ''}) as {filterChannel?: string; filterStatus?: string};
-    const filterChannel = slackChannelId || session.filterChannel || 'all';
+    const filterChannel = slackChannelId || session.filterChannel || 'all'; // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing
     const filterStatus = codeReviewStatus ?? session.filterStatus;
 
     if (user) {
@@ -391,6 +404,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         options,
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const buttons: any[] = [
         filterByChannel,
         buttonPendingReviews,

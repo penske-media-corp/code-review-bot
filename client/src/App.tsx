@@ -7,6 +7,8 @@ import Navbar from './components/Navbar';
 import ChannelFilter from './components/ChannelFilter';
 import {logError} from './services/log';
 import {fetchData} from './services/fetch';
+import {BrowserRouter, Route, Routes} from 'react-router-dom';
+import Profile from './components/Profile';
 
 interface Session {
     appId: string;
@@ -36,17 +38,24 @@ function App() {
             {!session?.user
                 ? (<div><SignInWithSlackOAuth/> <SignInWithSlackApp appId={session.appId} teamId={session.teamId}/></div>)
                 : (
-                    <div>
-                        <div className="expanded-nav">
-                            <div className="left">
-                                <ChannelFilter selectedChannel={selectedChannel} onSelected={setSelectedChannel}/>
-                            </div>
-                            <div className="right">
-                                <Navbar status={status} user={session.user} onClick={handleNavBarClick}/>
-                            </div>
-                        </div>
-                        <RenderReviewList user={session.user} channel={selectedChannel} status={status}/>
-                    </div>
+                    <BrowserRouter>
+                        <Routes>
+                            <Route path="/" element={(
+                                <div>
+                                    <div className="expanded-nav">
+                                        <div className="left">
+                                            <ChannelFilter selectedChannel={selectedChannel} onSelected={setSelectedChannel}/>
+                                        </div>
+                                        <div className="right">
+                                            <Navbar status={status} user={session.user} onClick={handleNavBarClick}/>
+                                        </div>
+                                    </div>
+                                    <RenderReviewList user={session.user} channel={selectedChannel} status={status}/>
+                                </div>
+                            )} />
+                            <Route path="/profile" element={<Profile />}/>
+                        </Routes>
+                    </BrowserRouter>
                 )
             }
         </div>

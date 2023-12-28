@@ -6,6 +6,7 @@ import actionController from '../controllers/api/action';
 import {enforceAuthentication} from '../middlewares/auth';
 import express from 'express';
 import {handleWebhooks} from '../middlewares/webhooks';
+import profileController from '../controllers/api/profile';
 import reviewsController from '../controllers/api/reviews';
 import saveController from '../controllers/api/save';
 import sessionController from '../controllers/api/session';
@@ -14,6 +15,7 @@ const apiRouter = express.Router();
 
 apiRouter.use('/', handleWebhooks);
 apiRouter.get('/session', sessionController);
+apiRouter.get('/profile', profileController);
 
 apiRouter.use('/', enforceAuthentication);
 apiRouter.get('/action/:action/:value', actionController);
