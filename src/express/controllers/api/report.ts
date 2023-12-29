@@ -71,6 +71,8 @@ const generateReport = async (year: number, month: number): Promise<unknown> => 
     }
 
     return {
+        year,
+        ...month && {month},
         averageMinuteOveralDuration: requestCount ? overallDuration / requestCount / 1000 / 60 : 0,
         averageMinuteReviewDuration: reviewerCount ? reviewDuration / reviewerCount / 1000 / 60 : 0,
         averageMinuteTimeToFirstReview: reviewerCount ? timeToFirstReview / reviewerCount / 1000 / 60 : 0,
