@@ -4,6 +4,10 @@ import type {RequestHandler} from 'express';
 import {logError} from '../../../lib/log';
 import {prisma} from '../../../lib/config';
 
+
+/**
+ * Return the raw data if format is raw, otherwise return only the basic information about the record.
+ */
 const formatRecord = (format: string, record: Archive): unknown => {
     if (format === 'raw') {
         return record;
@@ -26,6 +30,9 @@ const formatRecord = (format: string, record: Archive): unknown => {
 
 };
 
+/**
+ * Controller for route /api/archive
+ */
 const archiveController: RequestHandler = (req, res) => {
     let format = 'basic';
     let page = 1;
