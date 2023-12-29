@@ -1,6 +1,18 @@
 import type {CodeReviewRecord} from '../../../service/Review';
+import type {Prisma} from '@prisma/client';
 import type {RequestHandler} from 'express';
 import {prisma} from '../../../lib/config';
+
+
+interface ReportType {
+    year: number;
+    month?: number;
+    averageMinuteOveralDuration: number;
+    averageMinuteReviewDuration: number;
+    averageMinuteTimeToFirstReview: number;
+    ownerTotalCount: Record<string, number>;
+    reviewerTotalCount: Record<string, number>;
+}
 
 /**
  * Helper function to return the time different between two date string.
@@ -13,7 +25,7 @@ const diffDateTime = (d1: string, d2: string): number => {
  * Generate the report base on the give year & month.
  * If month is 0, the report is generated for the entire year.
  */
-const generateReport = async (year: number, month: number): Promise<unknown> => {
+const generateReport = async (year: number, month: number): Promise<ReportType> => {
     const ownerTotalCount: Record<string, number> = {};
     const reviewerTotalCount: Record<string, number> = {};
     const limit = 1000;
@@ -25,7 +37,7 @@ const generateReport = async (year: number, month: number): Promise<unknown> => 
     let reviewerCount = 0;
     let requestCount = 0;
 
-    const where: {[index: string]: unknown} = {};
+    const where: Prisma.ArchiveWhereInput = {};
 
     if (!month) {
         where.createdAt = {
@@ -41,7 +53,12 @@ const generateReport = async (year: number, month: number): Promise<unknown> => 
 
     while (stillHasData) {
         const records = await prisma.archive.findMany({
-            where,
+            where: {
+                createdAt: {
+                    gte: new Date(year, 0, 1),
+                    lt: new Date(year + 1, 0, 1),
+                }
+            },
             skip: limit * (page - 1),
             take: limit,
         });
