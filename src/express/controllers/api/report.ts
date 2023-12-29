@@ -3,7 +3,7 @@ import type {RequestHandler} from 'express';
 import {prisma} from '../../../lib/config';
 
 /**
- * Helper function to return the time different between two date string.
+ * Helper function to return the time difference between two date string.
  */
 const diffDateTime = (d1: string, d2: string): number => {
     return new Date(d1).getTime() - new Date(d2).getTime();
