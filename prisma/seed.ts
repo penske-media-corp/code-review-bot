@@ -8,6 +8,7 @@ const prisma = new PrismaClient()
 async function main() {
     const usersCount = 50;
     const codeReviewsCount = 100;
+    const archiveCount = 100;
 
     let users = await prisma.user.findMany();
 
@@ -78,9 +79,36 @@ async function main() {
             data: {
                 userId: reviewer.id,
                 codeReviewId: codeReview.id,
-                status: faker.helpers.arrayElement(['pending', 'approve']),
+                status: faker.helpers.arrayElement(['pending', 'approved']),
             }
         })
+    }
+
+    let archives = await prisma.archive.findMany();
+
+    if (archives.length < archiveCount) {
+        const result = await prisma.codeReview.findMany({
+            include: {
+                user: true,
+                reviewers: {
+                    include: {
+                        reviewer: true,
+                    },
+                },
+            },
+            take: archiveCount - archives.length,
+        });
+
+        for (const record of result) {
+            await prisma.archive.create({
+                data: {
+                    data: JSON.stringify(record),
+                    jiraTicket: record.jiraTicket,
+                    note: record.note,
+                    pullRequestLink: record.pullRequestLink,
+                }
+            });
+        }
     }
 }
 
