@@ -14,10 +14,11 @@ import sessionController from '../controllers/api/session';
 const apiRouter = express.Router();
 
 apiRouter.use('/', handleWebhooks);
+
+// All routes from here on are required to authenticate
+apiRouter.use('/', enforceAuthentication);
 apiRouter.get('/session', sessionController);
 apiRouter.get('/profile', profileController);
-
-apiRouter.use('/', enforceAuthentication);
 apiRouter.get('/action/:action/:value', actionController);
 apiRouter.post('/action/save/:value', saveController);
 apiRouter.get('/reviews/:channel?/:status?', reviewsController);
