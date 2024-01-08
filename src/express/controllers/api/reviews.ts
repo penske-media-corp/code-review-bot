@@ -3,6 +3,7 @@ import type {
     ReviewerRecord
 } from '../../../service/Review';
 import {JIRA_TICKET_BASE_URL} from '../../../lib/env';
+import type {Prisma} from '@prisma/client';
 import type {RequestHandler} from 'express';
 import {channelMaps} from '../../../bolt/utils';
 import {logError} from '../../../lib/log';
@@ -47,7 +48,7 @@ const reviewsController: RequestHandler = (req, res) => {
         limit = parseInt(req.query.limit || '1') || 1;
     }
 
-    const where: {[index: string]: unknown} = {};
+    const where: Prisma.CodeReviewWhereInput = {};
     const {id: userId} = req.user as {id: number} || {};
 
     if (channel && channel !== 'all') {
