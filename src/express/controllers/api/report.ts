@@ -53,12 +53,7 @@ const generateReport = async (year: number, month: number): Promise<ReportType> 
 
     while (stillHasData) {
         const records = await prisma.archive.findMany({
-            where: {
-                createdAt: {
-                    gte: new Date(year, 0, 1),
-                    lt: new Date(year + 1, 0, 1),
-                }
-            },
+            where: where,
             skip: limit * (page - 1),
             take: limit,
         });
