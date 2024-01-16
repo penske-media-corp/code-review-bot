@@ -3,7 +3,7 @@ import React from "react";
 const Profile = () => {
     return (
         <div className="Profile">
-            TODO
+            Not yet implement, todo in next release.
         </div>
     );
 };

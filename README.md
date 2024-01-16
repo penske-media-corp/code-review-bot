@@ -31,5 +31,5 @@ To get needed repositories and applications:
     ```
 1. Start the local development environment
       ```
-      npm run dev
+      ./dev.sh
       ``` 

@@ -67,20 +67,28 @@ const handlePullRequestOpened = async (payload: PullRequestOpenedEvent): Promise
     });
 
     if (!user) {
+        logDebug(`Error: No slack user found for github user "${githubId}".`);
         return;
     }
 
     const repositoryName = extractRepository(pullRequestLink);
 
     if (!repositoryName) {
+        logDebug(`Error: Cannot determine the repository for pull request link "${pullRequestLink}".`);
         return;
     }
 
     const channel = await getReviewChannelForRepository(repositoryName);
+
+    if (!channel) {
+        logDebug(`Error: No channel found for repository "${repositoryName}".`);
+        return;
+    }
+
     const numberApprovalRequired = await getRepositoryNumberOfApprovals(repositoryName);
     const text = `*${user.displayName}* has request a code review! ${numberApprovalRequired} ${pluralize('reviewer', numberApprovalRequired)} :eyes: ${pluralize('is', numberApprovalRequired)} needed.\n<${pullRequestLink}>`;
 
-    logDebug(`Sending review request to channel ${channel}`);
+    logDebug(`Sending review request to channel "${channel}"`);
     const result = await postSlackMessage({
         mrkdwn: true,
         channel,
@@ -139,7 +147,10 @@ const handlePullRequestReviewSubmitted = async (payload: PullRequestReviewSubmit
                 ...(result.slackNotifyMessage as ChatPostMessageArguments),
             });
         }
+    } else if (state === 'commented') {
+        // Submit comment on a PR, future improvement?
     }
+
 
 };
 

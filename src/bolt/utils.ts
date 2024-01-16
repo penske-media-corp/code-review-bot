@@ -136,12 +136,13 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
         limit: 1,
         ts: event.item.ts,
     });
+    const botUserId = await getBotUserId();
 
     const getMessageInfo = async (data: ConversationsRepliesResponse): Promise<ReactionData> => {
         const message = (data.messages ?? [])[0] as GenericMessageEvent;
         let pullRequestLink = '';
         let jiraTicket = '';
-        let slackMsgUserId = message.user;
+        let slackMsgUserId = message.user === botUserId ? event.user : message.user;
         let note = '';
 
         // Try to parse github pull request from text message if available.
@@ -173,7 +174,7 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
             slackThreadTs: message.thread_ts ?? message.ts,
         } as ReactionData;
     };
-    const botUserId = await getBotUserId();
+
     let messageInfo = await getMessageInfo(result);
 
     if (!result.client_msg_id && botUserId === event.item_user && !messageInfo.pullRequestLink.length &&
