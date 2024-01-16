@@ -88,14 +88,14 @@ export default function registerEventAppMention (app: App): void {
                         }
                     }
                     break;
-                case 'jira-ticket-regex':
+                case 'jira-ticket-regex': // @pmc_code_review_bot set jira-ticket-regex <regex>
                     await setJiraTicketRegEx(result[2]);
                     await say({
                         text: `Set Jira Ticket Patterns to *${result[2]}*`,
                         thread_ts: thread_ts ?? ts,
                     });
                     break;
-                case 'slack-github-id':
+                case 'slack-github-id': // @pmc_code_review_bot set slack-github-id <slack-id> <github-id>
                     if (!result[2] || !result[3]) {
                         return;
                     }
@@ -126,7 +126,7 @@ export default function registerEventAppMention (app: App): void {
                     }).catch(logError);
 
                     break;
-                case 'my-github-id':
+                case 'my-github-id': // @pmc_code_review_bot set my-github-id <github-id>
                     if (!slackUserId) {
                         return;
                     }
