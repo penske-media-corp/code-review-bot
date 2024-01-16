@@ -22,7 +22,6 @@ model CodeReview {
   slackChannelId  String?  @map("slack_channel_id") @db.VarChar(20)
   jiraTicket      String?  @map("jira_ticket") @db.VarChar(128)
   note            String?  @db.TinyText()
-  extra           Json?
 
   user   User @relation(fields: [userId], references: [id])
   userId Int  @map("user_id")
