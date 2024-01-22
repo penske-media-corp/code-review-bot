@@ -57,8 +57,13 @@ const handlePullRequestClosed = async (payload: PullRequestClosedEvent): Promise
 };
 
 const handlePullRequestOpened = async (payload: PullRequestOpenedEvent): Promise<void> => {
-    const {html_url: pullRequestLink, title} = payload.pull_request;
+    const {draft, html_url: pullRequestLink, title} = payload.pull_request;
     const githubId = payload.sender.login;
+
+    if (draft) {
+        logDebug('Ignore draft pull request.');
+        return;
+    }
 
     const user = await prisma.user.findFirst({
         where: {
