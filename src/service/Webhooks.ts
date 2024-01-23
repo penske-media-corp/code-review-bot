@@ -1,7 +1,8 @@
 import type {
     PullRequestClosedEvent,
     PullRequestOpenedEvent,
-    PullRequestReviewSubmittedEvent
+    PullRequestReadyForReviewEvent,
+    PullRequestReviewSubmittedEvent,
 } from '@octokit/webhooks-types';
 import Review, {findCodeReviewRecord} from './Review';
 import {
@@ -56,7 +57,7 @@ const handlePullRequestClosed = async (payload: PullRequestClosedEvent): Promise
         });
 };
 
-const handlePullRequestOpened = async (payload: PullRequestOpenedEvent): Promise<void> => {
+const handlePullRequestOpened = async (payload: PullRequestOpenedEvent | PullRequestReadyForReviewEvent): Promise<void> => {
     const {draft, html_url: pullRequestLink, title} = payload.pull_request;
     const githubId = payload.sender.login;
 
@@ -169,6 +170,11 @@ const register = (): Webhooks => {
 
     webhooks = new Webhooks({
         secret: GITHUB_WEBHOOKS_SECRET,
+    });
+
+    webhooks.on('pull_request.ready_for_review', ({payload}) => {
+        logDebug(payload);
+        void handlePullRequestOpened(payload);
     });
 
     webhooks.on('pull_request.closed', ({payload}) => {
