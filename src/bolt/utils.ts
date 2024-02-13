@@ -9,7 +9,9 @@ import type {
 import type {
     ChatPostMessageArguments,
     ChatPostMessageResponse,
-    ConversationsRepliesResponse
+    ConversationsRepliesResponse,
+    ReactionsAddArguments,
+    ReactionsAddResponse,
 } from '@slack/web-api';
 import type {
     ReactionData,
@@ -236,10 +238,23 @@ export function getGithubBotEventData (event: GenericMessageEvent): GithubBotEve
     };
 }
 
-export async function postSlackMessage (slackMessage: ChatPostMessageArguments): Promise<ChatPostMessageResponse | null> {
+export async function addSlackReaction (reaction: ReactionsAddArguments): Promise<ReactionsAddResponse> {
+    return slackBotApp.client.reactions.add(reaction);
+}
+
+export async function postSlackMessage (slackMessage: ChatPostMessageArguments, reaction?: string): Promise<ChatPostMessageResponse | null> {
     logDebug('postSlackMessage', slackMessage);
     if (!slackMessage.channel) {
         return null;
+    }
+    if (reaction && slackMessage.thread_ts) {
+        void addSlackReaction({
+            name: reaction,
+            channel: slackMessage.channel,
+            timestamp: slackMessage.thread_ts,
+        }).catch((error) => {
+            logError(error);
+        });
     }
     return slackBotApp.client.chat.postMessage(slackMessage).catch((error) => {
         logError(error);

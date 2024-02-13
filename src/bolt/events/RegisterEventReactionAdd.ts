@@ -4,15 +4,22 @@ import type {
 } from '@slack/bolt';
 import Review, {findCodeReviewRecord} from '../../service/Review';
 import {
+    getBotUserId,
+    getReactionData
+} from '../utils';
+import {
     getGroupToMentionInChannel,
     slackActions,
 } from '../../lib/config';
-import {getReactionData} from '../utils';
 import {logDebug} from '../../lib/log';
 
 export default function registerEventReactionAdd (app: App): void {
     app.event('reaction_added', async ({event, say}) => {
         logDebug('reaction_added', event);
+
+        if (await getBotUserId() === event.user) {
+            return;
+        }
 
         // Check to make sure we only look into reaction we subscribed to
         if (!Object.values(slackActions).some((items) => items.includes(event.reaction))) {

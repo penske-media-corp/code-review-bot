@@ -50,7 +50,8 @@ const handlePullRequestClosed = async (payload: PullRequestClosedEvent): Promise
                     }
                     if (['closed'].includes(codeReview.status)) {
                         void postSlackMessage(
-                            result.slackNotifyMessage as ChatPostMessageArguments
+                            result.slackNotifyMessage as ChatPostMessageArguments,
+                            'done'
                         );
                     }
                 });

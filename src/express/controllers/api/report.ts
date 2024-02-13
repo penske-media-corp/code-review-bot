@@ -5,8 +5,9 @@ import {prisma} from '../../../lib/config';
 
 
 interface ReportType {
-    year: number;
+    year?: number;
     month?: number;
+    days?: number;
     averageMinuteOveralDuration: number;
     averageMinuteReviewDuration: number;
     averageMinuteTimeToFirstReview: number;
@@ -25,7 +26,7 @@ const diffDateTime = (d1: string, d2: string): number => {
  * Generate the report base on the give year & month.
  * If month is 0, the report is generated for the entire year.
  */
-const generateReport = async (year: number, month: number): Promise<ReportType> => {
+const generateReport = async ({year, month, days}: {year?: number; month?: number; days?: number}): Promise<ReportType> => {
     const ownerTotalCount: Record<string, number> = {};
     const reviewerTotalCount: Record<string, number> = {};
     const limit = 1000;
@@ -39,15 +40,22 @@ const generateReport = async (year: number, month: number): Promise<ReportType> 
 
     const where: Prisma.ArchiveWhereInput = {};
 
-    if (!month) {
+    if (!month && year) {
         where.createdAt = {
             gte: new Date(year, 0, 1),
             lt: new Date(year + 1, 0, 1),
         };
-    } else {
+    } else if (month && year) {
         where.createdAt = {
             gte: new Date(year, month - 1, 1),
             lt: new Date(year, month, 1),
+        };
+    } else if (days) {
+        const date = new Date();
+
+        date.setDate(date.getDate() - days);
+        where.createdAt = {
+            gte: date,
         };
     }
 
@@ -83,8 +91,9 @@ const generateReport = async (year: number, month: number): Promise<ReportType> 
     }
 
     return {
-        year,
+        ...year && {year},
         ...month && {month},
+        ...days && {days},
         averageMinuteOveralDuration: requestCount ? overallDuration / requestCount / 1000 / 60 : 0,
         averageMinuteReviewDuration: reviewerCount ? reviewDuration / reviewerCount / 1000 / 60 : 0,
         averageMinuteTimeToFirstReview: reviewerCount ? timeToFirstReview / reviewerCount / 1000 / 60 : 0,
@@ -98,18 +107,28 @@ const generateReport = async (year: number, month: number): Promise<ReportType> 
  * Controller for endpoint /api/report
  */
 const reportController: RequestHandler = (req, res) => {
-    let year = new Date().getFullYear();
-    let month = new Date().getMonth() + 1;
+    let year = 0;
+    let month = 0;
+    let days = 0;
 
     if (typeof req.query.year === 'string') {
         year = parseInt(req.query.year, 10);
-        month = 0;
     }
     if (typeof req.query.month === 'string') {
         month = parseInt(req.query.month, 10);
+        if (!year) {
+            year = new Date().getFullYear();
+        }
+    }
+    if (typeof req.query.days === 'string') {
+        days = parseInt(req.query.days, 10);
     }
 
-    void generateReport(year, month).then((report) => res.json(report));
+    if (!days && !year) {
+        days = 15;
+    }
+
+    void generateReport({year, month, days}).then((report) => res.json(report));
 };
 
 export default reportController;

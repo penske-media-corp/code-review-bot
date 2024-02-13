@@ -19,6 +19,7 @@ export default function registerActionHomePage (app: App): void {
 
             if (codeReview) {
                 let result;
+                let reaction;
                 switch (actionValue) {
                     case 'approve':
                         result = await Review.approve(codeReview, actionUserId);
@@ -28,13 +29,14 @@ export default function registerActionHomePage (app: App): void {
                         break;
                     case 'close':
                         result = await Review.close(codeReview);
+                        reaction = 'done';
                         break;
                     case 'delete':
                         result = await Review.deleteRecord(codeReview, actionUserId);
                         break;
                 }
                 if (result) {
-                    await postSlackMessage(result.slackNotifyMessage as ChatPostMessageArguments);
+                    await postSlackMessage(result.slackNotifyMessage as ChatPostMessageArguments, reaction);
                 }
             }
             await sentHomePageCodeReviewList({slackUserId: actionUserId});
