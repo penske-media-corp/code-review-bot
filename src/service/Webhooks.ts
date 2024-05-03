@@ -93,7 +93,7 @@ const handlePullRequestOpened = async (payload: PullRequestOpenedEvent | PullReq
     }
 
     const numberApprovalRequired = await getRepositoryNumberOfApprovals(repositoryName);
-    const text = `*${user.displayName}* has request a code review! ${numberApprovalRequired} ${pluralize('reviewer', numberApprovalRequired)} :eyes: ${pluralize('is', numberApprovalRequired)} needed.\n<${pullRequestLink}>`;
+    const text = `*${user.displayName}* has requested a code review! ${numberApprovalRequired} ${pluralize('reviewer', numberApprovalRequired)} :eyes: ${pluralize('is', numberApprovalRequired)} needed.\n<${pullRequestLink}>`;
 
     logDebug(`Sending review request to channel "${channel}"`);
     const result = await postSlackMessage({
