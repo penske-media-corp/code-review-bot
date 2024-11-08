@@ -12,6 +12,7 @@ import type {
     CodeReview,
     User,
 } from '../lib/types';
+import Cookies from 'js-cookie';
 import ExpandedRow from './ExpandedRow';
 import FancyProgress from './FancyProgress';
 import {format} from 'date-fns';
@@ -37,20 +38,24 @@ const columns: TableColumn<CodeReview>[] = [
         name: 'Date',
         selector: (row: CodeReview) => format(new Date(row.createdAt), 'MMM dd, yyyy'),
         maxWidth: '7em',
-        compact: true,
+        compact: false,
     },
     {
         name: 'Owner',
         selector: (row: CodeReview) => row.owner,
-        maxWidth: '12em',
-        compact: true,
+        maxWidth: '10em',
+        compact: false,
     },
     {
         name: 'Jira Ticket',
-        format: (row: CodeReview) => row.jiraTicket && <a href={`${row.jiraTicketLinkUrl}`}>{row.jiraTicket}</a>,
+        format: (row: CodeReview) => (<div>
+            {row.jiraTicket && <a href={`${row.jiraTicketLinkUrl}`}>{row.jiraTicket}</a>}
+            &nbsp;
+            {row.note && <span>{row.note.substring(0, 200)}</span>}
+        </div>),
         selector: () => true,
-        maxWidth: '7em',
-        compact: true,
+        compact: false,
+        grow: 2,
     },
     {
         name: 'Pull Request',
@@ -59,33 +64,33 @@ const columns: TableColumn<CodeReview>[] = [
                 <a href={row.pullRequestLink}>{row.pullRequestLink.replace(/.*\/(.*?\/pull\/\d+)/,'$1')}</a>
             </div>),
         selector: () => true,
-        maxWidth: '20em',
-        compact: true,
+        maxWidth: '15em',
+        compact: false,
     },
     {
         name: 'Slack Link',
         format: (row: CodeReview) => row.slackThreadTs && row.slackPermalink && <a href={row.slackPermalink ?? '#'}>{row.slackThreadTs}</a>,
         selector: () => true,
-        maxWidth: '12em',
-        compact: true,
+        maxWidth: '10em',
+        compact: false,
     },
     {
         name: 'Reviewers',
         selector: (row: CodeReview) => row.reviewers?.join(', ') ?? '',
         wrap: true,
-        compact: true,
+        compact: false,
     },
     {
         name: 'Approvers',
         selector: (row: CodeReview) => row.approvers?.join(', ') ?? '',
         wrap: true,
-        compact: true,
+        compact: false,
     },
     {
         name: 'Request Changes',
         selector: (row: CodeReview) => row.requestChanges?.join(', ') ?? '',
         wrap: true,
-        compact: true,
+        compact: false,
     },
 ];
 
@@ -113,6 +118,18 @@ const customStyles = {
     expanderRow: {
         style: {
             backgroundColor: '#252525',
+        }
+    },
+    headCells: {
+        style: {
+            paddingLeft: '0',
+            paddingRight: '1em',
+        }
+    },
+    cells: {
+        style: {
+            paddingLeft: '0',
+            paddingRight: '0.5em',
         }
     }
 };
@@ -147,7 +164,7 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
     const [dataSet, setDataSet] = useState([] as CodeReview[]);
     const [loading, setLoading] = useState(true);
     const [totalRows, setTotalRows] = useState(0);
-    const [pageSize, setPageSize] = useState(10);
+    const [pageSize, setPageSize] = useState(Number(Cookies.get('pageSize') || '10'));
     const [currentPage, setCurrentPage] = useStateWithDeps(1, [channel, status]);
 
     /**
@@ -210,6 +227,10 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
         });
     }, [channel, currentPage, pageSize, status]);
 
+    useEffect(() => {
+        Cookies.set('pageSize', String(pageSize));
+    }, [pageSize]);
+
     return (
         <div id="reviews-list">
             <DataTable
@@ -219,7 +240,7 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
                 data={dataSet}
                 progressPending={loading}
                 paginationPerPage={pageSize}
-                paginationRowsPerPageOptions={[10,20,30,50,100]}
+                paginationRowsPerPageOptions={[10,20,30,40,50,100]}
                 pagination
                 paginationServer
                 paginationTotalRows={totalRows}
