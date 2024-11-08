@@ -46,13 +46,9 @@ const columns: TableColumn<CodeReview>[] = [
     },
     {
         name: 'Jira Ticket',
-        format: (row: CodeReview) => (<div>
-            {row.jiraTicket && <a href={`${row.jiraTicketLinkUrl}`}>{row.jiraTicket}</a>}
-            &nbsp;
-            {row.note && <span>{row.note.substring(0, 200)}</span>}
-        </div>),
+        format: (row: CodeReview) => row.jiraTicket && <a href={`${row.jiraTicketLinkUrl}`}>{row.jiraTicket}</a>,
         selector: () => true,
-        grow: 2,
+        maxWidth: '7em',
     },
     {
         name: 'Pull Request',
@@ -93,6 +89,11 @@ const paginationComponentOptions = {
     selectAllRowsItem: false,
 };
 
+const cellPaddings = {
+    paddingLeft: '0',
+    paddingRight: '0.5em',
+}
+
 const customStyles = {
     header: {
         style: {
@@ -114,14 +115,12 @@ const customStyles = {
     },
     headCells: {
         style: {
-            paddingLeft: '0',
-            paddingRight: '1em',
+            ...cellPaddings,
         }
     },
     cells: {
         style: {
-            paddingLeft: '0',
-            paddingRight: '0.5em',
+            ...cellPaddings,
         }
     }
 };
@@ -153,11 +152,13 @@ createTheme('custom', {
  * @constructor
  */
 const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
+    const queryString = new URLSearchParams(window.location.search);
     const [dataSet, setDataSet] = useState([] as CodeReview[]);
     const [loading, setLoading] = useState(true);
     const [totalRows, setTotalRows] = useState(0);
     const [pageSize, setPageSize] = useState(Number(Cookies.get('pageSize') || '10'));
     const [currentPage, setCurrentPage] = useStateWithDeps(1, [channel, status]);
+    const [expandedRow] = useState(queryString.get('expanded') || Cookies.get('expanded') || '');
 
     /**
      * Fetch the list of code review.
@@ -223,6 +224,10 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
         Cookies.set('pageSize', String(pageSize));
     }, [pageSize]);
 
+    useEffect(() => {
+        Cookies.set('expanded', expandedRow);
+    }, [expandedRow]);
+
     return (
         <div id="reviews-list">
             <DataTable
@@ -232,7 +237,7 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
                 data={dataSet}
                 progressPending={loading}
                 paginationPerPage={pageSize}
-                paginationRowsPerPageOptions={[10,20,30,40,50,100]}
+                paginationRowsPerPageOptions={[10,15,20,25,30,40,50,100]}
                 pagination
                 paginationServer
                 paginationTotalRows={totalRows}
@@ -257,6 +262,8 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
 
                 expandableRows
                 expandableRowsComponent={expandedRowComponent}
+                expandableRowExpanded={() => expandedRow === 'yes'}
+                expandableInheritConditionalStyles={true}
             />
         </div>
     );
