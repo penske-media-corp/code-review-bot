@@ -158,7 +158,7 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
     const [totalRows, setTotalRows] = useState(0);
     const [pageSize, setPageSize] = useState(Number(Cookies.get('pageSize') || '10'));
     const [currentPage, setCurrentPage] = useStateWithDeps(1, [channel, status]);
-    const [expandedRow] = useState(queryString.get('expanded') || Cookies.get('expanded') || '');
+    const [expandedRow] = useState(queryString.get('expanded') || Cookies.get('expanded') || 'yes');
 
     /**
      * Fetch the list of code review.
@@ -238,8 +238,8 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
                 progressPending={loading}
                 paginationPerPage={pageSize}
                 paginationRowsPerPageOptions={[10,15,20,25,30,40,50,100]}
-                pagination
-                paginationServer
+                pagination={true}
+                paginationServer={true}
                 paginationTotalRows={totalRows}
                 paginationComponentOptions={paginationComponentOptions}
                 progressComponent={<FancyProgress/>}
@@ -247,11 +247,11 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
                 onChangePage={setCurrentPage}
                 paginationDefaultPage={currentPage}
 
-                fixedHeader
-                striped
-                highlightOnHover
-                dense
-                persistTableHead
+                fixedHeader={true}
+                striped={true}
+                highlightOnHover={true}
+                dense={true}
+                persistTableHead={true}
 
                 conditionalRowStyles={[
                     {
@@ -260,7 +260,7 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
                     }
                 ]}
 
-                expandableRows
+                expandableRows={true}
                 expandableRowsComponent={expandedRowComponent}
                 expandableRowExpanded={() => expandedRow === 'yes'}
                 expandableInheritConditionalStyles={true}
