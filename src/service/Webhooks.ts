@@ -1,10 +1,13 @@
 import type {
     User as GitHubUser,
+    PullRequestAssignedEvent,
     PullRequestClosedEvent,
     PullRequestOpenedEvent,
     PullRequestReadyForReviewEvent,
+    PullRequestReviewDismissedEvent,
     PullRequestReviewRequestedEvent,
     PullRequestReviewSubmittedEvent,
+    PullRequestUnassignedEvent,
 } from '@octokit/webhooks-types';
 import Review, {
     type ReviewActionResult,
@@ -37,6 +40,7 @@ let webhooks: Webhooks | null;
 
 /**
  * Handle git hub webhook PR merged/close event.
+ * @see https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=closed#pull_request
  *
  * @param {PullRequestClosedEvent} payload
  */
@@ -63,7 +67,8 @@ const handlePullRequestClosed = async (payload: PullRequestClosedEvent): Promise
         });
 };
 
-const handlePullRequestOpened = async (payload: PullRequestOpenedEvent | PullRequestReadyForReviewEvent | PullRequestReviewRequestedEvent): Promise<ReviewActionResult | null> => {
+// https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=opened#pull_request
+const handlePullRequestOpened = async (payload: PullRequestAssignedEvent | PullRequestOpenedEvent | PullRequestReadyForReviewEvent | PullRequestReviewRequestedEvent): Promise<ReviewActionResult | null> => {
     const {draft, html_url: pullRequestLink, title} = payload.pull_request;
     const githubId = payload.sender.login;
 
@@ -217,6 +222,69 @@ const handlePullRequestReviewRequested = async (payload: PullRequestReviewReques
     }
 };
 
+// https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=assigned#pull_request
+const handlePullRequestAssigned = async (payload: PullRequestAssignedEvent): Promise<void> => {
+    const pullRequestLink = payload.pull_request.html_url;
+
+    const hasAssignee =
+        (event: PullRequestAssignedEvent): event is PullRequestAssignedEvent & {assignee: GitHubUser} => {
+            return 'assignee' in event;
+        };
+
+    if (!hasAssignee(payload) || !payload.assignee.login) {
+        logDebug('Error: No reviewer found in payload.');
+
+        return;
+    }
+
+    let codeReview = await findCodeReviewRecord({pullRequestLink});
+
+    if (!codeReview) {
+        const result = await handlePullRequestOpened(payload);
+
+        if (result?.codeReview) {
+            codeReview = result.codeReview;
+        } else {
+            logDebug('Error: No review record found.');
+
+            return;
+        }
+    }
+
+    const reviewer = await prisma.user.findFirst({
+        where: {
+            githubId: payload.assignee.login,
+        }
+    });
+
+    if (!reviewer) {
+        logDebug('Error: No reviewer record found.');
+
+        return;
+    }
+
+    const result = await Review.assign(codeReview, reviewer.slackUserId).catch(logError);
+
+    if (result) {
+        await postSlackMessage({
+            mrkdwn: true,
+            ...(result.slackNotifyMessage as ChatPostMessageArguments),
+        });
+    }
+};
+
+// https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=unassigned#pull_request
+const handlePullRequestUnassigned = async (payload: PullRequestUnassignedEvent): Promise<void> => {
+    const pullRequestLink = payload.pull_request.html_url;
+    // @TODO, remove reviewer from review record.
+};
+
+// https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=dismissed#pull_request_review
+const handlePullRequestReviewDismissed = async (payload: PullRequestReviewDismissedEvent): Promise<void> => {
+    const pullRequestLink = payload.pull_request.html_url;
+    // @TODO, request re review from approved reviewer?
+};
+
 /**
  * Register the webhook events.
  */
@@ -251,10 +319,17 @@ const register = (): Webhooks => {
 
     webhooks.on('pull_request_review.dismissed', ({payload}) => {
         logDebug(payload);
+        void handlePullRequestReviewDismissed(payload);
     });
 
     webhooks.on('pull_request.assigned', ({payload}) => {
         logDebug(payload);
+        void handlePullRequestAssigned(payload);
+    });
+
+    webhooks.on('pull_request.unassigned', ({payload}) => {
+        logDebug(payload);
+        void handlePullRequestUnassigned(payload);
     });
 
     webhooks.on('pull_request.review_requested', ({payload}) => {
