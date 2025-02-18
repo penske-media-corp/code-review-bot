@@ -71,7 +71,7 @@ const ExpandedRowDataView = ({data, onError, onUpdate, user}: DataViewProps) => 
                 </div>
                 <div className="right small-text">Last updated on {format(new Date(data.updatedAt), 'MMM dd, yyyy hh:mmaaaaa')}</div>
             </div>
-            <div className="note">{data.note}</div>
+            <div className="note">{data.note}&nbsp;</div>
         </div>
     );
 };

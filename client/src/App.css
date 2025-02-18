@@ -95,6 +95,18 @@ button.no-click:hover {
     justify-content: space-between;
 }
 
+.expanded-row {
+    padding-bottom: 0.25em;
+}
+
+.expanded-row .expanded-nav {
+    display: none;
+}
+
+.expanded-row:hover .expanded-nav {
+    display: flex;
+}
+
 .expanded-row .note {
     margin: 2px 0px;
 }

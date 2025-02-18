@@ -96,6 +96,9 @@ const reviewsController: RequestHandler = (req, res) => {
             skip: limit * (page - 1),
             take: limit
         },
+        orderBy: {
+            createdAt: 'desc',
+        }
     }).then((reviews) => {
         const result = reviews.map(formatApiCodeReviewRecord);
         return {

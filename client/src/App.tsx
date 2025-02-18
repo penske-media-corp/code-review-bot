@@ -1,5 +1,6 @@
 import './App.css';
 import React, {useEffect, useState} from 'react';
+import Cookies from 'js-cookie';
 import RenderReviewList from './components/RenderReviewList';
 import SignInWithSlackOAuth from './components/SignInWithSlackOAuth';
 import SignInWithSlackApp from './components/SignInWithSlackApp';
@@ -19,9 +20,9 @@ interface Session {
 
 function App() {
     const queryString = new URLSearchParams(window.location.search);
-    const [status, setStatus] = useState(queryString.get('status') || 'pending');
+    const [status, setStatus] = useState(queryString.get('status') || Cookies.get('status') || 'pending');
     const [session, setSession] = useState({} as Session);
-    const [selectedChannel, setSelectedChannel] = useState(queryString.get('channel') || 'all');
+    const [selectedChannel, setSelectedChannel] = useState(queryString.get('channel') || Cookies.get('channel') || 'all');
 
     const handleNavBarClick = (value: string) => {
         setStatus(value);
@@ -32,6 +33,14 @@ function App() {
             .then((data) => setSession(data))
             .catch(logError);
     }, []);
+
+    useEffect(() => {
+        Cookies.set('channel', selectedChannel);
+    }, [selectedChannel]);
+
+    useEffect(() => {
+        Cookies.set('status', status);
+    }, [status]);
 
     return (
         <div className="App">

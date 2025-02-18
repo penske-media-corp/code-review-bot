@@ -321,6 +321,24 @@ const claim = async (codeReview: CodeReviewRecord, slackUserId: string): Promise
     };
 };
 
+const assign = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
+    await setCodeReviewerStatus(codeReview, slackUserId, 'pending');
+    const stats = await calculateReviewStats(codeReview);
+    const count = stats.reviewerCount + stats.approvalCount;
+    const message = getNumberReviewMessage(count, numberReviewRequired);
+
+    return {
+        codeReview,
+        message,
+        slackNotifyMessage: {
+            channel: codeReview.slackChannelId,
+            text: `<@${slackUserId}>, You are requested to do the code review. ${message}`,
+            thread_ts: codeReview.slackThreadTs,
+        },
+    };
+};
+
 const finish = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
     const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const requestSlackUserId = codeReview.user.slackUserId;
@@ -492,6 +510,7 @@ const close = async (codeReview: CodeReviewRecord, closeMessage?: string): Promi
 export default {
     add,
     approve,
+    assign,
     claim,
     close,
     finish,

@@ -149,6 +149,7 @@ export default function registerEventAppMention (app: App): void {
             }
 
         }
+
         /**
          * @TODO custom bot commands:
          *

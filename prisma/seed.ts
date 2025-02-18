@@ -75,13 +75,15 @@ async function main() {
     for (let i = 0; i < users.length; i++) {
         const reviewer = faker.helpers.arrayElement(users);
         const codeReview = faker.helpers.arrayElement(codeReviews);
-        await prisma.codeReviewRelation.create({
-            data: {
-                userId: reviewer.id,
-                codeReviewId: codeReview.id,
-                status: faker.helpers.arrayElement(['pending', 'approved']),
-            }
-        })
+        try {
+            await prisma.codeReviewRelation.create({
+                data: {
+                    userId: reviewer.id,
+                    codeReviewId: codeReview.id,
+                    status: faker.helpers.arrayElement(['pending', 'approved']),
+                }
+            })
+        } catch (e) {}
     }
 
     let archives = await prisma.archive.findMany();
