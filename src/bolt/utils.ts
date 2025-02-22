@@ -5,6 +5,8 @@ import type {
     KnownBlock,
     ReactionAddedEvent,
     ReactionRemovedEvent,
+    RichTextBlock,
+    RichTextSection,
 } from '@slack/bolt';
 import type {
     ChatPostMessageArguments,
@@ -13,6 +15,11 @@ import type {
     ReactionsAddArguments,
     ReactionsAddResponse,
 } from '@slack/web-api';
+import type {
+    CodeReview,
+    CodeReviewRelation,
+    User
+} from '@prisma/client';
 import type {
     ReactionData,
     UserInfo
@@ -243,7 +250,7 @@ export async function addSlackReaction (reaction: ReactionsAddArguments): Promis
 }
 
 export async function postSlackMessage (slackMessage: ChatPostMessageArguments, reaction?: string): Promise<ChatPostMessageResponse | null> {
-    logDebug('postSlackMessage', slackMessage);
+    logDebug('postSlackMessage', JSON.stringify(slackMessage, null, 2));
     if (!slackMessage.channel) {
         return null;
     }
@@ -263,52 +270,188 @@ export async function postSlackMessage (slackMessage: ChatPostMessageArguments, 
 }
 
 export async function sendCodeReviewSummary (channel: string): Promise<void> {
-    let text = '*Reminders!*';
-
-    const result = await prisma.codeReview.groupBy({
-        by: ['status'],
+    const maxRequestsToList = 20;
+    const prismaQueryStatus = (status: 'inprogress' | 'pending'): {
         where: {
-            status: {
-                in: ['pending', 'inprogress'],
-            },
+            status: 'inprogress' | 'pending';
+            slackChannelId: string;
+        };
+        include: {
+            user: boolean;
+            reviewers: {
+                include: {
+                    reviewer: boolean;
+                };
+            };
+        };
+        orderBy: {
+            createdAt: 'asc' | 'desc';
+        };
+    } => ({
+        where: {
+            status: status,
             slackChannelId: channel,
         },
-        _count: {
-            status: true,
-        }
+        include: {
+            user: true,
+            reviewers: {
+                include: {
+                    reviewer: true,
+                }
+            },
+        },
+        orderBy: {
+            createdAt: 'desc',
+        },
     });
+    const pendingReviews = await prisma.codeReview.findMany(prismaQueryStatus('pending'));
+    const inProgressReviews = await prisma.codeReview.findMany(prismaQueryStatus('inprogress'));
 
-    // Translate result array into object.  @TODO: Should combine the code an move the groupBy codes into a reusable module.
-    const counts: {pending?: number; inprogress?: number} = result.reduce((acc, item) => {
-        return {
-            ...acc,
-            ...{
-                [item.status]: item._count.status,
-            }
-        };
-    }, {});
-
-    const pendingCount: number = counts.pending ?? 0;
-    const inProgressCount: number = counts.inprogress ?? 0;
-
-    if (pendingCount + inProgressCount === 0) {
+    if (pendingReviews.length === 0 && inProgressReviews.length === 0) {
         return;
     }
 
+    const blocks: KnownBlock[] = [
+        {
+            type: 'header',
+            text: {
+                type: 'plain_text',
+                text: ':exclamation:Reminder:',
+                emoji: true
+            }
+        },
+        {
+            'type': 'divider'
+        },
+    ];
+    const pendingRequests: RichTextBlock = {
+        type: 'rich_text',
+        elements: [],
+    };
+    const inProgressRequests: RichTextBlock = {
+        type: 'rich_text',
+        elements: [],
+    };
     const webLink = `${APP_BASE_URL}?channel=${channel}`;
+    const generateRichTextSection = (codeReview: CodeReview & {user: User; reviewers: (CodeReviewRelation & {reviewer: User})[]}): RichTextSection => {
+        const extractDisplayName = ({reviewer}: {reviewer: User}): string => reviewer.displayName;
+        const reviewers: string[] = codeReview.reviewers.map(extractDisplayName);
+        const approvers: string[] = codeReview.reviewers.filter((r) => r.status === 'approved').map(extractDisplayName);
+        const prLinkLabel = codeReview.pullRequestLink.replace(/.*penske-media-corp\//, '').replace(/.*github.com\//, '');
 
-    if (pendingCount > 0) {
-        text = `${text}\nThere ${pluralize('is', pendingCount)} <${webLink}|*${pendingCount}* outstanding ${pluralize('request', pendingCount)}> waiting for code review.`;
+        return {
+            type: 'rich_text_section',
+            elements: [
+                {
+                    type: 'link',
+                    url: codeReview.pullRequestLink,
+                    text: `${codeReview.jiraTicket ? codeReview.jiraTicket + ': ' : ''}${prLinkLabel}`
+                },
+                {
+                    type: 'text',
+                    text: `\nRequested by ${codeReview.user.displayName}.${
+                        reviewers.length > 0 ? ` Reviewing by ${reviewers.join(', ')}.` : ''
+                    }${
+                        approvers.length > 0 ? ` Approved by ${approvers.join(', ')}.` : ''
+                    }`,
+                }
+            ]
+        };
+    };
+
+    if (pendingReviews.length > 0) {
+
+        pendingRequests.elements.push({
+            type: 'rich_text_section',
+            elements: [
+                {
+                    type: 'link',
+                    url: `${webLink}&status=pending`,
+                    text: `${pendingReviews.length} outstanding ${pluralize('request', pendingReviews.length)}`,
+                    style: {
+                        bold: true,
+                    }
+                },
+                {
+                    type: 'text',
+                    text: ` ${pluralize('is', pendingReviews.length)} waiting for code review:`,
+                }
+            ]
+        });
+
+        pendingRequests.elements.push({
+            type: 'rich_text_list',
+            style: 'bullet',
+            indent: 0,
+            elements: [
+                ...pendingReviews.slice(0, maxRequestsToList).map(generateRichTextSection),
+                ...pendingReviews.length > maxRequestsToList ? [{
+                    type: 'rich_text_section',
+                    elements: [
+                        {
+                            type: 'link',
+                            url: `${webLink}&status=pending`,
+                            text: `...too many to list, click to see all ${pendingReviews.length} requests!`,
+                        }
+                    ]
+                } as RichTextSection] : [],
+            ],
+        });
     }
-    if (inProgressCount > 0) {
-        text = `${text}\n*${inProgressCount}* in progress ${pluralize('request', inProgressCount)} ${pluralize('is', inProgressCount)} waiting for approval.`;
+
+    if (inProgressReviews.length > 0) {
+
+        inProgressRequests.elements.push({
+            type: 'rich_text_section',
+            elements: [
+                {
+                    type: 'link',
+                    url: `${webLink}&status=inprogress`,
+                    text: `${inProgressReviews.length} in progress ${pluralize('request', inProgressReviews.length)}`,
+                    style: {
+                        bold: true,
+                    }
+                },
+                {
+                    type: 'text',
+                    text: ` ${pluralize('is', inProgressReviews.length)} waiting for approval:`,
+                }
+            ]
+        });
+
+        inProgressRequests.elements.push({
+            type: 'rich_text_list',
+            style: 'bullet',
+            indent: 0,
+            elements: [
+                ...inProgressReviews.slice(0, maxRequestsToList).map(generateRichTextSection),
+                ...inProgressReviews.length > maxRequestsToList ? [{
+                    type: 'rich_text_section',
+                    elements: [
+                        {
+                            type: 'link',
+                            url: `${webLink}&status=inprogress`,
+                            text: `...too many to list, click to see all ${inProgressReviews.length} requests!`,
+                        }
+                    ]
+                } as RichTextSection] : [],
+            ],
+        });
+    }
+
+    if (pendingRequests.elements.length) {
+        blocks.push(pendingRequests);
+    }
+    if (inProgressRequests.elements.length) {
+        blocks.push(inProgressRequests);
     }
 
     logDebug(`Sending reminders to channel ${channel}`);
     await postSlackMessage({
-        mrkdwn: true,
+        unfurl_links: false,
+        unfurl_media: false,
         channel,
-        text,
+        blocks,
     });
 }
 

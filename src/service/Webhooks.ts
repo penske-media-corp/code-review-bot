@@ -69,7 +69,7 @@ const handlePullRequestClosed = async (payload: PullRequestClosedEvent): Promise
 
 // https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=opened#pull_request
 const handlePullRequestOpened = async (payload: PullRequestAssignedEvent | PullRequestOpenedEvent | PullRequestReadyForReviewEvent | PullRequestReviewRequestedEvent): Promise<ReviewActionResult | null> => {
-    const {draft, html_url: pullRequestLink, title} = payload.pull_request;
+    const {draft, html_url: pullRequestLink, title, head: {ref: branch}} = payload.pull_request;
     const githubId = payload.sender.login;
 
     if (draft) {
@@ -113,7 +113,7 @@ const handlePullRequestOpened = async (payload: PullRequestAssignedEvent | PullR
     });
 
     const data = {
-        jiraTicket: await extractJiraTicket(title),
+        jiraTicket: await extractJiraTicket(title + ' ' + branch),
         pullRequestLink,
         slackChannelId: channel,
         slackMsgUserId: user.slackUserId,
@@ -146,29 +146,40 @@ const handlePullRequestReviewSubmitted = async (payload: PullRequestReviewSubmit
         return;
     }
 
-    if (state === 'approved') {
-        const result = await Review.approve(codeReview, user.slackUserId).catch(logError);
+    switch (state) {
+        case 'approved': {
+            const result = await Review.approve(codeReview, user.slackUserId).catch(logError);
 
-        if (result) {
-            await postSlackMessage({
-                mrkdwn: true,
-                ...(result.slackNotifyMessage as ChatPostMessageArguments),
-            });
+            if (result) {
+                await postSlackMessage({
+                    mrkdwn: true,
+                    ...(result.slackNotifyMessage as ChatPostMessageArguments),
+                });
+            }
+            break;
         }
-    } else if (state === 'changes_requested') {
-        const result = await Review.requestChanges(codeReview, user.slackUserId).catch(logError);
+        case 'changes_requested': {
+            const result = await Review.requestChanges(codeReview, user.slackUserId).catch(logError);
 
-        if (result) {
-            await postSlackMessage({
-                mrkdwn: true,
-                ...(result.slackNotifyMessage as ChatPostMessageArguments),
-            });
+            if (result) {
+                await postSlackMessage({
+                    mrkdwn: true,
+                    ...(result.slackNotifyMessage as ChatPostMessageArguments),
+                });
+            }
+            break;
         }
-    } else if (state === 'commented') {
-        // Submit comment on a PR, future improvement?
+        case 'dismissed': {
+            // @TODO: Dismiss review, future improvement?
+            break;
+        }
+        case 'commented': {
+            // @TODO: Submit comment on a PR, future improvement?
+            break;
+        }
+        default:
+            break;
     }
-
-
 };
 
 // https://docs.github.com/en/webhooks/webhook-events-and-payloads?actionType=review_requested#pull_request
