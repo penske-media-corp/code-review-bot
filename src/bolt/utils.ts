@@ -316,7 +316,7 @@ export async function sendCodeReviewSummary (channel: string): Promise<void> {
             type: 'header',
             text: {
                 type: 'plain_text',
-                text: ':exclamation:Reminder:',
+                text: ':exclamation: Reminder:',
                 emoji: true
             }
         },
