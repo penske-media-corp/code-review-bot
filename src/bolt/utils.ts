@@ -269,8 +269,15 @@ export async function postSlackMessage (slackMessage: ChatPostMessageArguments, 
     });
 }
 
+/**
+ * Send the code review request summary to the slack channel.
+ */
 export async function sendCodeReviewSummary (channel: string): Promise<void> {
     const maxRequestsToList = 20;
+
+    /**
+     * Return the prisma query to get the list of code review requests for the given status.
+     */
     const prismaQueryStatus = (status: 'inprogress' | 'pending'): {
         where: {
             status: 'inprogress' | 'pending';
