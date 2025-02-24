@@ -39,7 +39,7 @@ model CodeReviewRelation {
   reviewer User @relation(fields: [userId], references: [id])
   userId   Int  @map("user_id")
 
-  codeReview   CodeReview @relation(fields: [codeReviewId], references: [id])
+  codeReview   CodeReview @relation(fields: [codeReviewId], references: [id], onDelete: Cascade)
   codeReviewId Int        @map("code_review_id")
 
   @@id([userId, codeReviewId])

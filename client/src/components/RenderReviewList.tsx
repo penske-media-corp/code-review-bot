@@ -158,7 +158,7 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
     const [totalRows, setTotalRows] = useState(0);
     const [pageSize, setPageSize] = useState(Number(Cookies.get('pageSize') || '10'));
     const [currentPage, setCurrentPage] = useStateWithDeps(1, [channel, status]);
-    const [expandedRow] = useState(queryString.get('expanded') || Cookies.get('expanded') || 'yes');
+    const [expandedRow] = useState(queryString.get('expanded') || Cookies.get('expanded') || 'no');
 
     /**
      * Fetch the list of code review.
