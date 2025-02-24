@@ -186,18 +186,10 @@ const handlePullRequestReviewRequested = async (payload: PullRequestReviewReques
         return;
     }
 
-    let codeReview = await findCodeReviewRecord({pullRequestLink});
+    const codeReview = await findCodeReviewRecord({pullRequestLink});
 
     if (!codeReview) {
-        const result = await handlePullRequestOpened(payload);
-
-        if (result?.codeReview) {
-            codeReview = result.codeReview;
-        } else {
-            logDebug('Error: No review record found.');
-
-            return;
-        }
+        return;
     }
 
     const reviewer = await prisma.user.findFirst({
@@ -209,6 +201,19 @@ const handlePullRequestReviewRequested = async (payload: PullRequestReviewReques
     if (!reviewer) {
         logDebug('Error: No reviewer record found.');
 
+        return;
+    }
+
+    const relation = await prisma.codeReviewRelation.findFirst({
+        where: {
+            codeReviewId: codeReview.id,
+            userId: reviewer.id,
+        }
+    });
+
+    // Only update status if reviewer already assigned to this PR.
+    // Avoid premature assigning to PRs triggered by github due to owner list when PR is created.
+    if (!relation) {
         return;
     }
 
