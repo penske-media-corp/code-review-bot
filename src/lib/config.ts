@@ -8,11 +8,11 @@ const OPTION_NAME_REPO_NUMBER_APPROVAL = 'repository-number-approval';
 const OPTION_NAME_JIRA_TICKET_PATTERNS = 'jira-ticket-regex';
 const OPTION_NAME_DEFAULT_CHANNEL = 'default-channel';
 const OPTION_NAME_REPO_CHANNEL = 'repository-channel';
-const OPTION_NAME_DATA_RETENTION_IN_YEAR = 'data-retention-in-year';
+const OPTION_NAME_DATA_RETENTION_IN_MONTH = 'data-retention-in-month';
 
 const DEFAULT_NUMBER_REVIEW   = 2;
 const DEFAULT_NUMBER_APPROVAL = 2;
-const DEFAULT_DATA_RETENTION_IN_YEAR = 2;
+const DEFAULT_DATA_RETENTION_IN_MONTH = 12;
 
 export const slackActions = {
     approved: ['approved', 'white_check_mark', 'heavy_check_mark'],
@@ -171,12 +171,21 @@ export const setReviewChannelForRepository = async (repositoryName: string, chan
     await option.global.set(OPTION_NAME_REPO_CHANNEL, options);
 };
 
-export const getDataRetentionInYear = async (): Promise<number> => {
-    let value: number | null = await cache.get(OPTION_NAME_DATA_RETENTION_IN_YEAR) as number | null;
+export const getDataRetentionInMonth = async (): Promise<number> => {
+    let value: number | null = await cache.get(OPTION_NAME_DATA_RETENTION_IN_MONTH) as number | null;
 
     if (!value) {
-        value = await option.global.get(OPTION_NAME_DATA_RETENTION_IN_YEAR) as number | null;
+        value = await option.global.get(OPTION_NAME_DATA_RETENTION_IN_MONTH) as number | null;
     }
 
-    return value ?? DEFAULT_DATA_RETENTION_IN_YEAR;
+    return value ?? DEFAULT_DATA_RETENTION_IN_MONTH;
+};
+
+export const setDataRetentionInMonth = async (months: number): Promise<void> => {
+    if (!months) {
+        return;
+    }
+
+    await cache.set(OPTION_NAME_DATA_RETENTION_IN_MONTH, months);
+    await option.global.set(OPTION_NAME_DATA_RETENTION_IN_MONTH, months);
 };

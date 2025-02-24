@@ -1,7 +1,7 @@
 import {
     defaultMonthlySchedule,
     defaultScheduleReminder,
-    getDataRetentionInYear,
+    getDataRetentionInMonth,
     prisma,
 } from './config';
 import type {Job} from 'node-schedule';
@@ -31,7 +31,7 @@ export async function monthlyCleanup (): Promise<void> {
     const currentDate = new Date();
     const date = new Date();
 
-    date.setFullYear(currentDate.getFullYear() - await getDataRetentionInYear());
+    date.setMonth(currentDate.getMonth() - await getDataRetentionInMonth());
 
     await prisma.archive.deleteMany({
         where: {
