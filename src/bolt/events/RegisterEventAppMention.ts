@@ -1,13 +1,19 @@
 import {channelList, updateChannelInfo} from '../utils';
 import {
+    getDataRetentionInMonth,
     getDefaultReviewChannel,
     getGroupToMentionInChannel,
     getRepositoryNumberOfApprovals,
-    getRepositoryNumberOfReviews, getReviewChannelForRepository, prisma, setDefaultReviewChannel,
+    getRepositoryNumberOfReviews,
+    getReviewChannelForRepository,
+    prisma,
+    setDataRetentionInMonth,
+    setDefaultReviewChannel,
     setGroupToMentionInChannel,
     setJiraTicketRegEx,
     setRepositoryNumberOfApprovals,
-    setRepositoryNumberOfReviews, setReviewChannelForRepository,
+    setRepositoryNumberOfReviews,
+    setReviewChannelForRepository,
 } from '../../lib/config';
 import {
     logDebug,
@@ -146,6 +152,14 @@ export default function registerEventAppMention (app: App): void {
                     }).catch(logError);
 
                     break;
+                case 'data-retention': // @pmc_code_review_bot set data-retention 15
+                    await setDataRetentionInMonth(parseInt(result[2]));
+                    await say({
+                        text: `Set data retention to ${await getDataRetentionInMonth()} months.`,
+                        thread_ts: thread_ts ?? ts,
+                    });
+                    break;
+
             }
 
         }

@@ -314,42 +314,42 @@ const register = (): Webhooks => {
     });
 
     webhooks.on('pull_request.ready_for_review', ({payload}) => {
-        logDebug(payload);
+        logDebug(JSON.stringify(payload, null, 2));
         void handlePullRequestOpened(payload);
     });
 
     webhooks.on('pull_request.closed', ({payload}) => {
-        logDebug(payload);
+        logDebug(JSON.stringify(payload, null, 2));
         void handlePullRequestClosed(payload);
     });
 
     webhooks.on('pull_request.opened', ({payload}) => {
-        logDebug(payload);
+        logDebug(JSON.stringify(payload, null, 2));
         void handlePullRequestOpened(payload);
     });
 
     webhooks.on('pull_request_review.submitted', ({payload}) => {
-        logDebug(payload);
+        logDebug(JSON.stringify(payload, null, 2));
         void handlePullRequestReviewSubmitted(payload);
     });
 
     webhooks.on('pull_request_review.dismissed', ({payload}) => {
-        logDebug(payload);
+        logDebug(JSON.stringify(payload, null, 2));
         void handlePullRequestReviewDismissed(payload);
     });
 
     webhooks.on('pull_request.assigned', ({payload}) => {
-        logDebug(payload);
+        logDebug(JSON.stringify(payload, null, 2));
         void handlePullRequestAssigned(payload);
     });
 
     webhooks.on('pull_request.unassigned', ({payload}) => {
-        logDebug(payload);
+        logDebug(JSON.stringify(payload, null, 2));
         void handlePullRequestUnassigned(payload);
     });
 
     webhooks.on('pull_request.review_requested', ({payload}) => {
-        logDebug(payload);
+        logDebug(JSON.stringify(payload));
         void handlePullRequestReviewRequested(payload);
     });
 
