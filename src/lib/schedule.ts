@@ -1,6 +1,8 @@
 import {
+    defaultMonthlySchedule,
     defaultScheduleReminder,
-    prisma
+    getDataRetentionInYear,
+    prisma,
 } from './config';
 import type {Job} from 'node-schedule';
 import {scheduleJob} from 'node-schedule';
@@ -25,7 +27,35 @@ export async function sendReminders (): Promise<void> {
     });
 }
 
-let currentJob: Job;
+export async function monthlyCleanup (): Promise<void> {
+    const currentDate = new Date();
+    const date = new Date();
+
+    date.setFullYear(currentDate.getFullYear() - await getDataRetentionInYear());
+
+    await prisma.archive.deleteMany({
+        where: {
+            createdAt: {
+                lt: date,
+            },
+        },
+    });
+
+    await prisma.codeReview.deleteMany({
+        where: {
+            status: {
+                in: ['ready', 'withdrew'],
+            },
+            updatedAt: {
+                lt: date,
+            },
+        },
+    });
+}
+
+const scheduledJobs: Job[] = [];
+
 export function registerSchedule (): void {
-    currentJob = scheduleJob(defaultScheduleReminder, sendReminders);
+    scheduledJobs.push(scheduleJob(defaultScheduleReminder, sendReminders));
+    scheduledJobs.push(scheduleJob(defaultMonthlySchedule, monthlyCleanup));
 }
