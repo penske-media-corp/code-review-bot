@@ -43,9 +43,6 @@ export async function monthlyCleanup (): Promise<void> {
 
     await prisma.codeReview.deleteMany({
         where: {
-            status: {
-                in: ['ready', 'withdrew'],
-            },
             updatedAt: {
                 lt: date,
             },
