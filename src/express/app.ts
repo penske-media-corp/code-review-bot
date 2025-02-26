@@ -18,8 +18,16 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.static(APP_CLIENT_BUILD_PATH));
+
 app.use(cookieParser());
-app.use(express.json());
+
+app.use((req, res, next) => {
+    if (['/api/github/webhooks'].includes(req.path)) {
+        next();
+    } else {
+        express.json()(req, res, next);
+    }
+});
 
 app.get( '/health-check', (req, res) => {
     res.json({
