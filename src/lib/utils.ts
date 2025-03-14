@@ -33,3 +33,11 @@ export async function extractJiraTicket (data: string): Promise<string> {
     }
     return '';
 }
+
+export async function extractNote (data: string): Promise<string> {
+    const regEx = await getJiraTicketRegEx();
+    if (regEx) {
+        return data.replace(regEx, '').replace(/^[\s:-]+|[\s:-]+$/g, '');
+    }
+    return data;
+}
