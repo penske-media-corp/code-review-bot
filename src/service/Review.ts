@@ -217,6 +217,11 @@ const add = async ({jiraTicket, note, pullRequestLink, slackChannelId, slackMsgI
                 userId: user.id,
             }
         }) as CodeReviewRecord;
+
+        // Ensure our object contains the reviewers relation.
+        Object.assign(codeReview, {
+            reviewers: [],
+        });
     } else {
         await prisma.codeReviewRelation.deleteMany({
             where: {
