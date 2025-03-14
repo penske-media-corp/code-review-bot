@@ -41,3 +41,16 @@ export async function extractNote (data: string): Promise<string> {
     }
     return data;
 }
+
+/**
+ * Return the eclipsed string:
+ *  Examples:
+ *   - "First part of string...last part of string."
+ *   - "Clipped string..."
+ */
+export function eclipse (data: string, first: number, last: number = 0): string {
+    if (first + last >= data.length) {
+        return data;
+    }
+    return data.substring(0, first).trim() + '...' + (first > data.length && last ? data.slice(-last) : '').trim();
+}
