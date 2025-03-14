@@ -22,6 +22,7 @@ app.use(express.static(APP_CLIENT_BUILD_PATH));
 app.use(cookieParser());
 
 app.use((req, res, next) => {
+    // @octokit/webhooks v12+ endpoint need to be excluded from json middleware.
     if (['/api/github/webhooks'].includes(req.path)) {
         next();
     } else {
