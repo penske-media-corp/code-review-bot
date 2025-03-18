@@ -25,6 +25,7 @@ import type {
     UserInfo
 } from './types';
 import {
+    eclipse,
     extractJiraTicket,
     extractPullRequestLink
 } from '../lib/utils';
@@ -356,7 +357,7 @@ export async function sendCodeReviewSummary (channel: string): Promise<void> {
                 },
                 {
                     type: 'text',
-                    text: `\nRequested by ${codeReview.user.displayName}.${
+                    text: `\n${codeReview.note?.length ? `${eclipse(codeReview.note, 80)}\n` : ''}Requested by ${codeReview.user.displayName}.${
                         reviewers.length > 0 ? ` Reviewing by ${reviewers.join(', ')}.` : ''
                     }${
                         approvers.length > 0 ? ` Approved by ${approvers.join(', ')}.` : ''

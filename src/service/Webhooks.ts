@@ -15,7 +15,8 @@ import Review, {
 } from './Review';
 import {
     extractJiraTicket,
-    extractRepository
+    extractNote,
+    extractRepository,
 } from '../lib/utils';
 import {
     getRepositoryNumberOfApprovals,
@@ -114,6 +115,7 @@ const handlePullRequestOpened = async (payload: PullRequestAssignedEvent | PullR
 
     const data = {
         jiraTicket: await extractJiraTicket(title + ' ' + branch),
+        note: await extractNote(title),
         pullRequestLink,
         slackChannelId: channel,
         slackMsgUserId: user.slackUserId,
