@@ -12,12 +12,7 @@ export const saveController: RequestHandler = (req, res) => {
             return;
         }
 
-        const {note, jiraTicket} = req.body as {note: string; jiraTicket: string};
-
-        if (typeof note !== 'string' || typeof jiraTicket !== 'string') {
-            res.json({error: 'Invalid note data.'});
-            return;
-        }
+        const {note = '', jiraTicket = ''} = req.body as {note: string; jiraTicket: string};
 
         void prisma.codeReview.update({
             where: {

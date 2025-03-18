@@ -56,9 +56,10 @@ async function main() {
 
     if (codeReviews.length < codeReviewsCount) {
         for (let i = 0; i < codeReviewsCount-codeReviews.length; i++) {
+            const date = faker.date.past();
             const data = {
-                createdAt: faker.date.past(),
-                updatedAt: faker.date.recent(),
+                createdAt: date,
+                updatedAt: date,
                 userId: faker.helpers.arrayElement(users).id,
                 pullRequestLink: `https://github.com/company/repo/pull/${faker.datatype.number({max: codeReviewsCount})}`,
                 status: 'pending',
@@ -75,13 +76,17 @@ async function main() {
     for (let i = 0; i < users.length; i++) {
         const reviewer = faker.helpers.arrayElement(users);
         const codeReview = faker.helpers.arrayElement(codeReviews);
-        await prisma.codeReviewRelation.create({
-            data: {
-                userId: reviewer.id,
-                codeReviewId: codeReview.id,
-                status: faker.helpers.arrayElement(['pending', 'approved']),
-            }
-        })
+        try {
+            await prisma.codeReviewRelation.create({
+                data: {
+                    createdAt: codeReview.createdAt,
+                    updatedAt: codeReview.updatedAt,
+                    userId: reviewer.id,
+                    codeReviewId: codeReview.id,
+                    status: faker.helpers.arrayElement(['pending', 'approved']),
+                }
+            })
+        } catch (e) {}
     }
 
     let archives = await prisma.archive.findMany();

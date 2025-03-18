@@ -33,3 +33,26 @@ export async function extractJiraTicket (data: string): Promise<string> {
     }
     return '';
 }
+
+export async function extractNote (data: string): Promise<string> {
+    const regEx = await getJiraTicketRegEx();
+    if (regEx) {
+        // We want to remove the Jira ticket & any leading or trailing spaces and dashes.
+        // Jira ticket is extracted and stored in a separate field so we don't need that info in the note field.
+        return data.replace(regEx, '').replace(/^[\s:-]+|[\s:-]+$/g, '');
+    }
+    return data;
+}
+
+/**
+ * Return the eclipsed string:
+ *  Examples:
+ *   - "First part of string...last part of string."
+ *   - "Clipped string..."
+ */
+export function eclipse (data: string, first: number, last: number = 0): string {
+    if (first + last >= data.length) {
+        return data;
+    }
+    return data.substring(0, first).trim() + '...' + (first > data.length && last ? data.slice(-last) : '').trim();
+}

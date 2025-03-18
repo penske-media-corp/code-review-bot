@@ -5,16 +5,27 @@ import type {
     KnownBlock,
     ReactionAddedEvent,
     ReactionRemovedEvent,
+    RichTextBlock,
+    RichTextSection,
 } from '@slack/bolt';
 import type {
     ChatPostMessageArguments,
-    ConversationsRepliesResponse
+    ChatPostMessageResponse,
+    ConversationsRepliesResponse,
+    ReactionsAddArguments,
+    ReactionsAddResponse,
 } from '@slack/web-api';
+import type {
+    CodeReview,
+    CodeReviewRelation,
+    User
+} from '@prisma/client';
 import type {
     ReactionData,
     UserInfo
 } from './types';
 import {
+    eclipse,
     extractJiraTicket,
     extractPullRequestLink
 } from '../lib/utils';
@@ -114,6 +125,15 @@ export async function updateChannelInfo (): Promise<ChannelInfo[]> {
     return channelList;
 }
 
+export async function getSlackPermalink (channel: string, message_ts: string): Promise<string | null> {
+    const result = await slackBotApp.client.chat.getPermalink({
+        channel,
+        message_ts,
+    }).catch(() => null);
+
+    return result?.permalink ?? null;
+}
+
 export async function getReactionData (event: ReactionAddedEvent | ReactionRemovedEvent): Promise<ReactionData | null> {
     if (event.item.type !== 'message') {
         return null;
@@ -126,12 +146,13 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
         limit: 1,
         ts: event.item.ts,
     });
+    const botUserId = await getBotUserId();
 
     const getMessageInfo = async (data: ConversationsRepliesResponse): Promise<ReactionData> => {
         const message = (data.messages ?? [])[0] as GenericMessageEvent;
         let pullRequestLink = '';
         let jiraTicket = '';
-        let slackMsgUserId = message.user;
+        let slackMsgUserId = message.user === botUserId ? event.user : message.user;
         let note = '';
 
         // Try to parse github pull request from text message if available.
@@ -163,7 +184,7 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
             slackThreadTs: message.thread_ts ?? message.ts,
         } as ReactionData;
     };
-    const botUserId = await getBotUserId();
+
     let messageInfo = await getMessageInfo(result);
 
     if (!result.client_msg_id && botUserId === event.item_user && !messageInfo.pullRequestLink.length &&
@@ -214,7 +235,7 @@ export function getGithubBotEventData (event: GenericMessageEvent): GithubBotEve
     }
 
     if (!['Pull request merged by', 'Pull request closed by']
-        .some((search) => pretext.includes('Pull request closed by'))) {
+        .some(() => pretext.includes('Pull request closed by'))) {
         return null;
     }
 
@@ -225,61 +246,220 @@ export function getGithubBotEventData (event: GenericMessageEvent): GithubBotEve
     };
 }
 
-export async function postSlackMessage (slackMessage: ChatPostMessageArguments): Promise<void> {
-    logDebug('postSlackMessage', slackMessage);
-    if (!slackMessage.channel) {
-        return;
-    }
-    await slackBotApp.client.chat.postMessage(slackMessage).catch(logError);
+export async function addSlackReaction (reaction: ReactionsAddArguments): Promise<ReactionsAddResponse> {
+    return slackBotApp.client.reactions.add(reaction);
 }
 
-export async function sendCodeReviewSummary (channel: string): Promise<void> {
-    let text = '*Reminders!*';
+export async function postSlackMessage (slackMessage: ChatPostMessageArguments, reaction?: string): Promise<ChatPostMessageResponse | null> {
+    logDebug('postSlackMessage', JSON.stringify(slackMessage, null, 2));
+    if (!slackMessage.channel) {
+        return null;
+    }
+    if (reaction && slackMessage.thread_ts) {
+        void addSlackReaction({
+            name: reaction,
+            channel: slackMessage.channel,
+            timestamp: slackMessage.thread_ts,
+        }).catch((error) => {
+            logError(error);
+        });
+    }
+    return slackBotApp.client.chat.postMessage(slackMessage).catch((error) => {
+        logError(error);
+        return null;
+    });
+}
 
-    const result = await prisma.codeReview.groupBy({
-        by: ['status'],
+/**
+ * Send the code review request summary to the slack channel.
+ */
+export async function sendCodeReviewSummary (channel: string): Promise<void> {
+    const maxRequestsToList = 20;
+
+    /**
+     * Return the prisma query to get the list of code review requests for the given status.
+     */
+    const prismaQueryStatus = (status: 'inprogress' | 'pending'): {
         where: {
-            status: {
-                in: ['pending', 'inprogress'],
-            },
+            status: 'inprogress' | 'pending';
+            slackChannelId: string;
+        };
+        include: {
+            user: boolean;
+            reviewers: {
+                include: {
+                    reviewer: boolean;
+                };
+            };
+        };
+        orderBy: {
+            createdAt: 'asc' | 'desc';
+        };
+    } => ({
+        where: {
+            status: status,
             slackChannelId: channel,
         },
-        _count: {
-            status: true,
-        }
+        include: {
+            user: true,
+            reviewers: {
+                include: {
+                    reviewer: true,
+                }
+            },
+        },
+        orderBy: {
+            createdAt: 'desc',
+        },
     });
+    const pendingReviews = await prisma.codeReview.findMany(prismaQueryStatus('pending'));
+    const inProgressReviews = await prisma.codeReview.findMany(prismaQueryStatus('inprogress'));
 
-    // Translate result array into object.  @TODO: Should combine the code an move the groupBy codes into a reusable module.
-    const counts: {pending?: number; inprogress?: number} = result.reduce((acc, item) => {
-        return {
-            ...acc,
-            ...{
-                [item.status]: item._count.status,
-            }
-        };
-    }, {});
-
-    const pendingCount: number = counts.pending ?? 0;
-    const inProgressCount: number = counts.inprogress ?? 0;
-
-    if (pendingCount + inProgressCount === 0) {
+    if (pendingReviews.length === 0 && inProgressReviews.length === 0) {
         return;
     }
 
+    const blocks: KnownBlock[] = [
+        {
+            type: 'header',
+            text: {
+                type: 'plain_text',
+                text: ':exclamation: Reminder:',
+                emoji: true
+            }
+        },
+        {
+            'type': 'divider'
+        },
+    ];
+    const pendingRequests: RichTextBlock = {
+        type: 'rich_text',
+        elements: [],
+    };
+    const inProgressRequests: RichTextBlock = {
+        type: 'rich_text',
+        elements: [],
+    };
     const webLink = `${APP_BASE_URL}?channel=${channel}`;
+    const generateRichTextSection = (codeReview: CodeReview & {user: User; reviewers: (CodeReviewRelation & {reviewer: User})[]}): RichTextSection => {
+        const extractDisplayName = ({reviewer}: {reviewer: User}): string => reviewer.displayName;
+        const reviewers: string[] = codeReview.reviewers.map(extractDisplayName);
+        const approvers: string[] = codeReview.reviewers.filter((r) => r.status === 'approved').map(extractDisplayName);
+        const prLinkLabel = codeReview.pullRequestLink.replace(/.*penske-media-corp\//, '').replace(/.*github.com\//, '');
 
-    if (pendingCount > 0) {
-        text = `${text}\nThere ${pluralize('is', pendingCount)} <${webLink}|*${pendingCount}* outstanding ${pluralize('request', pendingCount)}> waiting for code review.`;
+        return {
+            type: 'rich_text_section',
+            elements: [
+                {
+                    type: 'link',
+                    url: codeReview.pullRequestLink,
+                    text: `${codeReview.jiraTicket ? codeReview.jiraTicket + ': ' : ''}${prLinkLabel}`
+                },
+                {
+                    type: 'text',
+                    text: `\n${codeReview.note?.length ? `${eclipse(codeReview.note, 80)}\n` : ''}Requested by ${codeReview.user.displayName}.${
+                        reviewers.length > 0 ? ` Reviewing by ${reviewers.join(', ')}.` : ''
+                    }${
+                        approvers.length > 0 ? ` Approved by ${approvers.join(', ')}.` : ''
+                    }`,
+                }
+            ]
+        };
+    };
+
+    if (pendingReviews.length > 0) {
+
+        pendingRequests.elements.push({
+            type: 'rich_text_section',
+            elements: [
+                {
+                    type: 'link',
+                    url: `${webLink}&status=pending`,
+                    text: `${pendingReviews.length} outstanding ${pluralize('request', pendingReviews.length)}`,
+                    style: {
+                        bold: true,
+                    }
+                },
+                {
+                    type: 'text',
+                    text: ` ${pluralize('is', pendingReviews.length)} waiting for code review:`,
+                }
+            ]
+        });
+
+        pendingRequests.elements.push({
+            type: 'rich_text_list',
+            style: 'bullet',
+            indent: 0,
+            elements: [
+                ...pendingReviews.slice(0, maxRequestsToList).map(generateRichTextSection),
+                ...pendingReviews.length > maxRequestsToList ? [{
+                    type: 'rich_text_section',
+                    elements: [
+                        {
+                            type: 'link',
+                            url: `${webLink}&status=pending`,
+                            text: `...too many to list, click to see all ${pendingReviews.length} requests!`,
+                        }
+                    ]
+                } as RichTextSection] : [],
+            ],
+        });
     }
-    if (inProgressCount > 0) {
-        text = `${text}\n*${inProgressCount}* in progress ${pluralize('request', inProgressCount)} ${pluralize('is', inProgressCount)} waiting for approval.`;
+
+    if (inProgressReviews.length > 0) {
+
+        inProgressRequests.elements.push({
+            type: 'rich_text_section',
+            elements: [
+                {
+                    type: 'link',
+                    url: `${webLink}&status=inprogress`,
+                    text: `${inProgressReviews.length} in progress ${pluralize('request', inProgressReviews.length)}`,
+                    style: {
+                        bold: true,
+                    }
+                },
+                {
+                    type: 'text',
+                    text: ` ${pluralize('is', inProgressReviews.length)} waiting for approval:`,
+                }
+            ]
+        });
+
+        inProgressRequests.elements.push({
+            type: 'rich_text_list',
+            style: 'bullet',
+            indent: 0,
+            elements: [
+                ...inProgressReviews.slice(0, maxRequestsToList).map(generateRichTextSection),
+                ...inProgressReviews.length > maxRequestsToList ? [{
+                    type: 'rich_text_section',
+                    elements: [
+                        {
+                            type: 'link',
+                            url: `${webLink}&status=inprogress`,
+                            text: `...too many to list, click to see all ${inProgressReviews.length} requests!`,
+                        }
+                    ]
+                } as RichTextSection] : [],
+            ],
+        });
+    }
+
+    if (pendingRequests.elements.length) {
+        blocks.push(pendingRequests);
+    }
+    if (inProgressRequests.elements.length) {
+        blocks.push(inProgressRequests);
     }
 
     logDebug(`Sending reminders to channel ${channel}`);
     await postSlackMessage({
-        mrkdwn: true,
+        unfurl_links: false,
+        unfurl_media: false,
         channel,
-        text,
+        blocks,
     });
 }
 
@@ -324,7 +504,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
     });
 
     const session = (user?.session ?? {filterChannel: '', filterStatus: ''}) as {filterChannel?: string; filterStatus?: string};
-    const filterChannel = slackChannelId || session.filterChannel || 'all';
+    const filterChannel = slackChannelId || session.filterChannel || 'all'; // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing
     const filterStatus = codeReviewStatus ?? session.filterStatus;
 
     if (user) {
@@ -391,6 +571,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         options,
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const buttons: any[] = [
         filterByChannel,
         buttonPendingReviews,

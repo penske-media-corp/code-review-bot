@@ -62,7 +62,7 @@ export const actionController: RequestHandler = (req, res) => {
                             data: formatApiCodeReviewRecord(result.codeReview),
                         });
                         if (['closed'].includes(codeReview.status)) {
-                            void postSlackMessage(result.slackNotifyMessage as ChatPostMessageArguments);
+                            void postSlackMessage(result.slackNotifyMessage as ChatPostMessageArguments, 'done');
                         }
                     });
                     break;

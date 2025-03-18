@@ -217,6 +217,11 @@ const add = async ({jiraTicket, note, pullRequestLink, slackChannelId, slackMsgI
                 userId: user.id,
             }
         }) as CodeReviewRecord;
+
+        // Ensure our object contains the reviewers relation.
+        Object.assign(codeReview, {
+            reviewers: [],
+        });
     } else {
         await prisma.codeReviewRelation.deleteMany({
             where: {
@@ -257,7 +262,7 @@ const add = async ({jiraTicket, note, pullRequestLink, slackChannelId, slackMsgI
     const numberApprovalRequired = await getRepositoryNumberOfApprovals(extractRepository(codeReview.pullRequestLink));
 
     return {
-        message: `*${userDisplayName}* has request a code review! ${numberApprovalRequired} ${pluralize('reviewer', numberApprovalRequired)} :eyes: ${pluralize('is', numberApprovalRequired)} needed.`,
+        message: `*${userDisplayName}* has requested a code review! ${numberApprovalRequired} ${pluralize('reviewer', numberApprovalRequired)} :eyes: ${pluralize('is', numberApprovalRequired)} needed.`,
         codeReview,
     };
 };
@@ -316,6 +321,24 @@ const claim = async (codeReview: CodeReviewRecord, slackUserId: string): Promise
         slackNotifyMessage: {
             channel: codeReview.slackChannelId,
             text: `<@${requestSlackUserId}>, ${message}`,
+            thread_ts: codeReview.slackThreadTs,
+        },
+    };
+};
+
+const assign = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
+    await setCodeReviewerStatus(codeReview, slackUserId, 'pending');
+    const stats = await calculateReviewStats(codeReview);
+    const count = stats.reviewerCount + stats.approvalCount;
+    const message = getNumberReviewMessage(count, numberReviewRequired);
+
+    return {
+        codeReview,
+        message,
+        slackNotifyMessage: {
+            channel: codeReview.slackChannelId,
+            text: `<@${slackUserId}>, You are requested to do the code review. ${message}`,
             thread_ts: codeReview.slackThreadTs,
         },
     };
@@ -421,7 +444,7 @@ const requestReview = async (codeReview: CodeReviewRecord): Promise<ReviewAction
     const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const stats = await calculateReviewStats(codeReview);
     const count = stats.reviewerCount + stats.approvalCount;
-    const message = `*${userDisplayName}* has request another code review! ${getNumberReviewMessage(count, numberReviewRequired)}`;
+    const message = `*${userDisplayName}* has requested another code review! ${getNumberReviewMessage(count, numberReviewRequired)}`;
     const notifyMessage: string[] = codeReview.reviewers
         .filter((r) => r.status !== 'pending')
         .map((r) => `<@${r.reviewer.slackUserId}>`);
@@ -492,6 +515,7 @@ const close = async (codeReview: CodeReviewRecord, closeMessage?: string): Promi
 export default {
     add,
     approve,
+    assign,
     claim,
     close,
     finish,

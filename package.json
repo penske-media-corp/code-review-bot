@@ -1,6 +1,6 @@
 {
   "name": "code-review-slack-bot",
-  "version": "1.5.0",
+  "version": "1.9.1",
   "description": "Slack Bolt app for tracking code reviews",
   "license": "GPLv2",
   "engines": {
@@ -18,7 +18,6 @@
     "build:watch": "tsc -w -p .",
     "lint": "eslint ./src ./client/src",
     "start": "npm run build && node build/server.js",
-    "dev": "concurrently \"cd client && npm start\" \"nodemon --watch build build/server.js\" \"tsc -w -p .\" ",
     "dev-once": "npm ci && prisma migrate dev && prisma generate && prisma db seed && npm run build && cd client && npm ci && npm run build"
   },
   "nodemonConfig": {
@@ -28,7 +27,7 @@
     "delay": 2500
   },
   "dependencies": {
-    "@octokit/webhooks": "^10.7.0",
+    "@octokit/webhooks": "^12.3.1",
     "@prisma/client": "^4.11.0",
     "@slack/bolt": "^3.12.2",
     "cookie-parser": "^1.4.6",
@@ -40,6 +39,7 @@
     "openid-client": "^5.4.0",
     "passport": "^0.6.0",
     "pluralize": "^8.0.0",
+    "react-router-dom": "^6.20.1",
     "reflect-metadata": "^0.1.13",
     "tslib": "^2.5.0"
   },

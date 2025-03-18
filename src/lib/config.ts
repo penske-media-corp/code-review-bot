@@ -6,9 +6,13 @@ import option from './option';
 const OPTION_NAME_REPO_NUMBER_REVIEW   = 'repository-number-review';
 const OPTION_NAME_REPO_NUMBER_APPROVAL = 'repository-number-approval';
 const OPTION_NAME_JIRA_TICKET_PATTERNS = 'jira-ticket-regex';
+const OPTION_NAME_DEFAULT_CHANNEL = 'default-channel';
+const OPTION_NAME_REPO_CHANNEL = 'repository-channel';
+const OPTION_NAME_DATA_RETENTION_IN_MONTH = 'data-retention-in-month';
 
 const DEFAULT_NUMBER_REVIEW   = 2;
 const DEFAULT_NUMBER_APPROVAL = 2;
+const DEFAULT_DATA_RETENTION_IN_MONTH = 12;
 
 export const slackActions = {
     approved: ['approved', 'white_check_mark', 'heavy_check_mark'],
@@ -21,6 +25,11 @@ export const slackActions = {
 
 export const defaultScheduleReminder = {
     rule: '0 12 * * 1-5', // Mon-Fri 12:00p PT, 3:00p ET, 20:00 UTC
+    tz: 'America/Los_Angeles',
+};
+
+export const defaultMonthlySchedule = {
+    rule: '0 12 1 * *', // 1st of every month at 12:00p PT, 3:00a ET, 20:00 UTC
     tz: 'America/Los_Angeles',
 };
 
@@ -126,4 +135,57 @@ export const getJiraTicketRegEx = async (): Promise<RegExp | null> => {
 export const setJiraTicketRegEx = async (patterns: string): Promise<void> => {
     await cache.set(OPTION_NAME_JIRA_TICKET_PATTERNS, patterns);
     await option.global.set(OPTION_NAME_JIRA_TICKET_PATTERNS, patterns);
+};
+
+export const getDefaultReviewChannel = async (): Promise<string> => {
+    let channel = await cache.get(OPTION_NAME_DEFAULT_CHANNEL) as string;
+
+    if (!channel) {
+        channel = await option.global.get(OPTION_NAME_DEFAULT_CHANNEL) as string;
+    }
+    return channel || '';
+};
+
+export const setDefaultReviewChannel = async (channelName: string): Promise<void> => {
+    await cache.set(OPTION_NAME_DEFAULT_CHANNEL, channelName);
+    await option.global.set(OPTION_NAME_DEFAULT_CHANNEL, channelName);
+};
+
+export const getReviewChannelForRepository = async (repositoryName: string): Promise<string> => {
+    const cacheKey = `repo-channel-${repositoryName}`;
+    let channel = await cache.get(cacheKey) as string;
+
+    if (!channel) {
+        const options = (await option.global.get(OPTION_NAME_REPO_CHANNEL) ?? {}) as Record<string, string>;
+
+        channel = options[repositoryName] || await getDefaultReviewChannel();
+    }
+
+    return channel;
+};
+
+export const setReviewChannelForRepository = async (repositoryName: string, channelName: string): Promise<void> => {
+    const options = (await option.global.get(OPTION_NAME_REPO_CHANNEL) ?? {}) as Record<string, string>;
+
+    options[repositoryName] = channelName;
+    await option.global.set(OPTION_NAME_REPO_CHANNEL, options);
+};
+
+export const getDataRetentionInMonth = async (): Promise<number> => {
+    let value: number | null = await cache.get(OPTION_NAME_DATA_RETENTION_IN_MONTH) as number | null;
+
+    if (!value) {
+        value = await option.global.get(OPTION_NAME_DATA_RETENTION_IN_MONTH) as number | null;
+    }
+
+    return value ?? DEFAULT_DATA_RETENTION_IN_MONTH;
+};
+
+export const setDataRetentionInMonth = async (months: number): Promise<void> => {
+    if (!months) {
+        return;
+    }
+
+    await cache.set(OPTION_NAME_DATA_RETENTION_IN_MONTH, months);
+    await option.global.set(OPTION_NAME_DATA_RETENTION_IN_MONTH, months);
 };

@@ -36,6 +36,7 @@ export const load = async ({slackUserId, userId, id, select}: LoadParams): Promi
                     email: true,
                     id: true,
                     slackUserId: true,
+                    githubId: true,
                 },
                 select
             ),
@@ -109,8 +110,8 @@ export const sync = async ({displayName, email, slackUserId}: {displayName?: str
     return user;
 };
 
-export const getSessionValueByKey = (user: User, name: string): any => {
-    const session = user.session as Partial<{[index: string]: any} | null>;
+export const getSessionValueByKey = (user: User, name: string): any => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    const session = user.session as Partial<{[index: string]: any} | null>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     if (!session || typeof session !== 'object') {
         return null;
@@ -153,7 +154,7 @@ export const validateAuthToken = async ({id, token}: {id: number; token: string}
         return null;
     }
 
-    const session = user.session as Record<string, any>;
+    const session = user.session as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
     delete session.token;
 

@@ -12,6 +12,7 @@ import type {
     CodeReview,
     User,
 } from '../lib/types';
+import Cookies from 'js-cookie';
 import ExpandedRow from './ExpandedRow';
 import FancyProgress from './FancyProgress';
 import {format} from 'date-fns';
@@ -37,20 +38,17 @@ const columns: TableColumn<CodeReview>[] = [
         name: 'Date',
         selector: (row: CodeReview) => format(new Date(row.createdAt), 'MMM dd, yyyy'),
         maxWidth: '7em',
-        compact: true,
     },
     {
         name: 'Owner',
         selector: (row: CodeReview) => row.owner,
-        maxWidth: '12em',
-        compact: true,
+        maxWidth: '10em',
     },
     {
         name: 'Jira Ticket',
         format: (row: CodeReview) => row.jiraTicket && <a href={`${row.jiraTicketLinkUrl}`}>{row.jiraTicket}</a>,
         selector: () => true,
         maxWidth: '7em',
-        compact: true,
     },
     {
         name: 'Pull Request',
@@ -59,33 +57,28 @@ const columns: TableColumn<CodeReview>[] = [
                 <a href={row.pullRequestLink}>{row.pullRequestLink.replace(/.*\/(.*?\/pull\/\d+)/,'$1')}</a>
             </div>),
         selector: () => true,
-        maxWidth: '20em',
-        compact: true,
+        maxWidth: '15em',
     },
     {
         name: 'Slack Link',
         format: (row: CodeReview) => row.slackThreadTs && row.slackPermalink && <a href={row.slackPermalink ?? '#'}>{row.slackThreadTs}</a>,
         selector: () => true,
-        maxWidth: '12em',
-        compact: true,
+        maxWidth: '10em',
     },
     {
         name: 'Reviewers',
         selector: (row: CodeReview) => row.reviewers?.join(', ') ?? '',
         wrap: true,
-        compact: true,
     },
     {
         name: 'Approvers',
         selector: (row: CodeReview) => row.approvers?.join(', ') ?? '',
         wrap: true,
-        compact: true,
     },
     {
         name: 'Request Changes',
         selector: (row: CodeReview) => row.requestChanges?.join(', ') ?? '',
         wrap: true,
-        compact: true,
     },
 ];
 
@@ -95,6 +88,11 @@ const paginationComponentOptions = {
     rangeSeparatorText: 'of',
     selectAllRowsItem: false,
 };
+
+const cellPaddings = {
+    paddingLeft: '0',
+    paddingRight: '0.5em',
+}
 
 const customStyles = {
     header: {
@@ -113,6 +111,16 @@ const customStyles = {
     expanderRow: {
         style: {
             backgroundColor: '#252525',
+        }
+    },
+    headCells: {
+        style: {
+            ...cellPaddings,
+        }
+    },
+    cells: {
+        style: {
+            ...cellPaddings,
         }
     }
 };
@@ -144,11 +152,13 @@ createTheme('custom', {
  * @constructor
  */
 const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
+    const queryString = new URLSearchParams(window.location.search);
     const [dataSet, setDataSet] = useState([] as CodeReview[]);
     const [loading, setLoading] = useState(true);
     const [totalRows, setTotalRows] = useState(0);
-    const [pageSize, setPageSize] = useState(10);
+    const [pageSize, setPageSize] = useState(Number(Cookies.get('pageSize') || '10'));
     const [currentPage, setCurrentPage] = useStateWithDeps(1, [channel, status]);
+    const [expandedRow] = useState(queryString.get('expanded') || Cookies.get('expanded') || 'no');
 
     /**
      * Fetch the list of code review.
@@ -210,6 +220,14 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
         });
     }, [channel, currentPage, pageSize, status]);
 
+    useEffect(() => {
+        Cookies.set('pageSize', String(pageSize));
+    }, [pageSize]);
+
+    useEffect(() => {
+        Cookies.set('expanded', expandedRow);
+    }, [expandedRow]);
+
     return (
         <div id="reviews-list">
             <DataTable
@@ -219,9 +237,9 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
                 data={dataSet}
                 progressPending={loading}
                 paginationPerPage={pageSize}
-                paginationRowsPerPageOptions={[10,20,30,50,100]}
-                pagination
-                paginationServer
+                paginationRowsPerPageOptions={[10,15,20,25,30,40,50,100]}
+                pagination={true}
+                paginationServer={true}
                 paginationTotalRows={totalRows}
                 paginationComponentOptions={paginationComponentOptions}
                 progressComponent={<FancyProgress/>}
@@ -229,11 +247,11 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
                 onChangePage={setCurrentPage}
                 paginationDefaultPage={currentPage}
 
-                fixedHeader
-                striped
-                highlightOnHover
-                dense
-                persistTableHead
+                fixedHeader={true}
+                striped={true}
+                highlightOnHover={true}
+                dense={true}
+                persistTableHead={true}
 
                 conditionalRowStyles={[
                     {
@@ -242,8 +260,10 @@ const RenderReviewList = ({channel, status, user}: RenderReviewListProps) => {
                     }
                 ]}
 
-                expandableRows
+                expandableRows={true}
                 expandableRowsComponent={expandedRowComponent}
+                expandableRowExpanded={() => expandedRow === 'yes'}
+                expandableInheritConditionalStyles={true}
             />
         </div>
     );
