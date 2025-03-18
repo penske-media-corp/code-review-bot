@@ -37,6 +37,8 @@ export async function extractJiraTicket (data: string): Promise<string> {
 export async function extractNote (data: string): Promise<string> {
     const regEx = await getJiraTicketRegEx();
     if (regEx) {
+        // We want to remove the Jira ticket & any leading or trailing spaces and dashes.
+        // Jira ticket is extracted and stored in a separate field so we don't need that info in the note field.
         return data.replace(regEx, '').replace(/^[\s:-]+|[\s:-]+$/g, '');
     }
     return data;
