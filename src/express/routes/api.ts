@@ -15,11 +15,12 @@ import sessionController from '../controllers/api/session';
 
 const apiRouter = express.Router();
 
+// These routes don't need to be authenticated.
 apiRouter.use('/', handleWebhooks);
-
-// All routes from here on are required to authenticate
-apiRouter.use('/', enforceAuthentication);
 apiRouter.get('/session', sessionController);
+
+// All routes from here on are required to be authenticated.
+apiRouter.use('/', enforceAuthentication);
 apiRouter.get('/profile', profileController);
 apiRouter.get('/action/:action/:value', actionController);
 apiRouter.post('/action/save/:value', saveController);
