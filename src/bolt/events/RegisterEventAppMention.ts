@@ -1,4 +1,8 @@
-import {channelList, updateChannelInfo} from '../utils';
+import {
+    channelList,
+    getUserInfo,
+    updateChannelInfo
+} from '../utils';
 import {
     getDataRetentionInMonth,
     getDefaultReviewChannel,
@@ -102,36 +106,42 @@ export default function registerEventAppMention (app: App): void {
                     });
                     break;
                 case 'slack-github-id': // @pmc_code_review_bot set slack-github-id <slack-id> <github-id>
+                {
                     if (!result[2] || !result[3]) {
                         return;
                     }
+                    const inputSlackUserId = result[2];
+                    const inputGithubUserId = result[3];
 
-                    await prisma.user.findFirst({
+                    const userInfo = await getUserInfo(inputSlackUserId);
+
+                    if (!userInfo.displayName) {
+                        console.log(`Cannot locate slack user id ${inputSlackUserId}`);
+                        void say({
+                            text: `Cannot locate slack user id ${inputSlackUserId}`,
+                            thread_ts: thread_ts ?? ts,
+                        });
+
+                        return;
+                    }
+
+                    await prisma.user.update({
                         where: {
-                            slackUserId: result[2],
-                        }
-                    }).then((user) => {
-                        if (!user) {
-                            return;
-                        }
-
-                        void prisma.user.update({
-                            where: {
-                                id: user.id,
-                            },
-                            data: {
-                                githubId: result[3],
-                            },
-                        }).then((updatedUser) => {
-                            console.log('updated', updatedUser);
-                            void say({
-                                text: `Set *${updatedUser.displayName}*'s github login to *${updatedUser.githubId ?? ''}*`,
-                                thread_ts: thread_ts ?? ts,
-                            });
-                        }).catch(logError);
+                            id: (await User.findOrCreate(inputSlackUserId)).id
+                        },
+                        data: {
+                            githubId: inputGithubUserId,
+                        },
+                    }).then((updatedUser) => {
+                        console.log('updated', updatedUser);
+                        void say({
+                            text: `Set *${updatedUser.displayName}*'s github login to *${updatedUser.githubId ?? ''}*`,
+                            thread_ts: thread_ts ?? ts,
+                        });
                     }).catch(logError);
 
                     break;
+                }
                 case 'my-github-id': // @pmc_code_review_bot set my-github-id <github-id>
                     if (!slackUserId) {
                         return;

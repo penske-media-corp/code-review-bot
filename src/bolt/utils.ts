@@ -494,52 +494,60 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         value: 'mine',
         action_id: 'mine',
     };
-    let buttonWebLogin;
 
     // Retrieve the user session info from user record in db.
-    const user = await prisma.user.findFirst({
+    let user = await prisma.user.findFirst({
         where: {
             slackUserId,
         }
     });
 
+    if (!user) {
+        const userInfo = await getUserInfo(slackUserId);
+
+        user = await prisma.user.create({
+            data: {
+                email: userInfo.email,
+                displayName: userInfo.displayName,
+                slackUserId,
+            }
+        });
+    }
+
     const session = (user?.session ?? {filterChannel: '', filterStatus: ''}) as {filterChannel?: string; filterStatus?: string};
     const filterChannel = slackChannelId || session.filterChannel || 'all'; // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing
     const filterStatus = codeReviewStatus ?? session.filterStatus;
 
-    if (user) {
-        // If the request filter changed, save them to the session.
-        if (filterChannel !== session.filterChannel || filterStatus !== session.filterStatus) {
-            Object.assign(session, {filterChannel, filterStatus});
-            await prisma.user.update({
-                where: {
-                    id: user.id,
-                },
-                data: {
-                    session,
-                }
-            });
-        }
-
-        let authToken = getSessionValueByKey(user, 'token') as string | undefined;
-
-        if (!authToken) {
-            authToken = await generateAuthToken({id: user.id});
-        }
-
-        buttonWebLogin = {
-            type: 'button',
-            text: {
-                type: 'plain_text',
-                text: ':slack: Sign In To Web Version',
-                emoji: true
+    // If the request filter changed, save them to the session.
+    if (filterChannel !== session.filterChannel || filterStatus !== session.filterStatus) {
+        Object.assign(session, {filterChannel, filterStatus});
+        await prisma.user.update({
+            where: {
+                id: user.id,
             },
-            value: authToken,
-            action_id: 'weblogin',
-            url: `${APP_BASE_URL}/auth/slack/token/${user.id}/${authToken}`,
-        };
-
+            data: {
+                session,
+            }
+        });
     }
+
+    let authToken = getSessionValueByKey(user, 'token') as string | undefined;
+
+    if (!authToken) {
+        authToken = await generateAuthToken({id: user.id});
+    }
+
+    const buttonWebLogin = {
+        type: 'button',
+        text: {
+            type: 'plain_text',
+            text: ':slack: Sign In To Web Version',
+            emoji: true
+        },
+        value: authToken,
+        action_id: 'weblogin',
+        url: `${APP_BASE_URL}/auth/slack/token/${user.id}/${authToken}`,
+    };
 
     const channels = await getChannels();
     const options = [
@@ -579,9 +587,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         buttonMyReviews,
     ];
 
-    if (buttonWebLogin) {
-        buttons.push(buttonWebLogin);
-    }
+    buttons.push(buttonWebLogin);
 
     let blocks: (Block | KnownBlock)[] = [
         {
