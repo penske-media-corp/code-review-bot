@@ -19,7 +19,7 @@ import {
     extractRepository,
 } from '../lib/utils';
 import {
-    getRepositoryNumberOfApprovals,
+    getRepositoryNumberOfApproval,
     getReviewChannelForRepository,
     prisma
 } from '../lib/config';
@@ -103,7 +103,7 @@ const handlePullRequestOpened = async (payload: PullRequestAssignedEvent | PullR
         return null;
     }
 
-    const numberApprovalRequired = await getRepositoryNumberOfApprovals(repositoryName);
+    const numberApprovalRequired = await getRepositoryNumberOfApproval(repositoryName);
     const text = `*${user.displayName}* has requested a code review! ${numberApprovalRequired} ${pluralize('reviewer', numberApprovalRequired)} :eyes: ${pluralize('is', numberApprovalRequired)} needed.\n<${pullRequestLink}>`;
 
     logDebug(`Sending review request to channel "${channel}"`);
