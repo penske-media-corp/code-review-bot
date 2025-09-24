@@ -78,13 +78,13 @@ export default function registerEventAppMention (app: App): void {
                 case 'default-review':
                     await setDefaultNumberOfReviews(parseInt(result[2]));
                     await say({
-                        text: `Set default number of review required to ${await getDefaultNumberOfReviews()}`,
+                        text: `Set the default number of reviews required to ${await getDefaultNumberOfReviews()}`,
                         thread_ts: thread_ts ?? ts,
                     });                    break;
                 case 'default-approval':
                     await setDefaultNumberOfApprovals(parseInt(result[2]));
                     await say({
-                        text: `Set default number of approval required to ${await getDefaultNumberOfApprovals()}`,
+                        text: `Set the default number of approvals required to ${await getDefaultNumberOfApprovals()}`,
                         thread_ts: thread_ts ?? ts,
                     });                    break;
                     break;
@@ -98,14 +98,14 @@ export default function registerEventAppMention (app: App): void {
                 case 'review': // @pmc_code_review_bot set review <repo-name> 2
                     await setRepositoryNumberOfReviews(result[2], parseInt(result[3]));
                     await say({
-                        text: `Set number of review required for *${result[2]}* to ${await getRepositoryNumberOfReviews(result[2])}`,
+                        text: `Set the number of reviews required for the repository *${result[2]}* to ${await getRepositoryNumberOfReviews(result[2])}`,
                         thread_ts: thread_ts ?? ts,
                     });
                     break;
                 case 'approval': // @pmc_code_review_bot set approval <repo-name> 2
                     await setRepositoryNumberOfApprovals(result[2], parseInt(result[3]));
                     await say({
-                        text: `Set number of approval required for *${result[2]}* to ${await getRepositoryNumberOfApprovals(result[2])}`,
+                        text: `Set the number of approvals required for the repository *${result[2]}* to ${await getRepositoryNumberOfApprovals(result[2])}`,
                         thread_ts: thread_ts ?? ts,
                     });
                     break;
