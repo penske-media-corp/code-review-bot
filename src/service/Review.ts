@@ -5,8 +5,8 @@ import type {
     User,
 } from '@prisma/client';
 import {
-    getRepositoryNumberOfApproval,
-    getRepositoryNumberOfReview,
+    getRepositoryNumberOfApprovals,
+    getRepositoryNumberOfReviews,
     prisma
 } from '../lib/config';
 import type {ReactionData} from '../bolt/types';
@@ -158,7 +158,7 @@ async function setCodeReviewerStatus (codeReview: CodeReviewRecord, slackUserId:
 }
 
 async function calculateReviewStats (codeReview: CodeReviewRecord): Promise<{approvalCount: number; reviewerCount: number}> {
-    const numberReviewRequired = await getRepositoryNumberOfReview(extractRepository(codeReview.pullRequestLink));
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     let approvalCount = 0;
     let reviewerCount = 0;
 
@@ -259,7 +259,7 @@ const add = async ({jiraTicket, note, pullRequestLink, slackChannelId, slackMsgI
     }
 
     const userDisplayName = user.displayName;
-    const numberApprovalRequired = await getRepositoryNumberOfApproval(extractRepository(codeReview.pullRequestLink));
+    const numberApprovalRequired = await getRepositoryNumberOfApprovals(extractRepository(codeReview.pullRequestLink));
 
     return {
         message: `*${userDisplayName}* has requested a code review! ${numberApprovalRequired} ${pluralize('reviewer', numberApprovalRequired)} :eyes: ${pluralize('is', numberApprovalRequired)} needed.`,
@@ -268,7 +268,7 @@ const add = async ({jiraTicket, note, pullRequestLink, slackChannelId, slackMsgI
 };
 
 const approve = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
-    const numberApprovalRequired = await getRepositoryNumberOfApproval(extractRepository(codeReview.pullRequestLink));
+    const numberApprovalRequired = await getRepositoryNumberOfApprovals(extractRepository(codeReview.pullRequestLink));
     const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'approved');
     const userDisplayName = user.displayName;
@@ -305,7 +305,7 @@ const getNumberReviewMessage = (count: number, required: number): string => {
 };
 
 const claim = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
-    const numberReviewRequired = await getRepositoryNumberOfReview(extractRepository(codeReview.pullRequestLink));
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'pending');
     const userDisplayName = user.displayName;
@@ -327,7 +327,7 @@ const claim = async (codeReview: CodeReviewRecord, slackUserId: string): Promise
 };
 
 const assign = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
-    const numberReviewRequired = await getRepositoryNumberOfReview(extractRepository(codeReview.pullRequestLink));
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     await setCodeReviewerStatus(codeReview, slackUserId, 'pending');
     const stats = await calculateReviewStats(codeReview);
     const count = stats.reviewerCount + stats.approvalCount;
@@ -345,7 +345,7 @@ const assign = async (codeReview: CodeReviewRecord, slackUserId: string): Promis
 };
 
 const finish = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
-    const numberReviewRequired = await getRepositoryNumberOfReview(extractRepository(codeReview.pullRequestLink));
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const requestSlackUserId = codeReview.user.slackUserId;
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'finish');
     const userDisplayName = user.displayName;
@@ -397,7 +397,7 @@ const deleteRecord = async (codeReview: CodeReviewRecord, slackUserId: string): 
 };
 
 const requestChanges = async (codeReview: CodeReviewRecord, slackUserId: string): Promise<ReviewActionResult> => {
-    const numberReviewRequired = await getRepositoryNumberOfReview(extractRepository(codeReview.pullRequestLink));
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const user = await setCodeReviewerStatus(codeReview, slackUserId, 'change');
     const userDisplayName = user.displayName;
     const requestSlackUserId = codeReview.user.slackUserId;
@@ -441,7 +441,7 @@ const requestReview = async (codeReview: CodeReviewRecord): Promise<ReviewAction
     });
 
     const userDisplayName = codeReview.user.displayName;
-    const numberReviewRequired = await getRepositoryNumberOfReview(extractRepository(codeReview.pullRequestLink));
+    const numberReviewRequired = await getRepositoryNumberOfReviews(extractRepository(codeReview.pullRequestLink));
     const stats = await calculateReviewStats(codeReview);
     const count = stats.reviewerCount + stats.approvalCount;
     const message = `*${userDisplayName}* has requested another code review! ${getNumberReviewMessage(count, numberReviewRequired)}`;

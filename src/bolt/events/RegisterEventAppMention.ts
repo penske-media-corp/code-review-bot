@@ -5,22 +5,22 @@ import {
 } from '../utils';
 import {
     getDataRetentionInMonth,
-    getDefaultNumberOfApproval,
-    getDefaultNumberOfReview,
+    getDefaultNumberOfApprovals,
+    getDefaultNumberOfReviews,
     getDefaultReviewChannel,
     getGroupToMentionInChannel,
-    getRepositoryNumberOfApproval,
-    getRepositoryNumberOfReview,
+    getRepositoryNumberOfApprovals,
+    getRepositoryNumberOfReviews,
     getReviewChannelForRepository,
     prisma,
     setDataRetentionInMonth,
-    setDefaultNumberOfApproval,
-    setDefaultNumberOfReview,
+    setDefaultNumberOfApprovals,
+    setDefaultNumberOfReviews,
     setDefaultReviewChannel,
     setGroupToMentionInChannel,
     setJiraTicketRegEx,
-    setRepositoryNumberOfApproval,
-    setRepositoryNumberOfReview,
+    setRepositoryNumberOfApprovals,
+    setRepositoryNumberOfReviews,
     setReviewChannelForRepository,
 } from '../../lib/config';
 import {
@@ -76,15 +76,15 @@ export default function registerEventAppMention (app: App): void {
                     });
                     break;
                 case 'default-review':
-                    await setDefaultNumberOfReview(parseInt(result[2]));
+                    await setDefaultNumberOfReviews(parseInt(result[2]));
                     await say({
-                        text: `Set default number of review required to ${await getDefaultNumberOfReview()}`,
+                        text: `Set default number of review required to ${await getDefaultNumberOfReviews()}`,
                         thread_ts: thread_ts ?? ts,
                     });                    break;
                 case 'default-approval':
-                    await setDefaultNumberOfApproval(parseInt(result[2]));
+                    await setDefaultNumberOfApprovals(parseInt(result[2]));
                     await say({
-                        text: `Set default number of approval required to ${await getDefaultNumberOfApproval()}`,
+                        text: `Set default number of approval required to ${await getDefaultNumberOfApprovals()}`,
                         thread_ts: thread_ts ?? ts,
                     });                    break;
                     break;
@@ -96,16 +96,16 @@ export default function registerEventAppMention (app: App): void {
                     });
                     break;
                 case 'review': // @pmc_code_review_bot set review <repo-name> 2
-                    await setRepositoryNumberOfReview(result[2], parseInt(result[3]));
+                    await setRepositoryNumberOfReviews(result[2], parseInt(result[3]));
                     await say({
-                        text: `Set number of review required for *${result[2]}* to ${await getRepositoryNumberOfReview(result[2])}`,
+                        text: `Set number of review required for *${result[2]}* to ${await getRepositoryNumberOfReviews(result[2])}`,
                         thread_ts: thread_ts ?? ts,
                     });
                     break;
                 case 'approval': // @pmc_code_review_bot set approval <repo-name> 2
-                    await setRepositoryNumberOfApproval(result[2], parseInt(result[3]));
+                    await setRepositoryNumberOfApprovals(result[2], parseInt(result[3]));
                     await say({
-                        text: `Set number of approval required for *${result[2]}* to ${await getRepositoryNumberOfApproval(result[2])}`,
+                        text: `Set number of approval required for *${result[2]}* to ${await getRepositoryNumberOfApprovals(result[2])}`,
                         thread_ts: thread_ts ?? ts,
                     });
                     break;

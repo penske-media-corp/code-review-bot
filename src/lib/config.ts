@@ -74,41 +74,41 @@ export const setGroupToMentionInChannel = async (slackChannelId: string, notify:
     await option.set(slackChannelId, 'group-to-alert', notify);
 };
 
-export const getDefaultNumberOfReview = async (): Promise<number> => {
+export const getDefaultNumberOfReviews = async (): Promise<number> => {
     return (await option.global.get(OPTION_NAME_DEFAULT_NUMBER_REVIEW) as number) || DEFAULT_NUMBER_REVIEW;
 };
 
-export const getDefaultNumberOfApproval = async (): Promise<number> => {
+export const getDefaultNumberOfApprovals = async (): Promise<number> => {
     return (await option.global.get(OPTION_NAME_DEFAULT_NUMBER_APPROVAL) as number) || DEFAULT_NUMBER_APPROVAL;
 };
 
-export const getRepositoryNumberOfReview = async (repositoryName: string): Promise<number> => {
+export const getRepositoryNumberOfReviews = async (repositoryName: string): Promise<number> => {
     const cacheKey = `repo-review-${repositoryName}`;
     const value = await cache.get(cacheKey) as number;
 
     if (!value) {
         const options = (await option.global.get(OPTION_NAME_REPO_NUMBER_REVIEW) ?? {}) as {[index: string]: number};
 
-        return options[repositoryName] || getDefaultNumberOfReview();
+        return options[repositoryName] || getDefaultNumberOfReviews();
     }
 
     return value || DEFAULT_NUMBER_REVIEW;
 };
 
-export const getRepositoryNumberOfApproval = async (repositoryName: string): Promise<number> => {
+export const getRepositoryNumberOfApprovals = async (repositoryName: string): Promise<number> => {
     const cacheKey = `repo-approval-${repositoryName}`;
     const value = await cache.get(cacheKey) as number;
 
     if (!value) {
         const options = (await option.global.get(OPTION_NAME_REPO_NUMBER_APPROVAL) ?? {}) as {[index: string]: number};
 
-        return options[repositoryName] || getDefaultNumberOfApproval();
+        return options[repositoryName] || getDefaultNumberOfApprovals();
     }
 
     return value || DEFAULT_NUMBER_APPROVAL;
 };
 
-export const setRepositoryNumberOfReview = async (repositoryName: string, numberReviewRequired: number): Promise<void> => {
+export const setRepositoryNumberOfReviews = async (repositoryName: string, numberReviewRequired: number): Promise<void> => {
     if (!numberReviewRequired) {
         return;
     }
@@ -120,7 +120,7 @@ export const setRepositoryNumberOfReview = async (repositoryName: string, number
     await option.global.set(OPTION_NAME_REPO_NUMBER_REVIEW, options);
 };
 
-export const setRepositoryNumberOfApproval = async (repositoryName: string, numberReviewRequired: number): Promise<void> => {
+export const setRepositoryNumberOfApprovals = async (repositoryName: string, numberReviewRequired: number): Promise<void> => {
     if (!numberReviewRequired) {
         return;
     }
@@ -132,10 +132,10 @@ export const setRepositoryNumberOfApproval = async (repositoryName: string, numb
     await option.global.set(OPTION_NAME_REPO_NUMBER_APPROVAL, options);
 };
 
-export const setDefaultNumberOfReview = async (value: number): Promise<void> => {
+export const setDefaultNumberOfReviews = async (value: number): Promise<void> => {
     await option.global.set(OPTION_NAME_DEFAULT_NUMBER_REVIEW, value);
 };
-export const setDefaultNumberOfApproval = async (value: number): Promise<void> => {
+export const setDefaultNumberOfApprovals = async (value: number): Promise<void> => {
     await option.global.set(OPTION_NAME_DEFAULT_NUMBER_APPROVAL, value);
 };
 
