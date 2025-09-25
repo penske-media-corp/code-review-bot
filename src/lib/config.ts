@@ -3,16 +3,18 @@ import {PrismaClient} from '@prisma/client';
 import cache from './cache';
 import option from './option';
 
+const DEFAULT_DATA_RETENTION_IN_MONTH = 12;
+const DEFAULT_NUMBER_APPROVAL = 1;
+const DEFAULT_NUMBER_REVIEW   = 1;
+
+const OPTION_NAME_DATA_RETENTION_IN_MONTH = 'data-retention-in-month';
+const OPTION_NAME_DEFAULT_CHANNEL = 'default-channel';
+const OPTION_NAME_DEFAULT_NUMBER_REVIEW = 'default-number-review';
+const OPTION_NAME_DEFAULT_NUMBER_APPROVAL = 'default-number-approval';
+const OPTION_NAME_JIRA_TICKET_PATTERNS = 'jira-ticket-regex';
+const OPTION_NAME_REPO_CHANNEL = 'repository-channel';
 const OPTION_NAME_REPO_NUMBER_REVIEW   = 'repository-number-review';
 const OPTION_NAME_REPO_NUMBER_APPROVAL = 'repository-number-approval';
-const OPTION_NAME_JIRA_TICKET_PATTERNS = 'jira-ticket-regex';
-const OPTION_NAME_DEFAULT_CHANNEL = 'default-channel';
-const OPTION_NAME_REPO_CHANNEL = 'repository-channel';
-const OPTION_NAME_DATA_RETENTION_IN_MONTH = 'data-retention-in-month';
-
-const DEFAULT_NUMBER_REVIEW   = 2;
-const DEFAULT_NUMBER_APPROVAL = 2;
-const DEFAULT_DATA_RETENTION_IN_MONTH = 12;
 
 export const slackActions = {
     approved: ['approved', 'white_check_mark', 'heavy_check_mark'],
@@ -72,6 +74,14 @@ export const setGroupToMentionInChannel = async (slackChannelId: string, notify:
     await option.set(slackChannelId, 'group-to-alert', notify);
 };
 
+export const getDefaultNumberOfReviews = async (): Promise<number> => {
+    return (await option.global.get(OPTION_NAME_DEFAULT_NUMBER_REVIEW) as number) || DEFAULT_NUMBER_REVIEW;
+};
+
+export const getDefaultNumberOfApprovals = async (): Promise<number> => {
+    return (await option.global.get(OPTION_NAME_DEFAULT_NUMBER_APPROVAL) as number) || DEFAULT_NUMBER_APPROVAL;
+};
+
 export const getRepositoryNumberOfReviews = async (repositoryName: string): Promise<number> => {
     const cacheKey = `repo-review-${repositoryName}`;
     const value = await cache.get(cacheKey) as number;
@@ -79,7 +89,7 @@ export const getRepositoryNumberOfReviews = async (repositoryName: string): Prom
     if (!value) {
         const options = (await option.global.get(OPTION_NAME_REPO_NUMBER_REVIEW) ?? {}) as {[index: string]: number};
 
-        return options[repositoryName] || DEFAULT_NUMBER_REVIEW;
+        return options[repositoryName] || getDefaultNumberOfReviews();
     }
 
     return value || DEFAULT_NUMBER_REVIEW;
@@ -92,7 +102,7 @@ export const getRepositoryNumberOfApprovals = async (repositoryName: string): Pr
     if (!value) {
         const options = (await option.global.get(OPTION_NAME_REPO_NUMBER_APPROVAL) ?? {}) as {[index: string]: number};
 
-        return options[repositoryName] || DEFAULT_NUMBER_APPROVAL;
+        return options[repositoryName] || getDefaultNumberOfApprovals();
     }
 
     return value || DEFAULT_NUMBER_APPROVAL;
@@ -120,6 +130,13 @@ export const setRepositoryNumberOfApprovals = async (repositoryName: string, num
 
     Object.assign(options, {[repositoryName]: numberReviewRequired});
     await option.global.set(OPTION_NAME_REPO_NUMBER_APPROVAL, options);
+};
+
+export const setDefaultNumberOfReviews = async (value: number): Promise<void> => {
+    await option.global.set(OPTION_NAME_DEFAULT_NUMBER_REVIEW, value);
+};
+export const setDefaultNumberOfApprovals = async (value: number): Promise<void> => {
+    await option.global.set(OPTION_NAME_DEFAULT_NUMBER_APPROVAL, value);
 };
 
 export const getJiraTicketRegEx = async (): Promise<RegExp | null> => {

@@ -5,6 +5,8 @@ import {
 } from '../utils';
 import {
     getDataRetentionInMonth,
+    getDefaultNumberOfApprovals,
+    getDefaultNumberOfReviews,
     getDefaultReviewChannel,
     getGroupToMentionInChannel,
     getRepositoryNumberOfApprovals,
@@ -12,6 +14,8 @@ import {
     getReviewChannelForRepository,
     prisma,
     setDataRetentionInMonth,
+    setDefaultNumberOfApprovals,
+    setDefaultNumberOfReviews,
     setDefaultReviewChannel,
     setGroupToMentionInChannel,
     setJiraTicketRegEx,
@@ -25,6 +29,7 @@ import {
 } from '../../lib/log';
 import type {App} from '@slack/bolt';
 import User from '../../service/User';
+import cache from '../../lib/cache';
 
 export default function registerEventAppMention (app: App): void {
     app.event('app_mention', async ({event, say}) => {
@@ -37,6 +42,12 @@ export default function registerEventAppMention (app: App): void {
 
             await say({
                 text: `The current date and time is ${dateString}`,
+                thread_ts: thread_ts ?? ts,
+            });
+        } else if (/clear cache/i.test(text)) {
+            await cache.clear();
+            await say({
+                text: 'In memory cache is now cleared.',
                 thread_ts: thread_ts ?? ts,
             });
         } else {
@@ -64,6 +75,19 @@ export default function registerEventAppMention (app: App): void {
                         thread_ts: thread_ts ?? ts,
                     });
                     break;
+                case 'default-review':
+                    await setDefaultNumberOfReviews(parseInt(result[2]));
+                    await say({
+                        text: `Set the default number of reviews required to ${await getDefaultNumberOfReviews()}`,
+                        thread_ts: thread_ts ?? ts,
+                    });                    break;
+                case 'default-approval':
+                    await setDefaultNumberOfApprovals(parseInt(result[2]));
+                    await say({
+                        text: `Set the default number of approvals required to ${await getDefaultNumberOfApprovals()}`,
+                        thread_ts: thread_ts ?? ts,
+                    });                    break;
+                    break;
                 case 'repository': // @pmc_code_review_bot set repository <repo-name>
                     await setReviewChannelForRepository(result[2], channel);
                     await say({
@@ -74,14 +98,14 @@ export default function registerEventAppMention (app: App): void {
                 case 'review': // @pmc_code_review_bot set review <repo-name> 2
                     await setRepositoryNumberOfReviews(result[2], parseInt(result[3]));
                     await say({
-                        text: `Set number of review required for *${result[2]}* to ${await getRepositoryNumberOfReviews(result[2])}`,
+                        text: `Set the number of reviews required for the repository *${result[2]}* to ${await getRepositoryNumberOfReviews(result[2])}`,
                         thread_ts: thread_ts ?? ts,
                     });
                     break;
                 case 'approval': // @pmc_code_review_bot set approval <repo-name> 2
                     await setRepositoryNumberOfApprovals(result[2], parseInt(result[3]));
                     await say({
-                        text: `Set number of approval required for *${result[2]}* to ${await getRepositoryNumberOfApprovals(result[2])}`,
+                        text: `Set the number of approvals required for the repository *${result[2]}* to ${await getRepositoryNumberOfApprovals(result[2])}`,
                         thread_ts: thread_ts ?? ts,
                     });
                     break;
