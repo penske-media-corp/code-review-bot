@@ -599,6 +599,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         },
         {
             type: 'actions',
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             elements: buttons,
         },
         ...await getCodeReviewList({codeReviewStatus: filterStatus, slackChannelId: filterChannel, userId: user?.id})
