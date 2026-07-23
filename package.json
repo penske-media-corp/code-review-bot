@@ -5,7 +5,7 @@
   "license": "GPLv2",
   "engines": {
     "npm": ">=9.6.4",
-    "node": ">=20"
+    "node": ">=20.19"
   },
   "main": "build/server.js",
   "prisma": {
@@ -27,7 +27,7 @@
     "delay": 2500
   },
   "dependencies": {
-    "@octokit/webhooks": "^12.3.1",
+    "@octokit/webhooks": "^14.2.0",
     "@prisma/client": "^6.19.3",
     "@slack/bolt": "^5.0.0",
     "@slack/types": "^3.0.0",
