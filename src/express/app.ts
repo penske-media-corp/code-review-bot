@@ -40,7 +40,7 @@ app.get( '/health-check', (req, res) => {
 registerAuthenticationService(app);
 app.use('/api', apiRouter);
 
-app.get('*', (req, res) => {
+app.get('/*catchAll', (req, res) => {
     res.sendFile(path.resolve(APP_CLIENT_BUILD_PATH, 'index.html'));
 });
 

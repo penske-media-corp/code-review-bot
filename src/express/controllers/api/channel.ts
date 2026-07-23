@@ -4,7 +4,7 @@ import {
 } from '../../../bolt/utils';
 import type {RequestHandler} from 'express';
 
-export const channelController: RequestHandler = (req, res) => {
+export const channelController: RequestHandler<{id: string}> = (req, res) => {
     res.json(channelMaps[req.params.id]);
 };
 
