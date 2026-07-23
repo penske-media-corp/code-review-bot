@@ -13,12 +13,12 @@
   },
   "scripts": {
     "build": "rm -rf build && tsc -p .",
-    "build:client": "cd client && rm -rf build && npm run build",
+    "build:client": "cd client && rm -rf build && CI=false npm run build",
     "build:all": "npm run build && npm run build:client",
     "build:watch": "tsc -w -p .",
     "lint": "eslint ./src ./client/src",
     "start": "npm run build && node build/server.js",
-    "dev-once": "npm ci && prisma migrate dev && prisma generate && prisma db seed && npm run build && cd client && npm ci && npm run build"
+    "dev-once": "npm ci && prisma migrate dev && prisma generate && prisma db seed && npm run build && cd client && npm ci && CI=false npm run build"
   },
   "nodemonConfig": {
     "ignore": [
