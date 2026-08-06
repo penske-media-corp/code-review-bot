@@ -5,7 +5,7 @@
   "license": "GPLv2",
   "engines": {
     "npm": ">=9.6.4",
-    "node": ">=20"
+    "node": ">=20.19"
   },
   "main": "build/server.js",
   "prisma": {
@@ -13,12 +13,12 @@
   },
   "scripts": {
     "build": "rm -rf build && tsc -p .",
-    "build:client": "cd client && rm -rf build && npm run build",
+    "build:client": "cd client && rm -rf build && CI=false npm run build",
     "build:all": "npm run build && npm run build:client",
     "build:watch": "tsc -w -p .",
     "lint": "eslint ./src ./client/src",
     "start": "npm run build && node build/server.js",
-    "dev-once": "npm ci && prisma migrate dev && prisma generate && prisma db seed && npm run build && cd client && npm ci && npm run build"
+    "dev-once": "npm ci && prisma migrate dev && prisma generate && prisma db seed && npm run build && cd client && npm ci && CI=false npm run build"
   },
   "nodemonConfig": {
     "ignore": [
@@ -27,7 +27,7 @@
     "delay": 2500
   },
   "dependencies": {
-    "@octokit/webhooks": "^12.3.1",
+    "@octokit/webhooks": "^14.2.0",
     "@prisma/client": "^6.19.3",
     "@slack/bolt": "^5.0.0",
     "@slack/types": "^3.0.0",
