@@ -22,10 +22,32 @@ async function main() {
                 slackUserId: faker.random.alphaNumeric(20),
                 displayName: `${firstName} ${lastName}`,
                 email: faker.internet.email(firstName, lastName),
-                session: '{}',
+                session: {},
             };
 
             await prisma.user.create({data});
+        }
+    }
+
+    // Repair any rows seeded before the `session` fix, where an empty session
+    // was stored as the JSON string '{}' instead of an object. A string session
+    // breaks the token-login flow (getSessionValueByKey / generateAuthToken in
+    // src/service/User.ts expect an object), so normalize them here.
+    const existingUsers = await prisma.user.findMany({
+        select: {id: true, session: true},
+    });
+    for (const user of existingUsers) {
+        if (typeof user.session === 'string') {
+            let session: unknown = {};
+            try {
+                session = JSON.parse(user.session);
+            } catch {
+                session = {};
+            }
+            await prisma.user.update({
+                data: {session: session as object},
+                where: {id: user.id},
+            });
         }
     }
 
