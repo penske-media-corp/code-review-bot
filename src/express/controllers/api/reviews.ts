@@ -35,7 +35,7 @@ export const formatApiCodeReviewRecord = (codeReview: CodeReviewRecord): unknown
     };
 };
 
-const reviewsController: RequestHandler = (req, res) => {
+const reviewsController: RequestHandler<{channel?: string; status?: string}> = (req, res) => {
     const channel = req.params.channel;
     const status = req.params.status;
     let page = 1;

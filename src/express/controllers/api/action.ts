@@ -4,7 +4,7 @@ import type {RequestHandler} from 'express';
 import {formatApiCodeReviewRecord} from './reviews';
 import {postSlackMessage} from '../../../bolt/utils';
 
-export const actionController: RequestHandler = (req, res) => {
+export const actionController: RequestHandler<{action: string; value: string}> = (req, res) => {
     const action = req.params.action;
     const value = req.params.value;
 

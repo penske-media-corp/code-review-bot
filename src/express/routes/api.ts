@@ -25,7 +25,7 @@ apiRouter.get('/profile', profileController);
 apiRouter.get('/action/:action/:value', actionController);
 apiRouter.post('/action/save/:value', saveController);
 apiRouter.get('/archive', archiveController);
-apiRouter.get('/reviews/:channel?/:status?', reviewsController);
+apiRouter.get('/reviews{/:channel}{/:status}', reviewsController);
 apiRouter.get('/channel/:id', channelController);
 apiRouter.get('/channels', channelListController);
 apiRouter.get('/report', reportController);

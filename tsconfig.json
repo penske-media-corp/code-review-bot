@@ -16,8 +16,8 @@
     "rootDir": "src",
     "strictNullChecks": true,
     "sourceMap": true,
-    "strictNullChecks": true,
-    "target": "ES2019",
+    "skipLibCheck": true,
+    "target": "es2022",
   },
   "include": [
     "src/**/*"
