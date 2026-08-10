@@ -1,5 +1,4 @@
 import type {
-    App,
     Block,
     GenericMessageEvent,
     KnownBlock,
@@ -7,7 +6,7 @@ import type {
     ReactionRemovedEvent,
     RichTextBlock,
     RichTextSection,
-} from '@slack/bolt';
+} from '@slack/types';
 import type {
     ChatPostMessageArguments,
     ChatPostMessageResponse,
@@ -38,6 +37,7 @@ import {
     logError
 } from '../lib/log';
 import {APP_BASE_URL} from '../lib/env';
+import type {App} from '@slack/bolt';
 import type {ChannelInfo} from './types';
 import type {GithubBotEventData} from './types';
 import getCodeReviewList from './lib/CodeReviewList';
@@ -187,7 +187,7 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
 
     let messageInfo = await getMessageInfo(result);
 
-    if (!result.client_msg_id && botUserId === event.item_user && !messageInfo.pullRequestLink.length &&
+    if (!messageInfo.slackMsgId && botUserId === event.item_user && !messageInfo.pullRequestLink.length &&
         messageInfo.slackMsgTs !== messageInfo.slackThreadTs) {
 
         result = await slackBotApp.client.conversations.replies({
@@ -200,12 +200,12 @@ export async function getReactionData (event: ReactionAddedEvent | ReactionRemov
         messageInfo = await getMessageInfo(result);
     }
 
-    result = await slackBotApp.client.chat.getPermalink({
+    const permalinkResult = await slackBotApp.client.chat.getPermalink({
         channel: event.item.channel,
         message_ts: messageInfo.slackThreadTs,
     });
 
-    const {permalink} = result;
+    const {permalink} = permalinkResult;
 
     return {
         ...messageInfo,
@@ -599,6 +599,7 @@ export async function sentHomePageCodeReviewList ({slackUserId, codeReviewStatus
         },
         {
             type: 'actions',
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             elements: buttons,
         },
         ...await getCodeReviewList({codeReviewStatus: filterStatus, slackChannelId: filterChannel, userId: user?.id})

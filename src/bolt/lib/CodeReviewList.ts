@@ -1,7 +1,7 @@
 import type {
     Block,
     KnownBlock
-} from '@slack/bolt';
+} from '@slack/types';
 import type {
     CodeReview,
     CodeReviewRelation,

@@ -1,14 +1,4 @@
-import type {
-    User as GitHubUser,
-    PullRequestAssignedEvent,
-    PullRequestClosedEvent,
-    PullRequestOpenedEvent,
-    PullRequestReadyForReviewEvent,
-    PullRequestReviewDismissedEvent,
-    PullRequestReviewRequestedEvent,
-    PullRequestReviewSubmittedEvent,
-    PullRequestUnassignedEvent,
-} from '@octokit/webhooks-types';
+import {type EmitterWebhookEvent, Webhooks} from '@octokit/webhooks';
 import Review, {
     type ReviewActionResult,
     findCodeReviewRecord,
@@ -34,8 +24,22 @@ import {
 import type {ChatPostMessageArguments} from '@slack/web-api';
 import {GITHUB_WEBHOOKS_SECRET} from '../lib/env';
 import type {ReactionData} from '../bolt/types';
-import {Webhooks} from '@octokit/webhooks';
 import pluralize from 'pluralize';
+
+/*
+ * @octokit/webhooks v14 dropped its named payload type exports (the old
+ * @octokit/webhooks-types package). Derive the payload types from the emitter
+ * event map instead (the payload of each `event.action`).
+ */
+type PullRequestAssignedEvent = EmitterWebhookEvent<'pull_request.assigned'>['payload'];
+type PullRequestClosedEvent = EmitterWebhookEvent<'pull_request.closed'>['payload'];
+type PullRequestOpenedEvent = EmitterWebhookEvent<'pull_request.opened'>['payload'];
+type PullRequestReadyForReviewEvent = EmitterWebhookEvent<'pull_request.ready_for_review'>['payload'];
+type PullRequestReviewDismissedEvent = EmitterWebhookEvent<'pull_request_review.dismissed'>['payload'];
+type PullRequestReviewRequestedEvent = EmitterWebhookEvent<'pull_request.review_requested'>['payload'];
+type PullRequestReviewSubmittedEvent = EmitterWebhookEvent<'pull_request_review.submitted'>['payload'];
+type PullRequestUnassignedEvent = EmitterWebhookEvent<'pull_request.unassigned'>['payload'];
+type GitHubUser = NonNullable<PullRequestClosedEvent['sender']>;
 
 let webhooks: Webhooks | null;
 

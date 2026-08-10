@@ -1,6 +1,6 @@
 import Review, {findCodeReviewRecord} from '../../service/Review';
 import type {App} from '@slack/bolt';
-import type {GenericMessageEvent} from '@slack/bolt';
+import type {GenericMessageEvent} from '@slack/types';
 import type {SayArguments} from '@slack/bolt';
 import {getGithubBotEventData} from '../utils';
 import {logDebug} from '../../lib/log';
